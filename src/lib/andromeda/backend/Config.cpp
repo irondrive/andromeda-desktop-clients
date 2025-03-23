@@ -58,21 +58,21 @@ Config::Config(BackendImpl& backend) :
 }
 
 /*****************************************************/
-void Config::LoadAccountLimits(BackendImpl& backend)
+void Config::LoadAccountPolicy(BackendImpl& backend)
 {
     MDBG_INFO("()");
 
-    nlohmann::json limits(backend.GetAccountLimits());
+    /*nlohmann::json policy(backend.GetAccountPolicy());
 
     try
     {
-        if (limits != nullptr)
+        if (policy != nullptr)
         {
-            mRandWrite.store(limits.at("features").at("randomwrite").get<bool>());
+            mRandWrite.store(policy.at("features").at("randomwrite").get<bool>());
         }
     }
     catch (const nlohmann::json::exception& ex) {
-        throw BackendImpl::JSONErrorException(ex.what()); }
+        throw BackendImpl::JSONErrorException(ex.what()); }*/ // TODO POLICY
 }
 
 } // namespace Backend

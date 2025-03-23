@@ -25,7 +25,7 @@ void Filesystems::SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisL
 {
     MDBG_INFO("()");
 
-    const nlohmann::json data(mBackend.GetFilesystems());
+    const nlohmann::json data(mBackend.GetStorages());
 
     Folder::NewItemMap newItems;
 

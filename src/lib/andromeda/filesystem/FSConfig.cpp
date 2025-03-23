@@ -25,21 +25,21 @@ const FSConfig& FSConfig::LoadByID(BackendImpl& backend, const std::string& id)
     if (it == sCache.end())
     {
         it = sCache.emplace(std::piecewise_construct, std::forward_as_tuple(id), 
-            std::forward_as_tuple(backend.GetFilesystem(id), backend.GetFSLimits(id))).first;
+            std::forward_as_tuple(backend.GetStorage(id), nlohmann::json{}/*backend.GetStoragePolicy(id) TODO POLICY*/)).first;
     }
 
     return it->second;
 }
 
 /*****************************************************/
-FSConfig::FSConfig(const nlohmann::json& data, const nlohmann::json& lims) :
+FSConfig::FSConfig(const nlohmann::json& data, const nlohmann::json& policy) :
     mDebug(__func__, this)
 {
-    if (data.is_null() && lims.is_null()) return;
+    if (data.is_null() /*&& policy.is_null()*/) return; // TODO POLICY
 
     try
     {
-        if (data.contains("chunksize"))
+        if (data.at("chunksize") != nullptr)
             data.at("chunksize").get_to(mChunksize);
 
         data.at("readonly").get_to(mReadOnly);
@@ -51,9 +51,9 @@ FSConfig::FSConfig(const nlohmann::json& data, const nlohmann::json& lims) :
 
         if (mWriteMode >= WriteMode::RANDOM)
         {
-            if (lims.contains("features"))
+            if (policy.contains("features"))
             {
-                const nlohmann::json& rw(lims.at("features").at("randomwrite"));
+                const nlohmann::json& rw(policy.at("features").at("randomwrite"));
 
                 if (!rw.is_null() && !rw.get<bool>())
                     mWriteMode = WriteMode::APPEND;

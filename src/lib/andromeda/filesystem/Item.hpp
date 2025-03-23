@@ -114,7 +114,7 @@ public:
     virtual Folder* TryGetParent(const SharedLock& thisLock) const { return mParent; }
 
     /** Returns true if this item has FSconfig */
-    virtual bool HasFSConfig() const { return mFsConfig != nullptr; }
+    virtual bool HasFSConfig() const { return mStConfig != nullptr; }
 
     /** 
      * Returns the filesystem config
@@ -261,7 +261,7 @@ protected:
     Folder* mParent { nullptr };
 
     /** Pointer to filesystem config */
-    const FSConfig* mFsConfig { nullptr };
+    const FSConfig* mStConfig { nullptr };
 
     /** Backend object ID */
     std::string mId;

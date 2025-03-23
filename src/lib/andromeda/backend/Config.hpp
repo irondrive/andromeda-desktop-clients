@@ -52,10 +52,10 @@ public:
             Exception("Missing app: "+appname){}; };
 
     /** 
-     * Adds account-specific limits
+     * Adds account-specific policy
      * @throws BackendException for backend issues
      */
-    void LoadAccountLimits(BackendImpl& backend);
+    void LoadAccountPolicy(BackendImpl& backend);
 
     /** Returns true if the backend is read-only */
     [[nodiscard]] bool isReadOnly() const { return mReadOnly.load(); }

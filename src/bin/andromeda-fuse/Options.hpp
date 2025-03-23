@@ -88,7 +88,7 @@ public:
     enum class RootType : uint8_t
     {
         SUPERROOT,
-        FILESYSTEM,
+        STORAGE,
         FOLDER
     };
 

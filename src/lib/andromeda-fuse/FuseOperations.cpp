@@ -202,7 +202,7 @@ int FuseOperations::statfs(const char *path, struct statvfs* buf)
 //    ///    unsigned long  f_flag;     /* Mount flags */
 //           unsigned long  f_namemax;  /* Maximum filename length */
 
-// files getlimits & files getlimits --filesystem to calculate free space?
+// files getpolicy & files getpolicy --filesystem to calculate free space?
 // then the root folder knows the total space used...?
 // DO actually need the path as the answer would be different for each SuperRoot filesystem
 // this could be a call into a filesystem object... superRoot would need to extend Filesystem

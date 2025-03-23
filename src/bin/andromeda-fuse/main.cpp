@@ -140,7 +140,7 @@ int main(int argc, char** argv)
         {
             case Options::RootType::SUPERROOT:
                 folder = std::make_unique<SuperRoot>(*backend); break;
-            case Options::RootType::FILESYSTEM:
+            case Options::RootType::STORAGE:
                 folder = Filesystem::LoadByID(*backend, options.GetMountItemID()); break;
             case Options::RootType::FOLDER:
                 folder = PlainFolder::LoadByID(*backend, options.GetMountItemID()); break;

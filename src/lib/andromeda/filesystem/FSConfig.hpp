@@ -32,10 +32,10 @@ public:
     /** 
      * Construct with JSON data
      * @param data json data from backend
-     * @param lims json limit data from backend
+     * @param policy json policy data from backend
      * @throws BackendImpl::JSONErrorException on JSON errors
      */
-    FSConfig(const nlohmann::json& data, const nlohmann::json& lims);
+    FSConfig(const nlohmann::json& data, const nlohmann::json& policy);
 
     /** Returns the filesystem chunk size or 0 for none */
     [[nodiscard]] size_t GetChunkSize() const { return mChunksize; }
