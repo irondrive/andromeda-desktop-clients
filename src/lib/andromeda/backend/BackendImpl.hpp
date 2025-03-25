@@ -208,7 +208,7 @@ public:
      * @param id filesystem ID (or blank for default)
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetStorageRoot(const std::string& id = "");
+    nlohmann::json GetRootFolder(const std::string& id = "");
 
     /**
      * Load filesystem metadata

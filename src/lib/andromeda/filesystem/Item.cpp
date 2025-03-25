@@ -29,17 +29,13 @@ Item::Item(BackendImpl& backend, const nlohmann::json& data) :
         data.at("id").get_to(mId);
         data.at("name").get_to(mName);
 
-        // storages don't have item dates
-        if (data.contains("date_created"))
-        {
-            data.at("date_created").get_to(mCreated);
-            
-            const nlohmann::json& modifiedJ(data.at("date_modified"));
-            if (!modifiedJ.is_null()) modifiedJ.get_to(mModified);
+        data.at("date_created").get_to(mCreated);
+        
+        const nlohmann::json& modifiedJ(data.at("date_modified"));
+        if (!modifiedJ.is_null()) modifiedJ.get_to(mModified);
 
-            const nlohmann::json& accessedJ(data.at("date_accessed"));
-            if (!accessedJ.is_null()) accessedJ.get_to(mAccessed);
-        }
+        const nlohmann::json& accessedJ(data.at("date_accessed"));
+        if (!accessedJ.is_null()) accessedJ.get_to(mAccessed);
     }
     catch (const nlohmann::json::exception& ex) {
         throw BackendImpl::JSONErrorException(ex.what()); }

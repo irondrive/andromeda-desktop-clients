@@ -24,8 +24,11 @@ Filesystem::Filesystem(BackendImpl& backend, const nlohmann::json& data, Folder*
     MDBG_INFO("()");
 
     mId = "";
-    // our JSON ID is the storage ID
-    // use mId for the root folder
+    // our JSON ID is the storage ID, use mId for the root folder
+    
+    // NOTE we use the storage object as our "item" and lazy load the real folder object 
+    // only when needed, both to avoid an unnecessary request that might not be needed
+    // and also so that this object can still be loaded when the storage has a configuration issue
 
     mStConfig = &FSConfig::LoadByID(backend, mFsid);
 }
@@ -34,7 +37,7 @@ Filesystem::Filesystem(BackendImpl& backend, const nlohmann::json& data, Folder*
 const std::string& Filesystem::GetID()
 {
     const UniqueLock idLock(mIdMutex); // lazy-load the folder ID
-    if (mId.empty()) LoadID(mBackend.GetStorageRoot(mFsid), idLock);
+    if (mId.empty()) LoadID(mBackend.GetRootFolder(mFsid), idLock);
 
     return mId;
 }
@@ -55,7 +58,7 @@ void Filesystem::SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisLo
 {
     ITDBG_INFO("()");
 
-    const nlohmann::json data(mBackend.GetStorageRoot(mFsid));
+    const nlohmann::json data(mBackend.GetRootFolder(mFsid));
 
     { // lock scope
         const UniqueLock idLock(mIdMutex);

@@ -417,7 +417,7 @@ nlohmann::json BackendImpl::GetFolder(const std::string& id)
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetStorageRoot(const std::string& id)
+nlohmann::json BackendImpl::GetRootFolder(const std::string& id)
 {
     MDBG_INFO("(id:" << id << ")");
 
