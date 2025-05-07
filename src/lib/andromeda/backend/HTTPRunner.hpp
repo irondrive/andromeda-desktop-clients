@@ -138,31 +138,31 @@ private:
     /** Add filesIn params from the given input to a post body */
     void AddFileParams(const RunnerInput_FilesIn& input, httplib::MultipartFormDataItems& params);
 
-    /** Private data shared by DoRequestsSelf and HandleResponse */
+    /** Private data shared by DoRequestsCustom and HandleResponse */
     struct HandleResponseData
     {
-        /** Set by DoRequestsSelf(), true if retry is allowed in HandleResponse() */
+        /** Set by DoRequestsCustom(), true if retry is allowed in HandleResponse() */
         bool canRetry { true };
-        /** Set by HandleResponse(), true if it wants a retry in DoRequestsSelf() */
+        /** Set by HandleResponse(), true if it wants a retry in DoRequestsCustom() */
         bool doRetry { false };
     };
 
     /**
-     * Performs a series of HTTP request attempts, caller must call HandleResponse in getResult
-     * @param[in] getResult Function that provides an httplib result
+     * Performs a series of HTTP request attempts, letting the caller handle the response
+     * @param[in] getAndHandleResult Function that provides an httplib result, MUST call HandleResponse!
      * @param[inout] respData ref to data to be passed to manual call of HandleResponse()
      * @throws EndpointException on any failure
      */
-    void DoRequestsSelf(const std::function<httplib::Result()>& getResult, HandleResponseData& respData);
+    void DoRequestsCustom(const std::function<httplib::Result()>& getAndHandleResult, HandleResponseData& respData);
 
     /**
-     * Performs a series of HTTP request attempts, calling HandleResponse
+     * Performs a series of HTTP request attempts, calling HandleResponse automatically
      * @param[in] getResult Function that provides an httplib result
      * @param[out] isJson ref set to whether response is json
      * @return std::string the body of the response
      * @throws EndpointException on any failure
      */
-    std::string DoRequestsFull(const std::function<httplib::Result()>& getResult, bool& isJson);
+    std::string DoRequestsAuto(const std::function<httplib::Result()>& getResult, bool& isJson);
 
     /**
      * Handles an httplib non-response
@@ -179,7 +179,7 @@ private:
      * Handles an httplib response
      * @param[in] response httplib response object
      * @param[out] isJson ref set to whether response is json
-     * @param[inout] respData ref to data passed to DoRequestsSelf()
+     * @param[inout] respData ref to data passed to DoRequestsCustom()
      * @return std::string the body if not doRetry
      * @throws EndpointException if a non-retry error
      */

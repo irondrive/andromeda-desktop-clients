@@ -47,7 +47,9 @@ void* MemoryAllocator::alloc(size_t pages)
 {
     if (!pages) return nullptr;
 
-#if WIN32
+#ifdef FILEDATA_USE_MALLOC
+    void* ptr = ::malloc(pages*mPageSize); // NOLINT(*-owning-memory, *-no-malloc)
+#elif WIN32
     LPVOID ptr = VirtualAlloc(nullptr, pages*mPageSize, 
         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else // !WIN32
@@ -113,7 +115,9 @@ void MemoryAllocator::free(void* const ptr, const size_t pages)
 }
 #endif // DEBUG
 
-#if WIN32
+#ifdef FILEDATA_USE_MALLOC
+    ::free(ptr); // NOLINT(*-owning-memory, *-no-malloc)
+#elif WIN32
     VirtualFree(ptr, pages*mPageSize, MEM_RELEASE);
 #else // !WIN32
     munmap(ptr, pages*mPageSize);
