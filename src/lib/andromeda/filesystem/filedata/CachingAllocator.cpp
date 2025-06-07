@@ -32,6 +32,10 @@ void* CachingAllocator::alloc(size_t pages)
     MDBG_INFO("(pages:" << pages << " bytes:" << pages*mPageSize << ")");
     if (!pages) return nullptr;
 
+#ifdef FILEDATA_USE_MALLOC
+    return ::malloc(pages*mPageSize); // NOLINT(*-owning-memory, *-no-malloc)
+#endif
+
     { // lock scope
         const LockGuard lock(mMutex);
         ++mAllocs; // total
@@ -61,7 +65,7 @@ void* CachingAllocator::alloc(size_t pages)
             MDBG_INFO("... from freeList:" << pages << ":" << freeList.size() 
                 << " mCurFree:" << mCurFree);
             
-            if (fmIt->first != pages) // only used part of the alloc
+            if (fmIt->first != pages) // only used part of the alloc, re-add the remaining
             {
                 void* const newPtr { static_cast<uint8_t*>(ptr) + pages*mPageSize };
                 const size_t newPages { fmIt->first - pages };
@@ -93,6 +97,10 @@ void CachingAllocator::free(void* const ptr, size_t pages)
     MDBG_INFO("(ptr:" << ptr << " pages:" << pages << " bytes:" << pages*mPageSize << ")");
     if (ptr == nullptr || !pages) return;
 
+#ifdef FILEDATA_USE_MALLOC
+    ::free(ptr); return; // NOLINT(*-owning-memory, *-no-malloc)
+#endif
+
     const LockGuard lock(mMutex);
     const size_t freeListSize { add_entry(ptr, pages, lock) };
 #if DEBUG // sanity checks
@@ -106,7 +114,8 @@ void CachingAllocator::free(void* const ptr, size_t pages)
     MDBG_INFO("... to freeList:" << pages << ":" << freeListSize
         << " freeQueue:" << mFreeQueue.size() << " mCurFree:" << mCurFree << " mCurAlloc:" << mCurAlloc);
 
-    while (mCurFree > mMaxAlloc-mBaseline) clean_entry(lock);
+    while (mCurFree > mMaxAlloc-mBaseline) 
+        pop_last_entry(lock);
 }
 
 /*****************************************************/
@@ -120,7 +129,7 @@ size_t CachingAllocator::add_entry(void* const ptr, size_t pages, const LockGuar
 }
 
 /*****************************************************/
-void CachingAllocator::clean_entry(const LockGuard& lock)
+void CachingAllocator::pop_last_entry(const LockGuard& lock)
 {
     // free the oldest free
     const FreeQueue::value_type fpair { mFreeQueue.pop_back() }; // O(1)

@@ -29,16 +29,13 @@ Item::Item(BackendImpl& backend, const nlohmann::json& data) :
         data.at("id").get_to(mId);
         data.at("name").get_to(mName);
 
-        if (data.contains("dates"))
-        {
-            data.at("dates").at("created").get_to(mCreated);
-            
-            const nlohmann::json& modifiedJ(data.at("dates").at("modified"));
-            if (!modifiedJ.is_null()) modifiedJ.get_to(mModified);
+        data.at("date_created").get_to(mCreated);
+        
+        const nlohmann::json& modifiedJ(data.at("date_modified"));
+        if (!modifiedJ.is_null()) modifiedJ.get_to(mModified);
 
-            const nlohmann::json& accessedJ(data.at("dates").at("accessed"));
-            if (!accessedJ.is_null()) accessedJ.get_to(mAccessed);
-        }
+        const nlohmann::json& accessedJ(data.at("date_accessed"));
+        if (!accessedJ.is_null()) accessedJ.get_to(mAccessed);
     }
     catch (const nlohmann::json::exception& ex) {
         throw BackendImpl::JSONErrorException(ex.what()); }
@@ -61,14 +58,14 @@ void Item::Refresh(const nlohmann::json& data, const SharedLockW& thisLock)
         }
         
         decltype(mCreated) newCreated = 0; 
-        data.at("dates").at("created").get_to(newCreated);
+        data.at("date_created").get_to(newCreated);
         if (newCreated != mCreated)
         {
             mCreated = newCreated;
             ITDBG_INFO("... newCreated:" << mCreated);
         }
 
-        const nlohmann::json& modifiedJ(data.at("dates").at("modified"));
+        const nlohmann::json& modifiedJ(data.at("date_modified"));
         if (!modifiedJ.is_null())
         {
             decltype(mModified) newModified = 0; 
@@ -80,7 +77,7 @@ void Item::Refresh(const nlohmann::json& data, const SharedLockW& thisLock)
             }
         }
 
-        const nlohmann::json& accessedJ(data.at("dates").at("accessed"));
+        const nlohmann::json& accessedJ(data.at("date_accessed"));
         if (!accessedJ.is_null())
         {
             decltype(mAccessed) newAccessed = 0; 
@@ -108,10 +105,10 @@ Folder& Item::GetParent(const SharedLock& thisLock) const
 /*****************************************************/
 const FSConfig& Item::GetFSConfig() const
 {
-    if (mFsConfig == nullptr)
+    if (mStConfig == nullptr)
         throw NullFSConfigException();
 
-    return *mFsConfig;
+    return *mStConfig;
 }
 
 /*****************************************************/

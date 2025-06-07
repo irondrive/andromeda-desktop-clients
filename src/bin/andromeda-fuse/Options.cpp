@@ -64,8 +64,8 @@ bool Options::AddFlag(const std::string& flag)
     else if (flag == "force-session")
         mForceSession = true;
 
-    else if (flag == "filesystem")
-        mMountRootType = RootType::FILESYSTEM;
+    else if (flag == "storage")
+        mMountRootType = RootType::STORAGE;
     else if (flag == "folder")
         mMountRootType = RootType::FOLDER;
 
@@ -113,10 +113,10 @@ bool Options::AddOption(const std::string& option, const std::string& value)
         mSessionkey = value;
 
     /** Backend mount object selection */
-    else if (option == "ri" || option == "filesystem")
+    else if (option == "ri" || option == "storage")
     {
         mMountItemID = value;
-        mMountRootType = RootType::FILESYSTEM;
+        mMountRootType = RootType::STORAGE;
     }
     else if (option == "rf" || option == "folder")
     {

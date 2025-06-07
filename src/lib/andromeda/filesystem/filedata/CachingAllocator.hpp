@@ -20,10 +20,9 @@ namespace Filedata {
 /**
  * Adds a very basic allocation-caching layer on top of MemoryAllocator.
  * When an allocation is free()d, it is added to a list to be re-used in a later alloc(). 
- * When the maximum free pool size is exceeded, allocations are removed and returned the OS smallest first.
+ * When the maximum free pool size is exceeded, allocations are removed and returned the OS longest-ago-freed first (FIFO).
  * NOTE 1) memory is allocated only at page size granularity.  Use get_usage() to determine the actual memory size of an allocation.
- * NOTE 2) allocations are only re-used if they are the exact size of a previously freed allocation.
- * ... these make this a bad general allocator, but good for allocating filedata pages that are mostly constant per-filesystem.
+ * NOTE 2) allocations can be made by splitting from a larger chunk, but adjacent frees are not then re-combined.
  * THREAD SAFE (INTERNAL LOCKS)
  */
 class CachingAllocator : public MemoryAllocator
@@ -77,8 +76,8 @@ private:
      */
     size_t add_entry(void* ptr, size_t pages, const LockGuard& lock) noexcept;
 
-    /** Removes and returns to the OS the smallest freed allocation */
-    void clean_entry(const LockGuard& lock);
+    /** Removes and returns to the OS the last freed allocation */
+    void pop_last_entry(const LockGuard& lock);
 
     mutable Debug mDebug;
     mutable std::mutex mMutex;

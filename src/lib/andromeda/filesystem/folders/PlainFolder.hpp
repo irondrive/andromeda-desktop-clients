@@ -31,7 +31,7 @@ public:
     static std::unique_ptr<PlainFolder> LoadByID(Backend::BackendImpl& backend, const std::string& id);
     
     /** 
-     * Construct with JSON data, load fsConfig
+     * Construct with JSON data, load stConfig
      * @param backend reference to backend
      * @param data json data from backend
      * @param haveItems true if JSON has subitems
@@ -50,7 +50,7 @@ protected:
     PlainFolder(Backend::BackendImpl& backend, Folder* parent);
     
     /** 
-     * Construct with JSON data without items and NO fsConfig
+     * Construct with JSON data without items and NO stConfig
      * @param backend reference to backend
      * @param data json data from backend
      * @param parent pointer to parent

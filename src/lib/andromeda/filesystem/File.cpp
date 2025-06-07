@@ -28,16 +28,16 @@ File::File(BackendImpl& backend, const nlohmann::json& data, Folder& parent) :
     mParent = &parent;
 
     uint64_t fileSize = 0;
-    std::string fsid; 
+    std::string stid; 
     try
     {
         data.at("size").get_to(fileSize);
-        data.at("filesystem").get_to(fsid);
+        data.at("storage").get_to(stid);
     }
     catch (const nlohmann::json::exception& ex) {
         throw BackendImpl::JSONErrorException(ex.what()); }
 
-    mFsConfig = &FSConfig::LoadByID(mBackend, fsid);
+    mStConfig = &FSConfig::LoadByID(mBackend, stid);
 
     MDBG_INFO("... ID:" << mId << " name:" << mName);
 
@@ -47,13 +47,13 @@ File::File(BackendImpl& backend, const nlohmann::json& data, Folder& parent) :
 }
 
 /*****************************************************/
-File::File(BackendImpl& backend, Folder& parent, const std::string& name, const FSConfig& fsConfig,
+File::File(BackendImpl& backend, Folder& parent, const std::string& name, const FSConfig& stConfig,
     const File::CreateFunc& createFunc, const File::UploadFunc& uploadFunc) : 
     Item(backend), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 
-    mFsConfig = &fsConfig;
+    mStConfig = &stConfig;
     mParent = &parent;
     mName = name;
 
@@ -69,13 +69,13 @@ File::File(BackendImpl& backend, Folder& parent, const std::string& name, const 
 /*****************************************************/
 size_t File::CalcPageSize() const
 {
-    const size_t fsChunk { mFsConfig->GetChunkSize() };
+    const size_t stChunk { mStConfig->GetChunkSize() };
     const size_t cfChunk { mBackend.GetOptions().pageSize };
 
     auto ceil { [](auto x, auto y) { return (x + y - 1) / y; } };
-    const size_t pageSize { fsChunk ? ceil(cfChunk,fsChunk)*fsChunk : cfChunk };
+    const size_t pageSize { stChunk ? ceil(cfChunk,stChunk)*stChunk : cfChunk };
 
-    MDBG_INFO("... fsChunk:" << fsChunk << " cfChunk:" << cfChunk << " pageSize:" << pageSize);
+    MDBG_INFO("... stChunk:" << stChunk << " cfChunk:" << cfChunk << " pageSize:" << pageSize);
 
     return pageSize;
 }

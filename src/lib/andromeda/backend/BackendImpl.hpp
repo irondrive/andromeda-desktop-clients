@@ -191,10 +191,10 @@ public:
     nlohmann::json GetFilesConfigJ();
 
     /** 
-     * Load limits for the current account
+     * Load policy for the current account
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetAccountLimits();
+    nlohmann::json GetAccountPolicy();
 
     /**
      * Load folder metadata (with subitems)
@@ -208,27 +208,27 @@ public:
      * @param id filesystem ID (or blank for default)
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetFSRoot(const std::string& id = "");
+    nlohmann::json GetRootFolder(const std::string& id = "");
 
     /**
      * Load filesystem metadata
      * @param id filesystem ID (or blank for default)
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetFilesystem(const std::string& id = "");
+    nlohmann::json GetStorage(const std::string& id = "");
 
     /**
-     * Load limits for a filesystem
+     * Load policy for a filesystem
      * @param id filesystem ID
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetFSLimits(const std::string& id);
+    nlohmann::json GetStoragePolicy(const std::string& id);
 
     /** 
      * Loads filesystem list metadata
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetFilesystems();
+    nlohmann::json GetStorages();
 
     /** 
      * Loads items owned but in another user's parent

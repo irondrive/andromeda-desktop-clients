@@ -55,12 +55,12 @@ PlainFolder::PlainFolder(BackendImpl& backend, const nlohmann::json& data, bool 
             LoadItemsFrom(data, lockMap, GetWriteLock());
         }
 
-        data.at("filesystem").get_to(fsid);
+        data.at("storage").get_to(fsid);
     }
     catch (const nlohmann::json::exception& ex) {
         throw BackendImpl::JSONErrorException(ex.what()); }
 
-    mFsConfig = &FSConfig::LoadByID(backend, fsid);
+    mStConfig = &FSConfig::LoadByID(backend, fsid);
 }
 
 /*****************************************************/
@@ -116,7 +116,7 @@ void PlainFolder::SubCreateFile(const std::string& name, const SharedLockW& this
         const nlohmann::json data(mBackend.CreateFile(GetID(), name));
         file = std::make_unique<File>(mBackend, data, *this);
     }
-    else file = std::make_unique<File>(mBackend, *this, name, *mFsConfig, // create later
+    else file = std::make_unique<File>(mBackend, *this, name, *mStConfig, // create later
         [&](const std::string& fname){ 
             return mBackend.CreateFile(GetID(), fname); },
         [&](const std::string& fname, const WriteFunc& ffunc, bool oneshot){ 

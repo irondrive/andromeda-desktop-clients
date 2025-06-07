@@ -25,7 +25,7 @@ void Filesystems::SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisL
 {
     MDBG_INFO("()");
 
-    const nlohmann::json data(mBackend.GetFilesystems());
+    nlohmann::json data(mBackend.GetStorages());
 
     Folder::NewItemMap newItems;
 
@@ -34,8 +34,13 @@ void Filesystems::SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisL
 
     try
     {
-        for (const nlohmann::json& fsJ : data)
+        for (nlohmann::json& fsJ : data)
         {
+            if (!data.contains("date_created"))
+                fsJ["date_created"] = 0.0F;
+            fsJ["date_modified"] = nullptr;
+            fsJ["date_accessed"] = nullptr;
+
             newItems.emplace(std::piecewise_construct,
                 std::forward_as_tuple(fsJ.at("name")),
                 std::forward_as_tuple(fsJ, newFilesystem));

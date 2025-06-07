@@ -59,7 +59,7 @@ public:
     /** Returns the file's data page size */
     virtual size_t GetPageSize() const;
 
-    /** Checks the FS and account limits for the allowed write mode */
+    /** Checks the storage and account policy for the allowed write mode */
     FSConfig::WriteMode GetWriteMode() const;
 
     /**
@@ -81,12 +81,12 @@ public:
      * @param backend backend reference
      * @param parent reference to parent folder
      * @param name name of the new file
-     * @param fsConfig reference to fs config
+     * @param stConfig reference to storage config
      * @param createFunc function to create on the backend
      * @param uploadFunc function to upload on the backend
      */
     File(Backend::BackendImpl& backend, Folder& parent, 
-        const std::string& name, const FSConfig& fsConfig,
+        const std::string& name, const FSConfig& stConfig,
         const CreateFunc& createFunc, const UploadFunc& uploadFunc);
 
     /** Returns true iff the file exists on the backend (false if waiting for flush) */
@@ -148,7 +148,7 @@ protected:
 
 private:
 
-    /** Returns the page size calculated from the backend.pageSize and fsConfig.chunkSize */
+    /** Returns the page size calculated from the backend.pageSize and stConfig.chunkSize */
     size_t CalcPageSize() const;
 
     /**

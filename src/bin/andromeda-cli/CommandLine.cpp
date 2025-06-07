@@ -42,11 +42,11 @@ std::string CommandLine::HelpText()
         << "NOTE all non-file and non-environment parameters will be sent as URL variables. Use stdin (opt@ or opt!) " << endl
         << "    or environment variables for private data, as they will be sent in the POST body instead." << endl << endl
            
-        << "action params: [--$param value] [--$param@ file] [--$param!] [--$param% file [name]] [--$param-]" << endl
+        << "action params: [--$param value] [--$param@ file] [--$param!] [--$param% file [name]] [--$param- [name]]" << endl
         << "         param@ puts the content of the file in the parameter" << endl
         << "         param! will prompt interactively or read stdin for the parameter value" << endl
         << "         param% gives the file path as a direct file input (optionally with a new name)" << endl
-        << "         param- will attach the stdin stream as a direct file input" << endl << endl
+        << "         param- will attach the stdin stream as a direct file input (default name is 'data')" << endl << endl
 
         << Options::DetailHelpText() << endl;
 
@@ -107,7 +107,15 @@ CommandLine::CommandLine(Options& options, size_t argc, const char* const* argv)
 /*****************************************************/
 std::string CommandLine::getNextValue(const StringUtil::StringList& argv, size_t& i)
 {
-    return (argv.size() > i+1 && argv[i+1][0] != '-') ? argv[++i] : "";
+    if (StringUtil::startsWith(argv[i],"--") && 
+        argv[i].find('=') != std::string::npos) // --key=val
+    {
+        return StringUtil::split(argv[i],"=").second;
+    }
+    
+    if (argv.size() > i+1 && !StringUtil::startsWith(argv[i+1],"--")) // --key val
+        return argv[++i];
+    return ""; // no value
 }
 
 /*****************************************************/
@@ -126,7 +134,9 @@ void CommandLine::ProcessArgList(const StringUtil::StringList& args, bool isPriv
             throw BaseOptions::BadUsageException(
                 "empty key at action arg "+std::to_string(i));
 
-        param.erase(0,2); const char special { param.back() };
+        param.erase(0,2); // remove --
+        param = StringUtil::split(param,"=").first;
+        const char special { param.back() };
 
         if (special == '@')
         {

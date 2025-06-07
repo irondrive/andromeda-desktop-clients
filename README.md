@@ -64,7 +64,7 @@ Ubuntu 22.04 is the baseline for support so all packages are assumed to be at le
 
 These libraries are dynamically linked and must be available at runtime.
 On Windows this means the folders containing the DLLs for each library must be in your $PATH.
-Some other dependencies will be fetched by cmake and built in-tree.
+Some other dependencies will be fetched by cmake and built in-tree (see FetchContent_Declare).
 
 ### Supported Platforms
 
@@ -112,7 +112,7 @@ Any features that rely on the higher privileges of the real CLI interface are no
 * Changing debug/metrics output
 * Doing a request dry-run
 
-The general usage is the same as the real CLI interface, but with different global options, and with -- before the server command.  Parameter syntax, attaching/uploading files and using environment variables is the same ([syntax reference](https://github.com/irondrive/andromeda-server#general-usage)). Batching is not yet supported.
+The general usage is the same as the real CLI interface, but with different global options, and with -- before the server command.  Parameter syntax, attaching/uploading files and using environment variables is the same ([syntax reference](https://github.com/irondrive/andromeda-server#general-usage)).
 
 Note that non-file and non-environment action params will be sent as URL variables.  Use stdin (opt@ or opt!) or environment variables for private data, as they will be sent in the POST body instead.  
 
@@ -129,8 +129,8 @@ Run `./andromeda-fuse --help` to see the available options.
 Authentication details (password, twofactor) will be prompted for interactively as required.
 
 The ID of a folder to mount can also be specified in the `-a` URL.
-If no folder/filesystem ID is provided, the "SuperRoot" will be mounted
-containing all filesystems and other special folders.
+If no folder/storage ID is provided, the "SuperRoot" will be mounted
+containing all storages and other special folders.
 
 The FUSE client can either connect to a remote server via HTTP by specifying a URL with `-a`,
 or it can run the server as a local program by specifying the path with `-p`.  Using `-p` as a 
@@ -204,12 +204,12 @@ Use the `tools/mkdocs` script from the repo root to generate documentation using
 
 Unit testing is done with catch2 and trompeloeil, which are built in-tree.  Configure cmake with `-DTESTS_CATCH2=1` to build and run tests.
 
-Static analysis is done with clang-tidy and cppcheck.  These must be installed on the system.  Configure cmake with `-DTESTS_CLANGTIDY=1` to run clang-tidy.  Configure cmake with `-DTESTS_CPPCHECK=1` to run cppcheck.  Use `-DALLOW_WARNINGS=1` to allow the build to pass with warnings.  cppcheck is somewhat buggy and can be ignored with careful analysis.
+Static analysis is done with clang-tidy and cppcheck.  These must be installed on the system.  Configure cmake with `-DTESTS_CLANGTIDY=1` to run clang-tidy.  Configure cmake with `-DTESTS_CPPCHECK=1` to run cppcheck.  Use `-DALLOW_WARNINGS=1` to allow the build to pass with warnings.  cppcheck is somewhat buggy and warnings can be ignored after careful analysis.
 
 Unit tests and static analysis are both enabled in the `tools/builddev` script.
 
 ## Sanitizers
 
-`-DSANITIZE` allows building with sanitizers with GCC and Clang.  The default is `address,leak,undefined` (AddressSanitizer, LeakSanitizer, UndefinedBehaviorSanitizer).  Other (mutually-exclusive) options include `memory` (MemorySanitizer) (Clang only), and `thread` (ThreadSanitizer).  See [GCC Instrumentation Options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html) and [Google Sanitizers](https://github.com/google/sanitizers).  
+`-DSANITIZE` allows building with sanitizers with GCC and Clang (debug builds only).  The default is `address,leak,undefined` (AddressSanitizer, LeakSanitizer, UndefinedBehaviorSanitizer).  Other (mutually-exclusive) options include `memory` (MemorySanitizer) (Clang only), and `thread` (ThreadSanitizer).  See [GCC Instrumentation Options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html) and [Google Sanitizers](https://github.com/google/sanitizers).  
 
 These must be disabled (use `none`) to use Valgrind tools.  LeakSanitizer does not work on AppleClang (macOS).  No sanitizers work on musl libc (Alpine Linux).

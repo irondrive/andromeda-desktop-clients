@@ -165,7 +165,7 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
             else if (code == HTTP_DENIED && message == "AUTHENTICATION_FAILED") throw AuthenticationFailedException();
             else if (code == HTTP_DENIED && message == "TWOFACTOR_REQUIRED")    throw TwoFactorRequiredException();
             else if (code == HTTP_DENIED && message == "READ_ONLY_DATABASE")    throw ReadOnlyFSException("Database");
-            else if (code == HTTP_DENIED && message == "READ_ONLY_FILESYSTEM")  throw ReadOnlyFSException("Filesystem");
+            else if (code == HTTP_DENIED && message == "READ_ONLY_STORAGE")     throw ReadOnlyFSException("Storage");
 
             else if (code == HTTP_DENIED) throw DeniedException(message); 
             else if (code == HTTP_NOT_FOUND) throw NotFoundException(message);
@@ -263,7 +263,7 @@ void BackendImpl::Authenticate(const std::string& username, const std::string& p
         throw JSONErrorException(ex.what()); }
 
     mUsername = username;
-    mConfig.LoadAccountLimits(*this);
+    mConfig.LoadAccountPolicy(*this);
 }
 
 /*****************************************************/
@@ -300,7 +300,7 @@ void BackendImpl::AuthInteractive(const std::string& username, std::string passw
     else 
     {
         mUsername = username;
-        mConfig.LoadAccountLimits(*this);
+        mConfig.LoadAccountPolicy(*this);
     }
 }
 
@@ -387,12 +387,12 @@ nlohmann::json BackendImpl::GetFilesConfigJ()
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetAccountLimits()
+nlohmann::json BackendImpl::GetAccountPolicy()
 {
     if (mAccountID.empty())
         return nullptr;
 
-    RunnerInput input {"files", "getlimits", {{"account", mAccountID}}}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getpolicy", {{"account", mAccountID}}}; MDBG_BACKEND(input);
 
     return RunAction_Read(input);
 }
@@ -417,7 +417,7 @@ nlohmann::json BackendImpl::GetFolder(const std::string& id)
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetFSRoot(const std::string& id)
+nlohmann::json BackendImpl::GetRootFolder(const std::string& id)
 {
     MDBG_INFO("(id:" << id << ")");
 
@@ -430,41 +430,41 @@ nlohmann::json BackendImpl::GetFSRoot(const std::string& id)
         return retval;
     }
 
-    RunnerInput input {"files", "getfolder", {{"filesystem", id}}}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getfolder", {{"storage", id}}}; MDBG_BACKEND(input);
     
     return RunAction_Read(input);
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetFilesystem(const std::string& id)
+nlohmann::json BackendImpl::GetStorage(const std::string& id)
 {
     MDBG_INFO("(id:" << id << ")");
 
     if (isMemory() && id.empty()) return nullptr;
 
-    RunnerInput input {"files", "getfilesystem", {{"filesystem", id}}}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getstorage", {{"storage", id}}}; MDBG_BACKEND(input);
 
     return RunAction_Read(input);
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetFSLimits(const std::string& id)
+nlohmann::json BackendImpl::GetStoragePolicy(const std::string& id)
 {
     MDBG_INFO("(id:" << id << ")");
 
     if (isMemory() && id.empty()) return nullptr;
 
-    RunnerInput input {"files", "getlimits", {{"filesystem", id}}}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getpolicy", {{"storage", id}}}; MDBG_BACKEND(input);
 
     return RunAction_Read(input);
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetFilesystems()
+nlohmann::json BackendImpl::GetStorages()
 {
     MDBG_INFO("()");
 
-    RunnerInput input {"files", "getfilesystems"}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getstorages"}; MDBG_BACKEND(input);
 
     return RunAction_Read(input); 
 }
@@ -474,7 +474,7 @@ nlohmann::json BackendImpl::GetAdopted()
 {
     MDBG_INFO("()");
 
-    RunnerInput input {"files", "listadopted"}; MDBG_BACKEND(input);
+    RunnerInput input {"files", "getadopted"}; MDBG_BACKEND(input);
 
     return RunAction_Read(input);
 }
@@ -488,9 +488,8 @@ nlohmann::json BackendImpl::CreateFile(const std::string& parent, const std::str
 
     if (isMemory()) // debug only
     {
-        nlohmann::json retval {{"id", ""}, {"name", name}, {"size", 0}, {"filesystem", ""}};
-
-        retval["dates"] = {{"created",0},{"modified",nullptr},{"accessed",nullptr}};
+        nlohmann::json retval {{"id", ""}, {"name", name}, {"size", 0}, {"storage", ""},
+            {"date_created",0}, {"date_modified",nullptr}, {"date_accessed",nullptr}};
         
         return retval;
     }
@@ -512,7 +511,7 @@ nlohmann::json BackendImpl::CreateFolder(const std::string& parent, const std::s
 
     if (isMemory()) // debug only
     {
-        nlohmann::json retval {{"id", ""}, {"name", name}, {"filesystem", ""}};
+        nlohmann::json retval {{"id", ""}, {"name", name}, {"storage", ""}};
 
         retval["dates"] = {{"created",0},{"modified",nullptr},{"accessed",nullptr}};
 
@@ -718,7 +717,7 @@ nlohmann::json BackendImpl::UploadFile(const std::string& parent, const std::str
     if (isMemory()) // debug only
     {
         nlohmann::json retval {{"id", ""}, {"name", name}, 
-            {"size", RunnerInput_StreamIn::StreamSize(userFunc)}, {"filesystem", ""}};
+            {"size", RunnerInput_StreamIn::StreamSize(userFunc)}, {"storage", ""}};
         retval["dates"] = {{"created",0},{"modified",nullptr},{"accessed",nullptr}};
         return retval;
     }
@@ -799,7 +798,7 @@ nlohmann::json BackendImpl::TruncateFile(const std::string& id, const uint64_t s
 
     if (isMemory()) return nullptr; // debug only
 
-    RunnerInput input {"files", "ftruncate", {{"file", id}}, // plainParams
+    RunnerInput input {"files", "truncate", {{"file", id}}, // plainParams
         {{"size", std::to_string(size)}}}; MDBG_BACKEND(input); // dataParams
 
     return RunAction_Write(input);

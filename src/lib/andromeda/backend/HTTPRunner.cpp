@@ -99,7 +99,7 @@ std::string HTTPRunner::SetupRequest(const RunnerInput& input, httplib::Headers&
     headers.emplace("User-Agent", mUserAgent);
 
     // set up the URL parameters and query string
-    httplib::Params urlParams {{"api",""},{"app",input.app},{"action",input.action}};
+    httplib::Params urlParams {{"api",""},{"_app",input.app},{"_act",input.action}};
 
     // set up plainParams as URL variables (for server logging)
     for (const decltype(input.plainParams)::value_type& it : input.plainParams)
@@ -136,7 +136,7 @@ void HTTPRunner::AddFileParams(const RunnerInput_FilesIn& input, httplib::Multip
 // get a response but it's a HTTP 503.  Other responses (404 etc.) don't get retried.
 
 /*****************************************************/
-void HTTPRunner::DoRequestsSelf(const std::function<httplib::Result()>& getResult, HandleResponseData& respData)
+void HTTPRunner::DoRequestsCustom(const std::function<httplib::Result()>& getAndHandleResult, HandleResponseData& respData)
 {
     // do the request some number of times until success
     for (decltype(mBaseOptions.maxRetries) attempt { 0 }; ; ++attempt)
@@ -145,7 +145,7 @@ void HTTPRunner::DoRequestsSelf(const std::function<httplib::Result()>& getResul
         respData.canRetry = (GetCanRetry() && !mFailureState);
 
         const steady_clock::time_point timeStart { steady_clock::now() };
-        httplib::Result result { getResult() }; // calls HandleResponse(respData)
+        httplib::Result result { getAndHandleResult() }; // calls HandleResponse(respData)
 
         if (result != nullptr && !respData.doRetry) return; // break
         else HandleNonResponse(result, respData.canRetry, attempt, steady_clock::now()-timeStart);
@@ -153,7 +153,7 @@ void HTTPRunner::DoRequestsSelf(const std::function<httplib::Result()>& getResul
 }
 
 /*****************************************************/
-std::string HTTPRunner::DoRequestsFull(const std::function<httplib::Result()>& getResult, bool& isJson)
+std::string HTTPRunner::DoRequestsAuto(const std::function<httplib::Result()>& getResult, bool& isJson)
 {
     // do the request some number of times until success
     for (decltype(mBaseOptions.maxRetries) attempt { 0 }; ; ++attempt)
@@ -261,7 +261,7 @@ std::string HTTPRunner::RunAction_Read(const RunnerInput& input, bool& isJson)
     httplib::Headers headers; 
     std::string url(SetupRequest(input, headers));
 
-    return DoRequestsFull([&](){ return mHttpClient->Get(url, headers); }, isJson);
+    return DoRequestsAuto([&](){ return mHttpClient->Get(url, headers); }, isJson);
 }
 
 /*****************************************************/
@@ -275,7 +275,7 @@ std::string HTTPRunner::RunAction_Write(const RunnerInput& input, bool& isJson)
 
     AddDataParams(input, postParams);
 
-    return DoRequestsFull([&](){ return mHttpClient->Post(url, headers, postParams); }, isJson);
+    return DoRequestsAuto([&](){ return mHttpClient->Post(url, headers, postParams); }, isJson);
 }
 
 /*****************************************************/
@@ -291,7 +291,7 @@ std::string HTTPRunner::RunAction_FilesIn(const RunnerInput_FilesIn& input, bool
     AddDataParams(input, postParams);
     AddFileParams(input, postParams);
 
-    return DoRequestsFull([&](){ return mHttpClient->Post(url, headers, postParams); }, isJson);
+    return DoRequestsAuto([&](){ return mHttpClient->Post(url, headers, postParams); }, isJson);
 }
 
 /*****************************************************/
@@ -324,7 +324,7 @@ std::string HTTPRunner::RunAction_StreamIn(const RunnerInput_StreamIn& input, bo
         streamParams.push_back({it.first, sfunc, it.second.name, {}});
     }
     
-    return DoRequestsFull([&](){ return mHttpClient->Post(url, headers, postParams, streamParams); }, isJson);
+    return DoRequestsAuto([&](){ return mHttpClient->Post(url, headers, postParams, streamParams); }, isJson);
 }
 
 /*****************************************************/
@@ -354,7 +354,7 @@ void HTTPRunner::RunAction_StreamOut(const RunnerInput_StreamOut& input, bool& i
     // httplib then calls our ResponseHandler, which checks the response and canRetry, then sets doRetry if needed.  
     // httplib then returns to DoRequests which checks the doRetry and starts over if set.
 
-    DoRequestsSelf([&](){ return mHttpClient->Get(url, headers, respFunc, recvFunc); }, respData);
+    DoRequestsCustom([&](){ return mHttpClient->Get(url, headers, respFunc, recvFunc); }, respData);
 }
 
 /*****************************************************/
