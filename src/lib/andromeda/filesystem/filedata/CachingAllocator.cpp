@@ -32,6 +32,10 @@ void* CachingAllocator::alloc(size_t pages)
     MDBG_INFO("(pages:" << pages << " bytes:" << pages*mPageSize << ")");
     if (!pages) return nullptr;
 
+#ifdef FILEDATA_USE_MALLOC
+    return ::malloc(pages*mPageSize); // NOLINT(*-owning-memory, *-no-malloc)
+#endif
+
     { // lock scope
         const LockGuard lock(mMutex);
         ++mAllocs; // total
@@ -92,6 +96,10 @@ void CachingAllocator::free(void* const ptr, size_t pages)
 {
     MDBG_INFO("(ptr:" << ptr << " pages:" << pages << " bytes:" << pages*mPageSize << ")");
     if (ptr == nullptr || !pages) return;
+
+#ifdef FILEDATA_USE_MALLOC
+    ::free(ptr); return; // NOLINT(*-owning-memory, *-no-malloc)
+#endif
 
     const LockGuard lock(mMutex);
     const size_t freeListSize { add_entry(ptr, pages, lock) };

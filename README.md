@@ -64,7 +64,7 @@ Ubuntu 22.04 is the baseline for support so all packages are assumed to be at le
 
 These libraries are dynamically linked and must be available at runtime.
 On Windows this means the folders containing the DLLs for each library must be in your $PATH.
-Some other dependencies will be fetched by cmake and built in-tree.
+Some other dependencies will be fetched by cmake and built in-tree (see FetchContent_Declare).
 
 ### Supported Platforms
 
