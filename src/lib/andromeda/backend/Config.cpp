@@ -40,8 +40,8 @@ Config::Config(BackendImpl& backend) :
         const nlohmann::json& appsHave { coreConfig.at("apps") };
         static constexpr std::array<const char*,3> appsReq { "core", "accounts", "files" };
 
-        for (const std::string appReq : appsReq) // NOT string&
-            if (appsHave.find(appReq) == appsHave.end())
+        for (const char* const appReq : appsReq)
+            if (!appsHave.contains(appReq))
                 throw AppMissingException(appReq);
 
 

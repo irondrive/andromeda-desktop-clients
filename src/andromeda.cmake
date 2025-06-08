@@ -216,6 +216,7 @@ if (${TESTS_CPPCHECK})
     # CXX_CPPCHECK ${target} does not seem to work...
     set(CMAKE_CXX_CPPCHECK "cppcheck;--std=c++17;--quiet;--inline-suppr"
         "--enable=style,performance,portability"
+        "--check-level=exhaustive"
         "--suppress=*:*_deps/*"
         "--suppress=*:*_autogen/*" # qt
         "--suppress=unmatchedSuppression"
@@ -225,6 +226,7 @@ if (${TESTS_CPPCHECK})
         "--suppress=useStlAlgorithm" # annoying
         "--suppress=comparisonOfFuncReturningBoolError" # catch2
         "--suppress=assertWithSideEffecs" # annoying
+        "--suppress=duplInheritedMember" # intentional
         "--suppress=checkersReport"
         PARENT_SCOPE)
     # cppcheck is too buggy...
