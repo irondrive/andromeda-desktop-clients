@@ -64,11 +64,7 @@ public:
     SecureBuffer& operator=(SecureBuffer&& old) = delete; // move
 
     /** Compare to another SecureBuffer */
-    inline bool operator==(const SecureBuffer& rhs) const
-    {
-        return mSize == rhs.mSize &&
-            !memcmp(mBuf, rhs.mBuf, mSize);
-    }
+    bool operator==(const SecureBuffer& rhs) const;
 
     /** Returns a pointer to the secure buffer */
     [[nodiscard]] inline T* data() noexcept { return mBuf; }
@@ -102,12 +98,8 @@ public:
     /** Construct from bytes from a char buf (insecure - unit test only!) */
     inline static SecureBuffer Insecure_FromBuf(const char* buf, size_t size) { return SecureBuffer(buf, size); }
 
-    /** Compare to another c-string (unit test only!) */
-    inline bool operator==(const char* cstr) const
-    {
-        return mSize == strlen(cstr) &&
-            !memcmp(mBuf, cstr, mSize);
-    }
+    /** Compare to another c-string (insecure - unit test only!) */
+    bool operator==(const char* cstr) const;
 
 private:
 

@@ -24,6 +24,8 @@ namespace base64
 
 	using byte = std::uint8_t;
 
+	// TODO could just use sodium_bin2base64 and sodium_base642bin
+
 	inline std::string encode(const std::string& input)
 	{
 		std::string encoded;

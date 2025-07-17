@@ -133,10 +133,10 @@ private:
     std::string SetupRequest(const RunnerInput& input, httplib::Headers& headers, bool dataParams = true);
 
     /** Add dataParams from the given input to a post body */
-    void AddDataParams(const RunnerInput& input, httplib::MultipartFormDataItems& params);
+    void AddDataParams(const RunnerInput& input, httplib::UploadFormDataItems& params);
 
     /** Add filesIn params from the given input to a post body */
-    void AddFileParams(const RunnerInput_FilesIn& input, httplib::MultipartFormDataItems& params);
+    void AddFileParams(const RunnerInput_FilesIn& input, httplib::UploadFormDataItems& params);
 
     /** Private data shared by DoRequestsCustom and HandleResponse */
     struct HandleResponseData

@@ -118,7 +118,7 @@ std::string HTTPRunner::SetupRequest(const RunnerInput& input, httplib::Headers&
 }
 
 /*****************************************************/
-void HTTPRunner::AddDataParams(const RunnerInput& input, httplib::MultipartFormDataItems& postParams)
+void HTTPRunner::AddDataParams(const RunnerInput& input, httplib::UploadFormDataItems& postParams)
 {
     // set up dataParams as POST body inputs
     for (const decltype(input.dataParams)::value_type& it : input.dataParams)
@@ -126,7 +126,7 @@ void HTTPRunner::AddDataParams(const RunnerInput& input, httplib::MultipartFormD
 }
 
 /*****************************************************/
-void HTTPRunner::AddFileParams(const RunnerInput_FilesIn& input, httplib::MultipartFormDataItems& postParams)
+void HTTPRunner::AddFileParams(const RunnerInput_FilesIn& input, httplib::UploadFormDataItems& postParams)
 {
     for (const decltype(input.files)::value_type& it : input.files)
         postParams.push_back({it.first, it.second.data, it.second.name, {}});
@@ -270,7 +270,7 @@ std::string HTTPRunner::RunAction_Write(const RunnerInput& input, bool& isJson)
     MDBG_INFO("()");
 
     httplib::Headers headers; 
-    httplib::MultipartFormDataItems postParams;
+    httplib::UploadFormDataItems postParams;
     std::string url(SetupRequest(input, headers, false));
 
     AddDataParams(input, postParams);
@@ -285,7 +285,7 @@ std::string HTTPRunner::RunAction_FilesIn(const RunnerInput_FilesIn& input, bool
 
     // set up the POST body as multipart files
     httplib::Headers headers;
-    httplib::MultipartFormDataItems postParams;
+    httplib::UploadFormDataItems postParams;
     std::string url(SetupRequest(input, headers, false)); 
 
     AddDataParams(input, postParams);
@@ -300,14 +300,14 @@ std::string HTTPRunner::RunAction_StreamIn(const RunnerInput_StreamIn& input, bo
     MDBG_INFO("()");
 
     httplib::Headers headers;
-    httplib::MultipartFormDataItems postParams;
+    httplib::UploadFormDataItems postParams;
     std::string url(SetupRequest(input, headers, false)); 
 
     AddDataParams(input, postParams);
     AddFileParams(input, postParams);
     
     // set up the POST body as files being done via a chunked stream
-    httplib::MultipartFormDataProviderItems streamParams;
+    httplib::FormDataProviderItems streamParams;
 
     for (const decltype(input.fstreams)::value_type& it : input.fstreams)
     {
