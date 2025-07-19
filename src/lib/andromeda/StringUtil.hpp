@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -108,6 +109,12 @@ public:
      * stopping at the biggest possible unit (under 1024, up to 2 decimals)
      */
     [[nodiscard]] static std::string bytesToStringF(uint64_t bytes);
+
+    /** Returns the string encoded as base64 */
+    static std::string base64_encode(const std::string& input);
+
+    /** Returns the string decoded from base64, or std::nullopt if not valid base64 */
+    static std::optional<std::string> base64_decode(const std::string& input);
 };
 
 } // namespace Andromeda

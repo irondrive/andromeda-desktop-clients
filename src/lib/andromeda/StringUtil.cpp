@@ -1,10 +1,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <iomanip>
 #include <locale>
 #include <random>
 #include <sstream>
+#include <sodium.h>
 
 #include "StringUtil.hpp"
 
@@ -245,6 +247,37 @@ std::string StringUtil::bytesToStringF(const uint64_t bytes)
     if (bstrng.back() == '.') bstrng.pop_back();
 
     return bstrng+units[unitIdx];
+}
+
+#define B64VARIANT sodium_base64_VARIANT_ORIGINAL
+
+/*****************************************************/
+std::string StringUtil::base64_encode(const std::string& input)
+{
+    std::string retval;
+    retval.resize(sodium_base64_ENCODED_LEN(input.size(), B64VARIANT));
+
+    (void)sodium_bin2base64(retval.data(), retval.size(), 
+        reinterpret_cast<const unsigned char*>(input.data()), input.size(), B64VARIANT);
+
+    assert(!retval.empty()); // should have trailing NUL
+    retval.resize(retval.size()-1); // strip trailing NUL
+    return retval;
+}
+
+/*****************************************************/
+std::optional<std::string> StringUtil::base64_decode(const std::string& input)
+{
+    std::string retval;
+    retval.resize(input.size()/4*3);
+
+    size_t binlen = 0;
+    if (sodium_base642bin(reinterpret_cast<unsigned char*>(retval.data()), retval.size(), 
+        input.data(), input.size(), nullptr, &binlen, nullptr, B64VARIANT) != 0)
+            return std::nullopt; // not valid base64
+
+    retval.resize(binlen);
+    return retval;
 }
 
 } // namespace Andromeda

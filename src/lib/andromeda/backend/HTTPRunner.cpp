@@ -7,7 +7,6 @@
 
 #include "HTTPRunner.hpp"
 #include "RunnerInput.hpp"
-#include "andromeda/base64.hpp"
 #include "andromeda/StringUtil.hpp"
 
 using std::chrono::duration_cast;
@@ -110,7 +109,7 @@ std::string HTTPRunner::SetupRequest(const RunnerInput& input, httplib::Headers&
     {
         std::string key { it.first };
         std::replace(key.begin(), key.end(), '_', '-');
-        headers.emplace("X-Andromeda-"+key, base64::encode(it.second));
+        headers.emplace("X-Andromeda-"+key, StringUtil::base64_encode(it.second));
     }
 
     return mBaseURL + (mBaseURL.find('?') != std::string::npos ? "&" : "?") + 
