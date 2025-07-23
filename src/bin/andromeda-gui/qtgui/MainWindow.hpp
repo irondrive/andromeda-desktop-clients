@@ -12,7 +12,7 @@
 namespace Ui { class MainWindow; }
 
 namespace Andromeda { 
-    namespace Backend { class SessionStore; }
+    namespace Account { class SessionStore; }
     namespace Database { class ObjectDatabase; }
     namespace Filesystem { namespace Filedata { class CacheManager; } }
 }
@@ -42,7 +42,7 @@ public:
     void closeEvent(QCloseEvent* event) override;
 
     /** Add an account tab for an existing session, shows an error box on failure */
-    void TryLoadAccount(Andromeda::Backend::SessionStore& session);
+    void TryLoadAccount(Andromeda::Account::SessionStore& session);
 
 public slots:
 

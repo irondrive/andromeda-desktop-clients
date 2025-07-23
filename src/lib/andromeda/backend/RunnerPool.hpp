@@ -58,8 +58,8 @@ public:
     /** Returns a reference to a runner and accompanying lock */
     LockedRunner GetRunner();
 
-    /** Returns a const reference to the first runner */
-    [[nodiscard]] const BaseRunner& GetFirst() const;
+    /** Returns a reference to the first runner (not locked!) */
+    [[nodiscard]] BaseRunner& GetUnlocked() const;
 
 private:
 

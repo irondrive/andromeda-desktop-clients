@@ -69,26 +69,26 @@ public:
      * @param stopmm if true, stop processing when "--" is encountered
      * @return number of arguments consumed (matches argc if stopmm is false)
      */
-    size_t ParseArgs(size_t argc, const char* const* argv, bool stopmm = false);
+    virtual size_t ParseArgs(size_t argc, const char* const* argv, bool stopmm = false);
 
     /** 
      * Parses arguments from a config file 
      * @throws Exception if invalid arguments
      */
-    void ParseFile(const std::filesystem::path& path);
+    virtual void ParseFile(const std::filesystem::path& path);
 
     /**
      * Finds and parses arguments from a config file
      * @param prefix the name of the config file to find
      * @throws Exception if invalid arguments
      */
-    void ParseConfig(const std::string& prefix);
+    virtual void ParseConfig(const std::string& prefix);
 
     /** 
      * Parses optional arguments from URL variables
      * @throws Exception if invalid arguments
      */
-    void ParseUrl(const std::string& url);
+    virtual void ParseUrl(const std::string& url);
 
     /** 
      * Adds the given argument, returning true iff it was used

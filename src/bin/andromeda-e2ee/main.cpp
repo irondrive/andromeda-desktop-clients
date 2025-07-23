@@ -7,11 +7,7 @@
 #include <cstdlib>
 
 #include "Options.hpp"
-using AndromedaFuse::Options;
-#include "andromeda-fuse/FuseAdapter.hpp"
-using AndromedaFuse::FuseAdapter;
-#include "andromeda-fuse/FuseOptions.hpp"
-using AndromedaFuse::FuseOptions;
+using AndromedaE2ee::Options;
 
 #include "andromeda/ConfigOptions.hpp"
 using Andromeda::ConfigOptions;
@@ -34,25 +30,11 @@ using Andromeda::Backend::RunnerOptions;
 #include "andromeda/backend/RunnerPool.hpp"
 using Andromeda::Backend::RunnerPool;
 
-#include "andromeda/filesystem/Folder.hpp"
-using Andromeda::Filesystem::Folder;
-#include "andromeda/filesystem/folders/PlainFolder.hpp"
-using Andromeda::Filesystem::Folders::PlainFolder;
-#include "andromeda/filesystem/folders/Filesystem.hpp"
-using Andromeda::Filesystem::Folders::Filesystem;
-#include "andromeda/filesystem/folders/SuperRoot.hpp"
-using Andromeda::Filesystem::Folders::SuperRoot;
-#include "andromeda/filesystem/filedata/CacheManager.hpp"
-using Andromeda::Filesystem::Filedata::CacheManager;
-#include "andromeda/filesystem/filedata/CacheOptions.hpp"
-using Andromeda::Filesystem::Filedata::CacheOptions;
-
 enum class ExitCode : uint8_t
 {
     SUCCESS,
     BAD_USAGE,
-    BACKEND_INIT,
-    FUSE_INIT
+    BACKEND_INIT
 };
 
 int main(int argc, char** argv)
@@ -63,15 +45,13 @@ int main(int argc, char** argv)
     ConfigOptions configOptions;
     HTTPOptions httpOptions;
     RunnerOptions runnerOptions;
-    CacheOptions cacheOptions;
-    FuseOptions fuseOptions;
 
-    Options options(configOptions, httpOptions, runnerOptions, cacheOptions, fuseOptions);
+    Options options(configOptions, httpOptions, runnerOptions);
 
     try
     {
         options.ParseConfig("libandromeda");
-        options.ParseConfig("andromeda-fuse");
+        options.ParseConfig("andromeda-e2ee");
 
         options.ParseArgs(static_cast<size_t>(argc), argv);
 
@@ -85,7 +65,6 @@ int main(int argc, char** argv)
     catch (const Options::ShowVersionException& ex)
     {
         std::cout << "version: " << ANDROMEDA_VERSION << std::endl;
-        FuseAdapter::ShowVersionText();
         return static_cast<int>(ExitCode::SUCCESS);
     }
     catch (const Options::Exception& ex)
@@ -102,7 +81,7 @@ int main(int argc, char** argv)
     {
         case Options::ApiType::API_URL:
         {
-            const std::string userAgent(std::string("andromeda-fuse/")
+            const std::string userAgent(std::string("andromeda-e2ee/")
                 +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
             runner = std::make_unique<HTTPRunner>(options.GetApiPath(),
@@ -117,34 +96,19 @@ int main(int argc, char** argv)
     }
 
     RunnerPool runners(*runner, configOptions);
-    
-    std::unique_ptr<CacheManager> cacheMgr;
-    if (!cacheOptions.disable) cacheMgr = 
-        std::make_unique<CacheManager>(cacheOptions, false); // don't start thread yet
-
-    // these must be after cacheMgr/runners!
     std::unique_ptr<BackendImpl> backend;
-    std::unique_ptr<Folder> folder;
+    // TODO RAY !! do we really need to do a GetCoreConfig call here? yes - but combine into a single call, server side
     
     try
     {
+        // TODO RAY !! make an alternate BackendImpl signature that takes only 1 runner
         backend = std::make_unique<BackendImpl>(configOptions, runners);
-        backend->SetCacheManager(cacheMgr.get());
 
         if (options.HasSession())
             backend->PreAuthenticate(options.GetSessionID(), options.GetSessionKey());
         else if (options.HasUsername())
             backend->AuthInteractive(options.GetUsername(), options.GetPassword(), options.GetForceSession());
-
-        switch (options.GetMountRootType())
-        {
-            case Options::RootType::SUPERROOT:
-                folder = std::make_unique<SuperRoot>(*backend); break;
-            case Options::RootType::STORAGE:
-                folder = Filesystem::LoadByID(*backend, options.GetMountItemID()); break;
-            case Options::RootType::FOLDER:
-                folder = PlainFolder::LoadByID(*backend, options.GetMountItemID()); break;
-        }
+        // TODO RAY !! move the authentication stuff to session. not sure where/how to run this, some actions will need pre-auth, some not
     }
     catch (const BackendException& ex)
     {
@@ -152,31 +116,8 @@ int main(int argc, char** argv)
         return static_cast<int>(ExitCode::BACKEND_INIT);
     }
 
-    runner->EnableRetry(); // no retries during init
-
-    try
-    {
-        FuseAdapter fuseAdapter(options.GetMountPath(), *folder, fuseOptions);
-
-        // In either case, StartFuse() will block until unmounted
-        if (options.isForeground())
-        {
-            if (cacheMgr) cacheMgr->StartThreads();
-            fuseAdapter.StartFuse(
-                FuseAdapter::RunMode::FOREGROUND);
-        }
-        else
-        { // daemonize kills threads, start cacheMgr in the callback
-            fuseAdapter.StartFuse(
-                FuseAdapter::RunMode::DAEMON,
-                [&](){ if (cacheMgr) cacheMgr->StartThreads(); });
-        }
-    }
-    catch (const FuseAdapter::Exception& ex)
-    {
-        std::cout << ex.what() << std::endl;
-        return static_cast<int>(ExitCode::FUSE_INIT);
-    }
+    // TODO RAY !! implement me further - need a "action" on the command line - move to a new class
+    DDBG_INFO(": action:" << options.GetAction());
 
     DDBG_INFO(": returning success...");
     return static_cast<int>(ExitCode::SUCCESS);

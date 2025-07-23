@@ -17,7 +17,7 @@ RunnerPool::RunnerPool(BaseRunner& runner, const ConfigOptions& options) :
 }
 
 /*****************************************************/
-const BaseRunner& RunnerPool::GetFirst() const { return *mRunnerPool[0]; }
+BaseRunner& RunnerPool::GetUnlocked() const { return *mRunnerPool[0]; }
 
 /*****************************************************/
 RunnerPool::LockedRunner RunnerPool::GetRunner()
@@ -43,7 +43,7 @@ RunnerPool::LockedRunner RunnerPool::GetRunner()
             if (!mRunnerPool[idx]) // not initialized
             {
                 MDBG_INFO("... new runner:" << idx);
-                mRunnersOwned.emplace_back(GetFirst().Clone());
+                mRunnersOwned.emplace_back(GetUnlocked().Clone());
                 mRunnerPool[idx] = mRunnersOwned.back().get();
             }
 

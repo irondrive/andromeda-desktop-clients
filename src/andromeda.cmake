@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
+enable_testing()
 include(GNUInstallDirs)
 include(CheckCXXCompilerFlag)
 
@@ -269,6 +270,10 @@ function (andromeda_test test_name)
         Catch2::Catch2WithMain trompeloeil::trompeloeil)
     target_compile_options(Catch2 PRIVATE ${ANDROMEDA_CXX_OPTS})
     target_compile_options(Catch2WithMain PRIVATE ${ANDROMEDA_CXX_OPTS})
+    
+    add_test(NAME ${test_name} COMMAND ${test_name})
+    # TODO add ctest post build command?
+
     if (${TESTS_CATCH2_RUN})
         add_custom_command(TARGET ${test_name} POST_BUILD COMMAND ${test_name})
     endif()

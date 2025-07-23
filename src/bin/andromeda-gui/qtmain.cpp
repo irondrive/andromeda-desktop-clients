@@ -20,12 +20,12 @@ using AndromedaGui::QtGui::Utilities;
 
 #include "andromeda/Debug.hpp"
 using Andromeda::Debug;
+#include "andromeda/account/SessionStore.hpp"
+using Andromeda::Account::SessionStore;
 #include "andromeda/database/DatabaseException.hpp"
 using Andromeda::Database::DatabaseException;
 #include "andromeda/database/ObjectDatabase.hpp"
 using Andromeda::Database::ObjectDatabase;
-#include "andromeda/backend/SessionStore.hpp"
-using Andromeda::Backend::SessionStore;
 #include "andromeda/database/SqliteDatabase.hpp"
 using Andromeda::Database::SqliteDatabase;
 #include "andromeda/database/TableInstaller.hpp"

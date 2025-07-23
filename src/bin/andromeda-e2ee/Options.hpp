@@ -1,10 +1,7 @@
-#ifndef A2FUSE_OPTIONS_H_
-#define A2FUSE_OPTIONS_H_
+#ifndef A2E2EE_OPTIONS_H_
+#define A2E2EE_OPTIONS_H_
 
 #include <string>
-
-#include "andromeda-fuse/FuseAdapter.hpp"
-#include "andromeda-fuse/FuseOptions.hpp"
 
 #include "andromeda/BaseOptions.hpp"
 
@@ -14,7 +11,7 @@ namespace Andromeda {
     namespace Filesystem { namespace Filedata { struct CacheOptions; } }
 }
 
-namespace AndromedaFuse {
+namespace AndromedaE2ee {
 
 /** Manages command line options and config */
 class Options : public Andromeda::BaseOptions
@@ -28,20 +25,16 @@ public:
      * @param[out] configOptions Config options ref to fill
      * @param[out] httpOptions HTTPRunner options ref to fill
      * @param[out] runnerOptions BaseRunner options ref to fill
-     * @param[out] cacheOptions CacheManager options ref to fill
-     * @param[out] fuseOptions FUSE options ref to fill
      */
     Options(Andromeda::ConfigOptions& configOptions, 
             Andromeda::Backend::HTTPOptions& httpOptions, 
-            Andromeda::Backend::RunnerOptions& runnerOptions,
-            Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions,
-            AndromedaFuse::FuseOptions& fuseOptions);
+            Andromeda::Backend::RunnerOptions& runnerOptions);
+
+    size_t ParseArgs(size_t argc, const char* const* argv, bool stopmm = false) override;
 
     bool AddFlag(const std::string& flag) override;
 
     bool AddOption(const std::string& option, const std::string& value) override;
-
-    void TryAddUrlOption(const std::string& option, const std::string& value) override;
 
     void Validate() override;
 
@@ -53,6 +46,9 @@ public:
 
         API_INVALID
     };
+
+    /** Returns the requested action to run */
+    [[nodiscard]] const std::string& GetAction() { return mAction; }
 
     /** Returns the specified API type */
     [[nodiscard]] ApiType GetApiType() const { return mApiType; }
@@ -79,42 +75,21 @@ public:
     [[nodiscard]] const std::string& GetSessionID() const { return mSessionid; }
 
     /** Returns the specified session key */
-    [[nodiscard]] const std::string& GetSessionKey() const { return mSessionkey; }
+    [[nodiscard]] const std::string& GetSessionKey() const { return mSessionkey; } // TODO RAY !! can this be commonized with fuse? perhaps move to SessionOptions or just Session?
 
     /** Returns true if using a session is forced */
-    [[nodiscard]] bool GetForceSession() const { return mForceSession; }
-
-    /** Folder types that can be mounted as root */
-    enum class RootType : uint8_t
-    {
-        SUPERROOT,
-        STORAGE,
-        FOLDER
-    };
-
-    /** Returns the filesystem directory to mount */
-    [[nodiscard]] const std::string& GetMountPath() const { return mMountPath; }
-
-    /** Returns the specified mount item type */
-    [[nodiscard]] RootType GetMountRootType() const { return mMountRootType; }
-
-    /** Returns the specified mount item ID */
-    [[nodiscard]] const std::string& GetMountItemID() const { return mMountItemID; }
-
-    /** Returns true if we should run in the foreground */
-    [[nodiscard]] bool isForeground() const { return mForeground; }
+    [[nodiscard]] bool GetForceSession() const { return mForceSession; } // TODO RAY !! don't think this applies?
 
 private:
 
     Andromeda::ConfigOptions& mConfigOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::HTTPOptions& mHttpOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::RunnerOptions& mRunnerOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Filesystem::Filedata::CacheOptions& mCacheOptions; // cppcheck-suppress uninitMemberVarPrivate
-    AndromedaFuse::FuseOptions& mFuseOptions; // cppcheck-suppress uninitMemberVarPrivate
+
+    std::string mAction;
 
     ApiType mApiType { ApiType::API_INVALID };
     std::string mApiPath;
-    std::string mMountPath;
 
     std::string mUsername;
     std::string mPassword;
@@ -122,13 +97,8 @@ private:
 
     std::string mSessionid;
     std::string mSessionkey;
-    
-    RootType mMountRootType { RootType::SUPERROOT };
-    std::string mMountItemID;
-
-    bool mForeground { false };
 };
 
-} // namespace AndromedaFuse
+} // namespace AndromedaE2ee
 
-#endif // A2FUSE_OPTIONS_H_
+#endif // A2E2EE_OPTIONS_H_

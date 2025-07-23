@@ -19,6 +19,7 @@ This repo contains the native applications and common libraries for Andromeda's 
 There are several binaries and libraries in the full suite.
 - `src/lib/andromeda` the core library that implements communication with the server
 - `src/bin/andromeda-cli` allows manual command line communication with the server
+- `src/bin/andromeda-e2ee` implements some CLI utilities for dealing with e2ee
 - `src/bin/andromeda-fuse` and `src/lib/andromeda-fuse` for mounting as local storage
 - FUTURE `src/bin/andromeda-sync` and `src/lib/andromeda-sync` for running directory sync
 - `src/bin/andromeda-gui` a Qt-based GUI client for local mounting and directory sync
@@ -120,6 +121,11 @@ Run `./andromeda-cli --help` to see the available options.
 
 Example that shows the available API calls: `./andromeda-cli -a (url) -- core usage`
 
+# E2EE Utilities
+
+This is another CLI client, but implements some logic for using end-to-end-encryption utilities.  Some of these functions would be difficult to use with the CLI client directly.  
+
+Run `./andromeda-e2ee --help` to see the available options.
 
 # FUSE Client
 

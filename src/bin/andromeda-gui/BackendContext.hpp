@@ -10,8 +10,9 @@
 #include "andromeda/backend/RunnerOptions.hpp"
 
 namespace Andromeda { 
+    namespace Account { class SessionStore; }
     namespace Backend { 
-        class BackendImpl; class HTTPRunner; class RunnerPool; class SessionStore; }
+        class BackendImpl; class HTTPRunner; class RunnerPool; }
     namespace Database { class ObjectDatabase; } }
 
 namespace AndromedaGui {
@@ -32,7 +33,7 @@ public:
      * Create a new BackendContext from a known session and store ref
      * @throws BackendException for backend issues
      */
-    explicit BackendContext(Andromeda::Backend::SessionStore& session);
+    explicit BackendContext(Andromeda::Account::SessionStore& session);
 
     virtual ~BackendContext();
     DELETE_COPY(BackendContext)
@@ -49,7 +50,7 @@ public:
      */
     void StoreSession(Andromeda::Database::ObjectDatabase& objdb);
     /** Returns the SessionStore instance or nullptr if not set */
-    inline Andromeda::Backend::SessionStore* GetSessionStore() const { return mSessionStore; }
+    inline Andromeda::Account::SessionStore* GetSessionStore() const { return mSessionStore; }
 
 private:
 
@@ -71,7 +72,7 @@ private:
     std::unique_ptr<Andromeda::Backend::RunnerPool> mRunners;
     std::unique_ptr<Andromeda::Backend::BackendImpl> mBackend;
 
-    Andromeda::Backend::SessionStore* mSessionStore { nullptr };
+    Andromeda::Account::SessionStore* mSessionStore { nullptr };
 };
 
 } // namespace AndromedaGui

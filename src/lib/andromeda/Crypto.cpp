@@ -24,7 +24,7 @@ void Crypto::SodiumInit() // @throws SodiumFailedException
 /*****************************************************/
 std::string Crypto::GenerateRandom(size_t len)
 {
-    SodiumInit();
+    SodiumInit(); // TODO RAY !! move this to a static constructor rather than in every function...
 
     std::string ret; ret.resize(len);
     randombytes_buf(ret.data(), len);
@@ -77,6 +77,37 @@ SecureBuffer Crypto::DeriveKey(const SecureBuffer& password, const std::string& 
         throw SodiumFailedException(err);
     }
     return key;
+}
+
+/*****************************************************/
+size_t Crypto::SuperKeyLength()
+{
+    return crypto_kdf_KEYBYTES;
+}
+
+/*****************************************************/
+SecureBuffer Crypto::DeriveSubkey(const SecureBuffer& superkey, uint64_t keyid, const std::string& context, size_t bytes) // TODO RAY !! add unit tests
+{
+    if (superkey.size() != crypto_kdf_KEYBYTES)
+        throw ArgumentException("key was "+std::to_string(superkey.size())+" bytes, expected "+std::to_string(crypto_kdf_KEYBYTES));
+    if (context.size() != crypto_kdf_CONTEXTBYTES)
+        throw ArgumentException("context was "+std::to_string(context.size())+" bytes, expected "+std::to_string(crypto_kdf_CONTEXTBYTES));
+
+    SodiumInit();
+
+    SecureBuffer subkey(bytes);
+    const int err = crypto_kdf_derive_from_key(
+        reinterpret_cast<unsigned char*>(subkey.data()), subkey.size(),
+        keyid, context.data(), 
+        reinterpret_cast<const unsigned char*>(superkey.data())
+    );
+    
+    if (err)
+    {
+        SDBG_ERROR("... crypto_pwhash returned " << err);
+        throw SodiumFailedException(err);
+    }
+    return subkey;
 }
 
 /*****************************************************/
@@ -186,6 +217,21 @@ SecureBuffer Crypto::DecryptSecret(const std::string& enc, const std::string& no
     return msg;
 }
 
+// NOTE we would use curve25519xchacha20poly1305 for public key crypto... but PHP doesn't have it
+// it seems the default is curve25519xsalsa20poly1305 (XSalsa20 vs XChaCha20)
+
+/*****************************************************/
+size_t Crypto::PublicKeyLength()
+{
+    return crypto_box_PUBLICKEYBYTES;
+}
+
+/*****************************************************/
+size_t Crypto::PrivateKeyLength()
+{
+    return crypto_box_SECRETKEYBYTES;
+}
+
 /*****************************************************/
 size_t Crypto::PublicNonceLength()
 {
@@ -203,8 +249,8 @@ Crypto::KeyPair Crypto::GeneratePublicKeyPair()
 {
     SodiumInit();
 
-    KeyPair keypair { { }, SecureBuffer(crypto_box_SECRETKEYBYTES) };
-    keypair.pubkey.resize(crypto_box_PUBLICKEYBYTES);
+    KeyPair keypair { { }, SecureBuffer(PrivateKeyLength()) };
+    keypair.pubkey.resize(PublicKeyLength());
 
     const int err = crypto_box_keypair(
         reinterpret_cast<unsigned char*>(keypair.pubkey.data()),
@@ -231,10 +277,10 @@ std::string Crypto::EncryptPublic(const SecureBuffer& msg, const std::string& no
 {
     if (nonce.size() != PublicNonceLength())
         throw ArgumentException("nonce was "+std::to_string(nonce.size())+" bytes, expected "+std::to_string(PublicNonceLength()));
-    if (sender_private.size() != crypto_box_SECRETKEYBYTES)
-        throw ArgumentException("privkey was "+std::to_string(sender_private.size())+" bytes, expected "+std::to_string(crypto_box_SECRETKEYBYTES));
-    if (recipient_public.size() != crypto_box_PUBLICKEYBYTES)
-        throw ArgumentException("pubkey was "+std::to_string(recipient_public.size())+" bytes, expected "+std::to_string(crypto_box_PUBLICKEYBYTES));
+    if (sender_private.size() != PrivateKeyLength())
+        throw ArgumentException("privkey was "+std::to_string(sender_private.size())+" bytes, expected "+std::to_string(PrivateKeyLength()));
+    if (recipient_public.size() != PublicKeyLength())
+        throw ArgumentException("pubkey was "+std::to_string(recipient_public.size())+" bytes, expected "+std::to_string(PublicKeyLength()));
 
     SodiumInit();
 
@@ -262,10 +308,10 @@ SecureBuffer Crypto::DecryptPublic(const std::string& enc, const std::string& no
 {
     if (nonce.size() != PublicNonceLength())
         throw ArgumentException("nonce was "+std::to_string(nonce.size())+" bytes, expected "+std::to_string(PublicNonceLength()));
-    if (recipient_private.size() != crypto_box_SECRETKEYBYTES)
-        throw ArgumentException("privkey was "+std::to_string(recipient_private.size())+" bytes, expected "+std::to_string(crypto_box_SECRETKEYBYTES));
-    if (sender_public.size() != crypto_box_PUBLICKEYBYTES)
-        throw ArgumentException("pubkey was "+std::to_string(sender_public.size())+" bytes, expected "+std::to_string(crypto_box_PUBLICKEYBYTES));
+    if (recipient_private.size() != PrivateKeyLength())
+        throw ArgumentException("privkey was "+std::to_string(recipient_private.size())+" bytes, expected "+std::to_string(PrivateKeyLength()));
+    if (sender_public.size() != PublicKeyLength())
+        throw ArgumentException("pubkey was "+std::to_string(sender_public.size())+" bytes, expected "+std::to_string(PublicKeyLength()));
 
     SodiumInit();
 

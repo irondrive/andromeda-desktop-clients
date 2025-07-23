@@ -110,10 +110,10 @@ public:
      */
     [[nodiscard]] static std::string bytesToStringF(uint64_t bytes);
 
-    /** Returns the string encoded as base64 */
+    /** Returns the string encoded as base64 (in data-independent time) */
     static std::string base64_encode(const std::string& input);
 
-    /** Returns the string decoded from base64, or std::nullopt if not valid base64 */
+    /** Returns the string decoded from base64, or std::nullopt if not valid base64 (in data-independent time) */
     static std::optional<std::string> base64_decode(const std::string& input);
 };
 

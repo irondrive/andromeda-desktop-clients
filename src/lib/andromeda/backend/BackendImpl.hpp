@@ -18,11 +18,11 @@
 
 namespace Andromeda {
 
+namespace Account { class SessionStore; }
 namespace Filesystem { namespace Filedata { class CacheManager; class CachingAllocator; } }
 
 namespace Backend {
 class RunnerPool;
-class SessionStore;
 
 /** 
  * Manages communication with the backend API 
@@ -106,7 +106,7 @@ public:
     [[nodiscard]] inline const Andromeda::ConfigOptions& GetOptions() const { return mOptions; }
 
     /** Returns the cache manager to use for file data */
-    [[nodiscard]] inline Filesystem::Filedata::CacheManager* GetCacheManager() const { return mCacheMgr; }
+    [[nodiscard]] inline Filesystem::Filedata::CacheManager* GetCacheManager() const { return mCacheMgr; } // TODO RAY !! these three seem dumb to have here
 
     /** Sets the cache manager to use (or nullptr to disable) */
     inline void SetCacheManager(Filesystem::Filedata::CacheManager* cacheMgr) { mCacheMgr = cacheMgr; }
@@ -130,7 +130,7 @@ public:
      * Registers a pre-existing SessionStore for use
      * @throws BackendException for backend issues
      */
-    void PreAuthenticate(const SessionStore& sessionObj);
+    void PreAuthenticate(const Account::SessionStore& sessionObj);
 
     /** 
      * Registers a pre-existing session ID/key for use
@@ -171,7 +171,7 @@ public:
     void CloseSession();
 
     /** Store the current session in the SessionStore */
-    void StoreSession(SessionStore& sessionObj);
+    void StoreSession(Account::SessionStore& sessionObj);
 
     /*****************************************************/
     // ---- Actual backend functions below here ---- //
@@ -195,6 +195,9 @@ public:
      * @throws BackendException for backend issues
      */
     nlohmann::json GetAccountPolicy();
+
+    /** Returns the password salt to use for a username */
+    std::string GetPasswordSalt(const std::string& username);
 
     /**
      * Load folder metadata (with subitems)

@@ -37,7 +37,7 @@ struct SecureMemory
 class SecureBuffer
 {
 public:
-    using T = unsigned char;
+    using T = char;
 
     SecureBuffer() = default; // empty
 

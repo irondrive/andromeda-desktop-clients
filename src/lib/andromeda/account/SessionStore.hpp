@@ -10,7 +10,7 @@
 #include "andromeda/database/fieldtypes/ScalarType.hpp"
 
 namespace Andromeda {
-namespace Backend {
+namespace Account {
 
 /** Stores an account and session in the database */
 class SessionStore : public Database::BaseObject
@@ -57,7 +57,7 @@ private:
     Database::FieldTypes::NullScalarType<std::string> mSessionKey;
 };
 
-} // namespace Backend
+} // namespace Account
 } // namespace Andromeda
 
 #endif // LIBA2_SESSIONSTORE_H_

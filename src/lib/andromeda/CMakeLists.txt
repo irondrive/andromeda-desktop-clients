@@ -27,6 +27,7 @@ install(TARGETS libandromeda
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+add_subdirectory(account)
 add_subdirectory(backend)
 add_subdirectory(database)
 add_subdirectory(filesystem)

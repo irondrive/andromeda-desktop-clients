@@ -8,7 +8,6 @@ set(SOURCE_FILES
     RunnerInput.cpp
     RunnerOptions.cpp
     RunnerPool.cpp
-    SessionStore.cpp
     )
 
 target_sources(libandromeda PRIVATE ${SOURCE_FILES})

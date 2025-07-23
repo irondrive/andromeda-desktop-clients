@@ -1,5 +1,6 @@
 
 #include <cassert>
+#include <cctype>
 #include <iostream>
 #include <map>
 #include <string>
@@ -11,11 +12,12 @@
 #include "HTTPRunner.hpp"
 #include "RunnerInput.hpp"
 #include "RunnerPool.hpp"
-#include "SessionStore.hpp"
 #include "andromeda/ConfigOptions.hpp"
 #include "andromeda/Crypto.hpp"
 #include "andromeda/PlatformUtil.hpp"
 #include "andromeda/StringUtil.hpp"
+#include "andromeda/account/SessionStore.hpp"
+using Andromeda::Account::SessionStore;
 #include "andromeda/filesystem/filedata/CacheManager.hpp"
 #include "andromeda/filesystem/filedata/CachingAllocator.hpp"
 using Andromeda::Filesystem::Filedata::CachingAllocator;
@@ -48,7 +50,7 @@ BackendImpl::~BackendImpl()
 }
 
 /*****************************************************/
-CachingAllocator& BackendImpl::GetPageAllocator()
+CachingAllocator& BackendImpl::GetPageAllocator() // TODO RAY !! this is an odd place for this
 {
     if (mCacheMgr) 
         return mCacheMgr->GetPageAllocator();
@@ -67,7 +69,7 @@ bool BackendImpl::isReadOnly() const
 /*****************************************************/
 std::string BackendImpl::GetName(bool human) const
 {
-    std::string hostname { mRunners.GetFirst().GetHostname() };
+    std::string hostname { mRunners.GetUnlocked().GetHostname() };
 
     if (mUsername.empty()) return hostname;
     
@@ -85,7 +87,13 @@ void BackendImpl::PrintInput(const RunnerInput& input, std::ostream& str, const 
         str << " " << key << ":" << val;
     
     for (const auto& [key,val] : input.dataParams)
-        str << " (" << key << ":" << val << ")";
+    {
+        const bool b64 = !std::all_of(val.cbegin(), val.cend(), 
+            [](unsigned char c)->bool{ return std::isprint(c); });
+        
+        str << " (" << key << (b64?"(b64)":"") << ":" 
+            << (b64 ? StringUtil::base64_encode(val) : val) << ")";
+    }
 }
 
 /*****************************************************/
@@ -160,7 +168,8 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
             else if (code == HTTP_ERROR && message == "STORAGE_FOLDERS_UNSUPPORTED") throw UnsupportedException();
                 // TODO better exception? - should not happen if Authenticated? maybe for bad shares
             else if (code == HTTP_ERROR && message == "ACCOUNT_CRYPTO_NOT_UNLOCKED") throw DeniedException(message);
-            else if (code == HTTP_ERROR && message == "INPUT_FILE_MISSING")          throw HTTPRunner::InputSizeException(); // PHP silently discards too-large files
+             // PHP silently discards too-large files, assume that's what happened and not us making a mistake
+            else if (code == HTTP_ERROR && message == "INPUT_FILE_MISSING")          throw HTTPRunner::InputSizeException();
 
             else if (code == HTTP_DENIED && message == "AUTHENTICATION_FAILED") throw AuthenticationFailedException();
             else if (code == HTTP_DENIED && message == "TWOFACTOR_REQUIRED")    throw TwoFactorRequiredException();
@@ -223,21 +232,27 @@ void BackendImpl::Authenticate(const std::string& username, const std::string& p
 
     CloseSession();
 
-    // TODO should be using SecureBuffer for passwords/sessionKey, etc for the whole chain, this is demo only
+    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?)
     const SecureBuffer passwordBuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
 
-    const size_t keySize { Crypto::SecretKeyLength() };
-    const std::string password_fullkey_salt(Crypto::SaltLength(),'\0'); // TODO get salt from server (demo only)
-    const SecureBuffer password_fullkey { Crypto::DeriveKey(passwordBuf,password_fullkey_salt,keySize*2) };
+    const std::string password_salt { GetPasswordSalt(username) };
+    if (password_salt.size() != Crypto::SaltLength())
+        throw JSONErrorException("incorrect salt length "+std::to_string(password_salt.size()));
+    MDBG_INFO("... password_salt:"); mDebug.Info(mDebug.DumpBytes(password_salt.data(), password_salt.size()));
 
-    const SecureBuffer password_authkey { password_fullkey.substr(0,keySize) };
-    const SecureBuffer password_cryptkey { password_fullkey.substr(keySize,keySize) };
-
-    MDBG_INFO("... password_authkey:"); mDebug.Info(mDebug.DumpBytes(password_authkey.data(), password_authkey.size()));
+    const SecureBuffer password_superkey { Crypto::DeriveKey(passwordBuf, password_salt, Crypto::SuperKeyLength()) };
+    MDBG_INFO("... password_superkey:"); mDebug.Info(mDebug.DumpBytes(password_superkey.data(), password_superkey.size()));
+    
+    const SecureBuffer password_cryptkey { Crypto::DeriveSubkey(password_superkey, 0, "a2pwe2ee") };
+    const SecureBuffer password_authkey { Crypto::DeriveSubkey(password_superkey, 1, "a2pwauth") };
     MDBG_INFO("... password_cryptkey:"); mDebug.Info(mDebug.DumpBytes(password_cryptkey.data(), password_cryptkey.size()));
+    MDBG_INFO("... password_authkey:"); mDebug.Info(mDebug.DumpBytes(password_authkey.data(), password_authkey.size()));
+
+    const std::string authkey64 { StringUtil::base64_encode(
+        std::string(password_authkey.data(), password_authkey.size())) }; // not secure
     
     RunnerInput input { "accounts", "createsession", {{ "username", username }}, // plainParams
-        {{ "auth_password", password }}}; // dataParams
+        {{ "auth_passkey", authkey64 }}}; // dataParams
 
     if (!twofactor.empty()) 
         input.dataParams["auth_twofactor"] = twofactor; 
@@ -245,11 +260,6 @@ void BackendImpl::Authenticate(const std::string& username, const std::string& p
 
     nlohmann::json resp(RunAction_Write(input));
     mDeleteSession = true;
-
-    // TODO this is demo placeholder code for e2ee later... master_keywrap_salt comes from the server
-    const std::string master_keywrap_salt { "\x7f\x1e\xc2\xb4\xf9\x09\xcc\xfb\xae\x64\x1d\xfd\x0f\x70\xb8\x05" };
-    const SecureBuffer master_keywrap { Crypto::DeriveKey(password_cryptkey,master_keywrap_salt) };
-    MDBG_INFO("... master_keywrap:"); mDebug.Info(mDebug.DumpBytes(master_keywrap.data(), master_keywrap.size()));
 
     try
     {
@@ -273,7 +283,7 @@ void BackendImpl::AuthInteractive(const std::string& username, std::string passw
 
     CloseSession();
 
-    if (mRunners.GetFirst().RequiresSession() || forceSession || !password.empty())
+    if (mRunners.GetUnlocked().RequiresSession() || forceSession || !password.empty())
     {
         if (password.empty())
         {
@@ -398,6 +408,24 @@ nlohmann::json BackendImpl::GetAccountPolicy()
 }
 
 /*****************************************************/
+std::string BackendImpl::GetPasswordSalt(const std::string& username)
+{
+    MDBG_INFO("(username:" << username << ")");
+
+    RunnerInput input {"accounts", "getpwsalt", {{"username", username}}}; MDBG_BACKEND(input);
+
+    const nlohmann::json res(RunAction_Read(input));
+
+    try
+    {
+        const std::optional<std::string> bin { StringUtil::base64_decode(res.get<std::string>()) };
+        if (bin) return *bin; else throw JSONErrorException("invalid salt base64");
+    }
+    catch (const nlohmann::json::exception& ex) {
+        throw JSONErrorException(ex.what()); }
+}
+
+/*****************************************************/
 nlohmann::json BackendImpl::GetFolder(const std::string& id)
 {
     MDBG_INFO("(id:" << id << ")");
@@ -495,7 +523,7 @@ nlohmann::json BackendImpl::CreateFile(const std::string& parent, const std::str
     }
 
     const std::string data; // empty - declare here as FilesIn takes a *reference*
-    RunnerInput_FilesIn input {{"files", "upload", 
+    RunnerInput_FilesIn input {{"files", "createfile", 
         {{"parent", parent}, {"overwrite", BOOLSTR(overwrite)}}}, // plainParams
         {{"file", {name, data}}}}; MDBG_BACKEND(input); // FilesIn
         
@@ -724,7 +752,7 @@ nlohmann::json BackendImpl::UploadFile(const std::string& parent, const std::str
 
     return SendFile(userFunc, "", 0, [&](const WriteFunc& writeFunc)->RunnerInput_StreamIn
     {
-        return {{{"files", "upload", 
+        return {{{"files", "createfile", 
             {{"parent", parent}, {"overwrite", BOOLSTR(overwrite)}}}}, // plainParams
             {{"file", {name, writeFunc}}}}; // StreamIn
     }, oneshot);

@@ -11,12 +11,12 @@
 #include "LoginDialog.hpp"
 #include "Utilities.hpp"
 
+#include "andromeda/account/SessionStore.hpp"
+using Andromeda::Account::SessionStore;
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
-#include "andromeda/backend/SessionStore.hpp"
-using Andromeda::Backend::SessionStore;
 #include "andromeda/database/DatabaseException.hpp"
 using Andromeda::Database::DatabaseException;
 #include "andromeda/database/ObjectDatabase.hpp"

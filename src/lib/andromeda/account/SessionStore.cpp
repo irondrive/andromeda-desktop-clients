@@ -9,7 +9,7 @@ using Andromeda::Database::ObjectDatabase;
 using Andromeda::Database::TableBuilder;
 
 namespace Andromeda {
-namespace Backend {
+namespace Account {
 
 /*****************************************************/
 SessionStore::SessionStore(ObjectDatabase& database, const MixedParams& data, bool created) :
@@ -64,11 +64,11 @@ void SessionStore::SetSession(std::nullptr_t)
 }
 
 /*****************************************************/
-void SessionStore::SetSession(const std::string& sessionID, const std::string& sessionKey)
+void SessionStore::SetSession(const std::string& sessionID, const std::string& sessionKey) // TODO RAY !! maybe this class should be all-encompassing - it should call into the backend to create the session
 {
     mSessionID = sessionID;
     mSessionKey = sessionKey;
 }
 
-} // namespace Backend
+} // namespace Account
 } // namespace Andromeda

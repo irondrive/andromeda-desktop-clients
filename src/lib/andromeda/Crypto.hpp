@@ -65,7 +65,12 @@ public:
      * @throws SodiumFailedException
     */
     static SecureBuffer DeriveKey(const SecureBuffer& password, const std::string& salt, size_t bytes = SecretKeyLength());
-    // TODO maybe add support for "sensitive" hash, right now only have "interactive" (later, for signing in, etc.)
+
+    /** Returns the length of a key for use with DeriveSubkey */
+    static size_t SuperKeyLength();
+
+    // TODO RAY !! comment
+    static SecureBuffer DeriveSubkey(const SecureBuffer& superkey, uint64_t keyid, const std::string& context, size_t bytes = SecretKeyLength());
 
     /** Returns the length of a key for use with secret crypto */
     static size_t SecretKeyLength();
@@ -115,6 +120,12 @@ public:
      * @throws DecryptFailedException
      */
     static SecureBuffer DecryptSecret(const std::string& enc, const std::string& nonce, const SecureBuffer& key, const std::string& extra = "");
+
+    /** Returns the length of a public key for use with public crypto */
+    static size_t PublicKeyLength();
+    
+    /** Returns the length of a private key for use with public crypto */
+    static size_t PrivateKeyLength();
 
     /** Returns the length of a nonce for use with public crypto */
     static size_t PublicNonceLength();

@@ -1,14 +1,14 @@
 
 #include "BackendContext.hpp"
 
+#include "andromeda/account/SessionStore.hpp"
+using Andromeda::Account::SessionStore;
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
 #include "andromeda/backend/HTTPRunner.hpp"
 using Andromeda::Backend::HTTPRunner;
 #include "andromeda/backend/RunnerPool.hpp"
 using Andromeda::Backend::RunnerPool;
-#include "andromeda/backend/SessionStore.hpp"
-using Andromeda::Backend::SessionStore;
 #include "andromeda/database/ObjectDatabase.hpp"
 using Andromeda::Database::ObjectDatabase;
 
