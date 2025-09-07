@@ -32,6 +32,26 @@ TEST_CASE("DeriveKey", "[Crypto]")
 }
 
 /*****************************************************/
+TEST_CASE("DeriveSubKey", "[Crypto]")
+{
+    REQUIRE(Crypto::SuperKeyLength() == 32);
+    
+    const SecureBuffer superkey { SecureBuffer::Insecure_FromCstr("0123456789ABCDEF0123456789ABCDEF") }; // 32 bytes
+
+    REQUIRE(Crypto::DeriveSubkey(superkey, 0, "ctx00000", 16) == 
+        SecureBuffer::Insecure_FromBuf("\x19\x7b\xd7\x7d\x31\x69\x88\x5c\x02\x84\x73\xc3\x02\x5b\xf0\xf8",16));
+
+    REQUIRE(Crypto::DeriveSubkey(superkey, 0, "ctx00000", 24) == 
+        SecureBuffer::Insecure_FromBuf("\xd8\x0f\x68\x2e\x47\x5e\x00\x7e\xa5\x35\xb2\x18\xb7\x10\x9b\x34\xca\x41\x10\x84\x52\x5e\xd4\x2b",24));
+
+    REQUIRE(Crypto::DeriveSubkey(superkey, 1, "ctx00000", 16) == 
+        SecureBuffer::Insecure_FromBuf("\x27\xa5\x4c\x21\xda\x48\x73\xa5\x38\xad\xde\x23\x02\x2a\xcc\x7d",16));
+
+    REQUIRE(Crypto::DeriveSubkey(superkey, 0, "ctx10000", 16) == 
+        SecureBuffer::Insecure_FromBuf("\xc1\x04\xbb\x01\x1b\x4d\x51\x84\xc3\xeb\xb5\xf5\x57\xf5\x7b\x19",16));
+}
+
+/*****************************************************/
 TEST_CASE("CryptoSecret", "[Crypto]")
 {
     REQUIRE(Crypto::SecretKeyLength() == 32);

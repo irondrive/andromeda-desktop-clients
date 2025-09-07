@@ -6,17 +6,20 @@
 
 namespace Andromeda {
 
+struct SodiumInit { SodiumInit(); };
+
 namespace { // anonymous
 Debug sDebug("Crypto",nullptr); // NOLINT(cert-err58-cpp)
+SodiumInit sSodiumInit; // NOLINT(cert-err58-cpp)
 } // anonymous namespace
 
 /*****************************************************/
-void Crypto::SodiumInit() // @throws SodiumFailedException
+SodiumInit::SodiumInit()
 {
     const int initc { sodium_init() };
     if (initc < 0)
     {
-        SDBG_ERROR("... sodium_init() failed!");
+        SDBG_ERROR("... sodium_init() failed! err:" << initc);
         throw Crypto::SodiumFailedException(initc);
     }
 }
@@ -24,8 +27,6 @@ void Crypto::SodiumInit() // @throws SodiumFailedException
 /*****************************************************/
 std::string Crypto::GenerateRandom(size_t len)
 {
-    SodiumInit(); // TODO RAY !! move this to a static constructor rather than in every function...
-
     std::string ret; ret.resize(len);
     randombytes_buf(ret.data(), len);
     return ret;
@@ -34,8 +35,6 @@ std::string Crypto::GenerateRandom(size_t len)
 /*****************************************************/
 SecureBuffer Crypto::GenerateSecRandom(size_t len)
 {
-    SodiumInit();
-
     SecureBuffer ret(len);
     randombytes_buf(ret.data(), len);
     return ret;
@@ -58,8 +57,6 @@ SecureBuffer Crypto::DeriveKey(const SecureBuffer& password, const std::string& 
 {
     if (salt.size() != SaltLength())
         throw ArgumentException("salt was "+std::to_string(salt.size())+" bytes, expected "+std::to_string(SaltLength()));
-
-    SodiumInit();
 
     SecureBuffer key(bytes);
     const int err = crypto_pwhash( 
@@ -86,14 +83,12 @@ size_t Crypto::SuperKeyLength()
 }
 
 /*****************************************************/
-SecureBuffer Crypto::DeriveSubkey(const SecureBuffer& superkey, uint64_t keyid, const std::string& context, size_t bytes) // TODO RAY !! add unit tests
+SecureBuffer Crypto::DeriveSubkey(const SecureBuffer& superkey, uint64_t keyid, const std::string& context, size_t bytes)
 {
     if (superkey.size() != crypto_kdf_KEYBYTES)
         throw ArgumentException("key was "+std::to_string(superkey.size())+" bytes, expected "+std::to_string(crypto_kdf_KEYBYTES));
     if (context.size() != crypto_kdf_CONTEXTBYTES)
         throw ArgumentException("context was "+std::to_string(context.size())+" bytes, expected "+std::to_string(crypto_kdf_CONTEXTBYTES));
-
-    SodiumInit();
 
     SecureBuffer subkey(bytes);
     const int err = crypto_kdf_derive_from_key(
@@ -148,8 +143,6 @@ std::string Crypto::EncryptSecret(const SecureBuffer& msg, const std::string& no
     if (key.size() != SecretKeyLength())
         throw ArgumentException("key was "+std::to_string(key.size())+" bytes, expected "+std::to_string(SecretKeyLength()));
 
-    SodiumInit();
-
     std::string enc; enc.resize(msg.size()+SecretOutputOverhead());
 
     unsigned long long clen { 0 }; // NOLINT(google-runtime-int)
@@ -185,8 +178,6 @@ SecureBuffer Crypto::DecryptSecret(const std::string& enc, const std::string& no
         throw ArgumentException("nonce was "+std::to_string(nonce.size())+" bytes, expected "+std::to_string(SecretNonceLength()));
     if (key.size() != SecretKeyLength())
         throw ArgumentException("key was "+std::to_string(key.size())+" bytes, expected "+std::to_string(SecretKeyLength()));
-
-    SodiumInit();
 
     SecureBuffer msg(enc.size());
 
@@ -247,8 +238,6 @@ std::string Crypto::GeneratePublicNonce()
 /*****************************************************/
 Crypto::KeyPair Crypto::GeneratePublicKeyPair()
 {
-    SodiumInit();
-
     KeyPair keypair { { }, SecureBuffer(PrivateKeyLength()) };
     keypair.pubkey.resize(PublicKeyLength());
 
@@ -282,8 +271,6 @@ std::string Crypto::EncryptPublic(const SecureBuffer& msg, const std::string& no
     if (recipient_public.size() != PublicKeyLength())
         throw ArgumentException("pubkey was "+std::to_string(recipient_public.size())+" bytes, expected "+std::to_string(PublicKeyLength()));
 
-    SodiumInit();
-
     std::string enc; enc.resize(msg.size()+PublicOutputOverhead());
 
     const int err = crypto_box_easy(
@@ -312,8 +299,6 @@ SecureBuffer Crypto::DecryptPublic(const std::string& enc, const std::string& no
         throw ArgumentException("privkey was "+std::to_string(recipient_private.size())+" bytes, expected "+std::to_string(PrivateKeyLength()));
     if (sender_public.size() != PublicKeyLength())
         throw ArgumentException("pubkey was "+std::to_string(sender_public.size())+" bytes, expected "+std::to_string(PublicKeyLength()));
-
-    SodiumInit();
 
     SecureBuffer msg(enc.size()-PublicOutputOverhead());
 
@@ -359,8 +344,6 @@ std::string Crypto::MakeAuthCode(const std::string& msg, const SecureBuffer& key
     if (key.size() != AuthKeyLength())
         throw ArgumentException("key was "+std::to_string(key.size())+" bytes, expected "+std::to_string(AuthKeyLength()));
 
-    SodiumInit();
-
     std::string mac; mac.resize(AuthTagLength());
 
     const int err = crypto_auth(
@@ -385,8 +368,6 @@ bool Crypto::TryCheckAuthCode(const std::string& mac, const std::string& msg, co
         throw ArgumentException("key was "+std::to_string(key.size())+" bytes, expected "+std::to_string(AuthKeyLength()));
     if (mac.size() != AuthTagLength())
         throw ArgumentException("mac was "+std::to_string(mac.size())+" bytes, expected "+std::to_string(AuthTagLength()));
-
-    SodiumInit();
 
     const int err = crypto_auth_verify(
         reinterpret_cast<const unsigned char*>(mac.data()),

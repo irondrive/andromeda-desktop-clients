@@ -69,7 +69,13 @@ public:
     /** Returns the length of a key for use with DeriveSubkey */
     static size_t SuperKeyLength();
 
-    // TODO RAY !! comment
+    /**
+     * Generates a subkey from an existing key (fast)
+     * @param superkey the key to derive a subkey from (length must be crypto_kdf_KEYBYTES)
+     * @param keyid the subkey "ID" to use
+     * @param context the subkey label to use (must be crypto_kdf_CONTEXTBYTES aka 8 bytes)
+     * @param bytes the desired length of the subkey
+     */
     static SecureBuffer DeriveSubkey(const SecureBuffer& superkey, uint64_t keyid, const std::string& context, size_t bytes = SecretKeyLength());
 
     /** Returns the length of a key for use with secret crypto */
@@ -216,16 +222,6 @@ public:
      * @throws DecryptFailedException
      */
     static void CheckAuthCode(const std::string& mac, const std::string& msg, const SecureBuffer& key);
-
-private:
-
-    friend struct SecureMemory; // SodiumInit
-
-    /**
-     * Calls sodium_init() to initialize
-     * @throws SodiumFailedException
-     */
-    static void SodiumInit();
 };
 
 } // namespace Andromeda

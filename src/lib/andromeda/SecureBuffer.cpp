@@ -9,8 +9,6 @@ namespace Andromeda {
 /*****************************************************/
 void* SecureMemory::alloc(size_t num, size_t size) noexcept
 {
-    Crypto::SodiumInit(); // abort on except
-
     return sodium_allocarray(num, size); // alloc, lock
 }
 
