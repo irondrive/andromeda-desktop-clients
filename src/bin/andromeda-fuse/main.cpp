@@ -17,6 +17,8 @@ using AndromedaFuse::FuseOptions;
 using Andromeda::ConfigOptions;
 #include "andromeda/Debug.hpp"
 using Andromeda::Debug;
+#include "andromeda/account/Session.hpp"
+using Andromeda::Account::Session;
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda/backend/BaseRunner.hpp"
@@ -57,7 +59,6 @@ enum class ExitCode : uint8_t
 
 int main(int argc, char** argv)
 {
-    Debug::AddStream(std::cerr);
     Debug debug("main",nullptr); 
     
     ConfigOptions configOptions;
@@ -124,6 +125,7 @@ int main(int argc, char** argv)
 
     // these must be after cacheMgr/runners!
     std::unique_ptr<BackendImpl> backend;
+    std::unique_ptr<Session> session;
     std::unique_ptr<Folder> folder;
     
     try
@@ -132,9 +134,23 @@ int main(int argc, char** argv)
         backend->SetCacheManager(cacheMgr.get());
 
         if (options.HasSession())
-            backend->PreAuthenticate(options.GetSessionID(), options.GetSessionKey());
+        {
+            session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
+        }
         else if (options.HasUsername())
-            backend->AuthInteractive(options.GetUsername(), options.GetPassword(), options.GetForceSession());
+        {
+            // TODO RAY !! make this a SessionOptions function for commonality
+            if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
+            {
+                if (configOptions.quiet)
+                    session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
+                else
+                    session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
+            }
+            else backend->SetSudoUsername(options.GetUsername());
+        }
+
+        backend->SetSession(session.get());
 
         switch (options.GetMountRootType())
         {

@@ -1,6 +1,8 @@
 
 #include "BackendContext.hpp"
 
+#include "andromeda/account/Session.hpp"
+using Andromeda::Account::Session;
 #include "andromeda/account/SessionStore.hpp"
 using Andromeda::Account::SessionStore;
 #include "andromeda/backend/BackendImpl.hpp"
@@ -24,7 +26,8 @@ BackendContext::BackendContext(
 
     InitializeBackend(url);
 
-    mBackend->Authenticate(username, password, twofactor);
+    mSession = std::make_unique<Session>(Session::Create(*mBackend, username, password, twofactor));
+    mBackend->SetSession(mSession.get());
     mRunner->EnableRetry(); // no retry during init
 }
 
@@ -36,7 +39,8 @@ BackendContext::BackendContext(SessionStore& session) :
 
     InitializeBackend(session.GetServerUrl());
 
-    mBackend->PreAuthenticate(session);
+    mSession = std::make_unique<Session>(Session::FromExisting(*mBackend, session));
+    mBackend->SetSession(mSession.get());
     mRunner->EnableRetry(); // no retry during init
 }
 
@@ -47,13 +51,24 @@ BackendContext::~BackendContext()
 }
 
 /*****************************************************/
+std::string BackendContext::GetName(bool human) const
+{
+    std::string hostname { mRunners->GetUnlocked().GetHostname() };
+    const std::string username { mSession->GetUsername() };
+
+    if (username.empty()) return hostname;
+    
+    if (human) return username+" on "+hostname;
+    else return hostname+"_"+username;
+}
+
+/*****************************************************/
 void BackendContext::StoreSession(ObjectDatabase& objdb)
 {
-    mSessionStore = &SessionStore::Create(objdb, 
-        mRunner->GetFullURL(), mBackend->GetAccountID());
+    mSessionStore = &SessionStore::Create(objdb, mRunner->GetFullURL(), *mSession);
 
-    mBackend->StoreSession(*mSessionStore);
     mSessionStore->Save(); // store to DB
+    mSession->SetTemporary(false);
 }
 
 /*****************************************************/

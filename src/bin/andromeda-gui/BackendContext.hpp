@@ -10,7 +10,7 @@
 #include "andromeda/backend/RunnerOptions.hpp"
 
 namespace Andromeda { 
-    namespace Account { class SessionStore; }
+    namespace Account { class Session; class SessionStore; }
     namespace Backend { 
         class BackendImpl; class HTTPRunner; class RunnerPool; }
     namespace Database { class ObjectDatabase; } }
@@ -38,6 +38,12 @@ public:
     virtual ~BackendContext();
     DELETE_COPY(BackendContext)
     DELETE_MOVE(BackendContext)
+    
+    /** 
+     * Return the hostname_username ID string 
+     * @param human if true make it human-pretty
+     */
+    [[nodiscard]] std::string GetName(bool human) const;
 
     /** Returns the Backend instance */
     inline Andromeda::Backend::BackendImpl& GetBackend() { return *mBackend; }
@@ -68,9 +74,10 @@ private:
     Andromeda::Backend::HTTPOptions mHttpOptions;
     Andromeda::Backend::RunnerOptions mRunnerOptions;
     
-    std::unique_ptr<Andromeda::Backend::HTTPRunner> mRunner;
-    std::unique_ptr<Andromeda::Backend::RunnerPool> mRunners;
-    std::unique_ptr<Andromeda::Backend::BackendImpl> mBackend;
+    std::unique_ptr<Andromeda::Backend::HTTPRunner> mRunner; // NEVER NULL
+    std::unique_ptr<Andromeda::Backend::RunnerPool> mRunners; // NEVER NULL
+    std::unique_ptr<Andromeda::Backend::BackendImpl> mBackend; // NEVER NULL
+    std::unique_ptr<Andromeda::Account::Session> mSession; // NEVER NULL
 
     Andromeda::Account::SessionStore* mSessionStore { nullptr };
 };

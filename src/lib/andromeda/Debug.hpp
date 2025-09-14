@@ -134,7 +134,7 @@ private:
         Level level { Debug::Level::ERRORS };
         std::unordered_set<std::string> filters;
 
-        explicit Context(std::ostream& s) : stream(&s){ }
+        explicit Context(std::ostream& s) noexcept : stream(&s){ }
     };
 
     /** Converts a comma-separated string of filters to a filter set */

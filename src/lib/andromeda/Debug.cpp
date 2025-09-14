@@ -13,7 +13,7 @@ namespace Andromeda {
 
 std::mutex Debug::sMutex;
 steady_clock::time_point Debug::sStart { steady_clock::now() };
-std::vector<Debug::Context> Debug::sContexts;
+std::vector<Debug::Context> Debug::sContexts { Debug::Context(std::cerr) }; // NOLINT(cert-err58-cpp, cppcoreguidelines-interfaces-global-init)
 Debug::Level Debug::sMaxLevel { Debug::Level::ERRORS };
 std::list<std::ofstream> Debug::sFileStreams;
 

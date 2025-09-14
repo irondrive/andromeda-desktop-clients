@@ -13,6 +13,8 @@ using AndromedaE2ee::Options;
 using Andromeda::ConfigOptions;
 #include "andromeda/Debug.hpp"
 using Andromeda::Debug;
+#include "andromeda/account/Session.hpp"
+using Andromeda::Account::Session;
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda/backend/BaseRunner.hpp"
@@ -39,7 +41,6 @@ enum class ExitCode : uint8_t
 
 int main(int argc, char** argv)
 {
-    Debug::AddStream(std::cerr);
     Debug debug("main",nullptr); 
     
     ConfigOptions configOptions;
@@ -97,18 +98,35 @@ int main(int argc, char** argv)
 
     RunnerPool runners(*runner, configOptions);
     std::unique_ptr<BackendImpl> backend;
+    std::unique_ptr<Session> session;
     // TODO RAY !! do we really need to do a GetCoreConfig call here? yes - but combine into a single call, server side
     
+    // TODO RAY !! rename to just andromeda-util
+
     try
     {
         // TODO RAY !! make an alternate BackendImpl signature that takes only 1 runner
         backend = std::make_unique<BackendImpl>(configOptions, runners);
+        // TODO RAY !! some actions will need pre-auth, some not, not sure how to do this
 
         if (options.HasSession())
-            backend->PreAuthenticate(options.GetSessionID(), options.GetSessionKey());
+        {
+            session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
+        }
         else if (options.HasUsername())
-            backend->AuthInteractive(options.GetUsername(), options.GetPassword(), options.GetForceSession());
-        // TODO RAY !! move the authentication stuff to session. not sure where/how to run this, some actions will need pre-auth, some not
+        {
+            // TODO RAY !! make this a SessionOptions function for commonality
+            if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
+            {
+                if (configOptions.quiet)
+                    session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
+                else
+                    session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
+            }
+            else backend->SetSudoUsername(options.GetUsername());
+        }
+
+        backend->SetSession(session.get());
     }
     catch (const BackendException& ex)
     {

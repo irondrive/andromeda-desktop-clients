@@ -55,7 +55,7 @@ public:
      * Adds account-specific policy
      * @throws BackendException for backend issues
      */
-    void LoadAccountPolicy(BackendImpl& backend);
+    void LoadFilesPolicy(BackendImpl& backend);
 
     /** Returns true if the backend is read-only */
     [[nodiscard]] bool isReadOnly() const { return mReadOnly.load(); }

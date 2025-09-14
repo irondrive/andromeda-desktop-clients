@@ -1,4 +1,5 @@
 
+#include "Session.hpp"
 #include "SessionStore.hpp"
 
 #include "andromeda/database/MixedValue.hpp"
@@ -15,11 +16,10 @@ namespace Account {
 SessionStore::SessionStore(ObjectDatabase& database, const MixedParams& data, bool created) :
     BaseObject(database),
     mServerUrl("serverUrl",*this),
-    mAccountID("accountID",*this),
     mSessionID("sessionID",*this),
     mSessionKey("sessionKey",*this)
 {
-    RegisterFields({&mServerUrl, &mAccountID, &mSessionID, &mSessionKey});
+    RegisterFields({&mServerUrl, &mSessionID, &mSessionKey});
     InitializeFields(data, created);
 }
 
@@ -29,9 +29,9 @@ TableBuilder SessionStore::GetTableInstall()
     TableBuilder tb { TableBuilder::For<SessionStore>() };
     tb.AddColumn("id","varchar(12)",false).SetPrimary("id")
       .AddColumn("serverUrl","text",false)
-      .AddColumn("accountID","char(12)",false).AddUnique("accountID")
-      .AddColumn("sessionID","char(12)",true)
-      .AddColumn("sessionKey","char(32)",true);
+      //.AddColumn("accountID","char(12)",false).AddUnique("accountID") // TODO unique field?
+      .AddColumn("sessionID","char(12)",false)
+      .AddColumn("sessionKey","char(32)",false);
     return tb;
 }
 
@@ -42,11 +42,12 @@ TableBuilder SessionStore::GetTableUpgrade(int newVersion)
 }
 
 /*****************************************************/
-SessionStore& SessionStore::Create(ObjectDatabase& db, const std::string& serverUrl, const std::string& accountID)
+SessionStore& SessionStore::Create(ObjectDatabase& db, const std::string& serverUrl, const Session& session)
 {
     SessionStore& obj { db.CreateObject<SessionStore>() };
     obj.mServerUrl = serverUrl;
-    obj.mAccountID = accountID;
+    obj.mSessionID = session.GetSessionID();
+    obj.mSessionKey = session.GetSessionKey();
     return obj;
 }
 
@@ -54,20 +55,6 @@ SessionStore& SessionStore::Create(ObjectDatabase& db, const std::string& server
 std::list<SessionStore*> SessionStore::LoadAll(ObjectDatabase& db) // cppcheck-suppress constParameterReference
 {
     return db.LoadObjectsByQuery<SessionStore>({}); // empty WHERE
-}
-
-/*****************************************************/
-void SessionStore::SetSession(std::nullptr_t)
-{
-    mSessionID = nullptr;
-    mSessionKey = nullptr;
-}
-
-/*****************************************************/
-void SessionStore::SetSession(const std::string& sessionID, const std::string& sessionKey) // TODO RAY !! maybe this class should be all-encompassing - it should call into the backend to create the session
-{
-    mSessionID = sessionID;
-    mSessionKey = sessionKey;
 }
 
 } // namespace Account

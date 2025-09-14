@@ -58,11 +58,11 @@ Config::Config(BackendImpl& backend) :
 }
 
 /*****************************************************/
-void Config::LoadAccountPolicy(BackendImpl& backend)
+void Config::LoadFilesPolicy(BackendImpl& backend)
 {
     MDBG_INFO("()");
 
-    /*nlohmann::json policy(backend.GetAccountPolicy());
+    /*nlohmann::json policy(backend.GetFilesPolicy());
 
     try
     {

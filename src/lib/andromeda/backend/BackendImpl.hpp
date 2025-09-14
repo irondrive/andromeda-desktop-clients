@@ -18,7 +18,7 @@
 
 namespace Andromeda {
 
-namespace Account { class SessionStore; }
+namespace Account { class Session; }
 namespace Filesystem { namespace Filedata { class CacheManager; class CachingAllocator; } }
 
 namespace Backend {
@@ -73,6 +73,10 @@ public:
     class AuthenticationFailedException : public DeniedException { public:
         AuthenticationFailedException() : DeniedException("Authentication Failed") {}; };
 
+    /** Andromeda exception indicating the session in use is invalid */
+    class InvalidSessionException : public DeniedException { public:
+        InvalidSessionException() : DeniedException("Invalid Session") {}; };
+
     /** Andromeda exception indicating two factor is needed */
     class TwoFactorRequiredException : public DeniedException { public:
         TwoFactorRequiredException() : DeniedException("Two Factor Required") {}; };
@@ -120,58 +124,12 @@ public:
     /** Returns true if the backend is read-only */
     [[nodiscard]] bool isReadOnly() const;
 
-    /** 
-     * Return the hostname_username ID string 
-     * @param human if true make it human-pretty
-     */
-    [[nodiscard]] std::string GetName(bool human) const;
-
-    /** 
-     * Registers a pre-existing SessionStore for use
-     * @throws BackendException for backend issues
-     */
-    void PreAuthenticate(const Account::SessionStore& sessionObj);
-
-    /** 
-     * Registers a pre-existing session ID/key for use
-     * @throws BackendException for backend issues
-     */
-    void PreAuthenticate(const std::string& sessionID, const std::string& sessionKey);
-
-    /** 
-     * Creates a new backend session and registers for use 
-     * The session will be DELETED on destruct or if this is called again, UNLESS StoreSession is called
-     * @param username username for authentication (required)
-     * @param password password for authentication (required)
-     * @param twofactor two factor code for authentication (optional)
-     * @throws TwoFactorRequiredException if twofactor is required
-     * @throws BackendException for backend issues
-     */
-    void Authenticate(const std::string& username, const std::string& password, const std::string& twofactor = "");
-
-    /** 
-     * Registers the username for use, and possibly creates a backend session, interactively prompting for input as required
-     * The session will be DELETED on destruct or if this is called again, UNLESS StoreSession is called
-     * A session will be created IF the runner requires it, or the given password is not blank
-     * @param username username for authentication (required)
-     * @param password password for authentication, prompt user if blank and the runner requires a session (HTTP)
-     * @param forceSession if true, force creating a session regardless of the above rules
-     * @throws AuthenticationFailedException if a password is required, none is given, and options.mQuiet is true
-     * @throws BackendException for backend issues
-     */
-    void AuthInteractive(const std::string& username, std::string password = "", bool forceSession = false);
-
-    /** Returns the ID of the authenticated account (if in use) */
-    inline const std::string& GetAccountID() const { return mAccountID; }
-
-    /** 
-     * Closes the existing session
-     * @throws BackendException for backend issues
-     */
-    void CloseSession();
-
-    /** Store the current session in the SessionStore */
-    void StoreSession(Account::SessionStore& sessionObj);
+    /** Returns true if this backend requires using a session */
+    bool RequiresSession() const;
+    /** Sets the session to use (or nullptr if none) */
+    void SetSession(Account::Session* session);
+    /** Sets the username to masquerade as (or "" if none) */
+    void SetSudoUsername(const std::string& username){ mSudoUsername = username; }
 
     /*****************************************************/
     // ---- Actual backend functions below here ---- //
@@ -191,10 +149,36 @@ public:
     nlohmann::json GetFilesConfigJ();
 
     /** 
-     * Load policy for the current account
+     * Load files policy for the current account
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetAccountPolicy();
+    nlohmann::json GetFilesPolicy();
+
+    /**
+     * Load account metadata for the current account
+     * @param session use this session rather than mSession if given
+     * @return account metadata as JSON
+     * @throws BackendException for backend issues
+     */
+    nlohmann::json GetAccount(const Account::Session* session = nullptr);
+
+    /**
+     * Creates a new session with the backend
+     * @param username username to log in with
+     * @param passkeyb64 passkey as base64
+     * @param twofactor two factor code
+     * @return session metadata as JSON
+     * @throws AuthenticationFailedException in particular for wrong username/password
+     * @throws TwoFactorRequiredException if two factor is required and not given
+     * @throws BackendException for any other backend issues
+     */
+    nlohmann::json CreateSession(const std::string& username, const std::string& passkeyb64, const std::string& twofactor = "");
+
+    /**
+     * Deletes the current client (from SetSession) from the backend
+     * @param session use this session rather than mSession if given
+     */
+    void DeleteClient(const Account::Session* session = nullptr);
 
     /** Returns the password salt to use for a username */
     std::string GetPasswordSalt(const std::string& username);
@@ -377,9 +361,12 @@ public:
 
 private:
     
-    /** Augment input with authentication details */
+    /** 
+     * Augment input with session authentication details
+     * @param session if given, use this instead of mSession
+     */
     template <class InputT>
-    InputT& FinalizeInput(InputT& input);
+    InputT& FinalizeInput(InputT& input, const Account::Session* session = nullptr);
 
     /** Prints a RunnerInput to the given stream */
     static void PrintInput(const RunnerInput& input, std::ostream& str, const std::string& myfname, uint64_t reqCount);
@@ -392,11 +379,11 @@ private:
     nlohmann::json GetJSON(const std::string& resp);
 
     /** Finalizes input, runs the action, returns string */
-    std::string RunAction_ReadStr(RunnerInput& input);
+    std::string RunAction_ReadStr(RunnerInput& input, const Account::Session* session = nullptr);
     /** Finalizes input, runs the action, returns JSON */
-    nlohmann::json RunAction_Read(RunnerInput& input);
+    nlohmann::json RunAction_Read(RunnerInput& input, const Account::Session* session = nullptr);
     /** Finalizes input, runs the action, returns JSON */
-    nlohmann::json RunAction_Write(RunnerInput& input);
+    nlohmann::json RunAction_Write(RunnerInput& input, const Account::Session* session = nullptr);
     /** Finalizes input, runs the action, returns JSON */
     nlohmann::json RunAction_FilesIn(RunnerInput_FilesIn& input);
     /** Finalizes input, runs the action, returns JSON */
@@ -418,14 +405,11 @@ private:
      */
     nlohmann::json SendFile(const WriteFunc& userFunc, std::string id, uint64_t offset, const UploadInput& getUpload, bool oneshot);
 
-    /** True if the session in use should be deleted when done */
-    bool mDeleteSession { false };
+    /** Session to use with requests */
+    Account::Session* mSession { nullptr };
+    /** --auth_sudouser sudo user to use */
+    std::string mSudoUsername;
 
-    std::string mUsername;
-    std::string mAccountID;
-    std::string mSessionID;
-    std::string mSessionKey;
-    
     // global backend request counter for debug
     static std::atomic<uint64_t> sReqNext;
 

@@ -46,7 +46,6 @@ enum class ExitCode : uint8_t
 /*****************************************************/
 int main(int argc, char** argv)
 {
-    Debug::AddStream(std::cerr);
     Debug debug("main",nullptr); 
 
     CacheOptions cacheOptions;

@@ -1,4 +1,5 @@
 
+#include <cassert>
 #include <sodium.h>
 
 #include "Crypto.hpp"
@@ -19,8 +20,9 @@ SodiumInit::SodiumInit()
     const int initc { sodium_init() };
     if (initc < 0)
     {
-        SDBG_ERROR("... sodium_init() failed! err:" << initc);
-        throw Crypto::SodiumFailedException(initc);
+        // use fprintf, probably before Debug is constructed/ready
+        (void)fprintf(stderr, "sodium_init() failed with %d\n", initc);
+        assert(false);
     }
 }
 

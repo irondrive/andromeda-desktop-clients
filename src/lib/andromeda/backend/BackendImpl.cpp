@@ -16,8 +16,8 @@
 #include "andromeda/Crypto.hpp"
 #include "andromeda/PlatformUtil.hpp"
 #include "andromeda/StringUtil.hpp"
-#include "andromeda/account/SessionStore.hpp"
-using Andromeda::Account::SessionStore;
+#include "andromeda/account/Session.hpp"
+using Andromeda::Account::Session;
 #include "andromeda/filesystem/filedata/CacheManager.hpp"
 #include "andromeda/filesystem/filedata/CachingAllocator.hpp"
 using Andromeda::Filesystem::Filedata::CachingAllocator;
@@ -41,16 +41,10 @@ BackendImpl::BackendImpl(const ConfigOptions& options, RunnerPool& runners) :
 BackendImpl::~BackendImpl()
 {
     MDBG_INFO("()");
-
-    try { CloseSession(); }
-    catch (const BackendException& ex) 
-    { 
-        MDBG_ERROR("... " << ex.what());
-    }
 }
 
 /*****************************************************/
-CachingAllocator& BackendImpl::GetPageAllocator() // TODO RAY !! this is an odd place for this
+CachingAllocator& BackendImpl::GetPageAllocator() // TODO RAY !! this is an odd place for this - make a FilesystemResource class that contains BackendImpl + the other things
 {
     if (mCacheMgr) 
         return mCacheMgr->GetPageAllocator();
@@ -64,17 +58,6 @@ CachingAllocator& BackendImpl::GetPageAllocator() // TODO RAY !! this is an odd 
 bool BackendImpl::isReadOnly() const
 {
     return mOptions.readOnly || mConfig.isReadOnly();
-}
-
-/*****************************************************/
-std::string BackendImpl::GetName(bool human) const
-{
-    std::string hostname { mRunners.GetUnlocked().GetHostname() };
-
-    if (mUsername.empty()) return hostname;
-    
-    if (human) return mUsername+" on "+hostname;
-    else return hostname+"_"+mUsername;
 }
 
 /*****************************************************/
@@ -122,16 +105,25 @@ void BackendImpl::PrintInput(const RunnerInput_StreamIn& input, std::ostream& st
 
 /*****************************************************/
 template <class InputT>
-InputT& BackendImpl::FinalizeInput(InputT& input)
+InputT& BackendImpl::FinalizeInput(InputT& input, const Session* session)
 {
-    if (!mSessionID.empty())
+    if (session != nullptr)
     {
-        input.dataParams["auth_sessionid"] = mSessionID;
-        input.dataParams["auth_sessionkey"] = mSessionKey;
+        input.dataParams["auth_sessionid"] = session->GetSessionID();
+        input.dataParams["auth_sessionkey"] = session->GetSessionKey();    
     }
-    else if (!mUsername.empty())
+    else
     {
-        input.plainParams["auth_sudouser"] = mUsername;
+        if (mSession != nullptr)
+        {
+            input.dataParams["auth_sessionid"] = mSession->GetSessionID();
+            input.dataParams["auth_sessionkey"] = mSession->GetSessionKey();
+        }
+    
+        if (!mSudoUsername.empty())
+        {
+            input.plainParams["auth_sudouser"] = mSudoUsername;
+        }
     }
 
     return input;
@@ -172,6 +164,7 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
             else if (code == HTTP_ERROR && message == "INPUT_FILE_MISSING")          throw HTTPRunner::InputSizeException();
 
             else if (code == HTTP_DENIED && message == "AUTHENTICATION_FAILED") throw AuthenticationFailedException();
+            else if (code == HTTP_DENIED && message == "INVALID_SESSION")       throw InvalidSessionException();
             else if (code == HTTP_DENIED && message == "TWOFACTOR_REQUIRED")    throw TwoFactorRequiredException();
             else if (code == HTTP_DENIED && message == "READ_ONLY_DATABASE")    throw ReadOnlyFSException("Database");
             else if (code == HTTP_DENIED && message == "READ_ONLY_STORAGE")     throw ReadOnlyFSException("Storage");
@@ -190,21 +183,21 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
 }
 
 /*****************************************************/
-std::string BackendImpl::RunAction_ReadStr(RunnerInput& input)
+std::string BackendImpl::RunAction_ReadStr(RunnerInput& input, const Session* session)
 {
-    return mRunners.GetRunner()->RunAction_Read(FinalizeInput(input));
+    return mRunners.GetRunner()->RunAction_Read(FinalizeInput(input, session));
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::RunAction_Read(RunnerInput& input)
+nlohmann::json BackendImpl::RunAction_Read(RunnerInput& input, const Session* session)
 {
-    return GetJSON(mRunners.GetRunner()->RunAction_Read(FinalizeInput(input)));
+    return GetJSON(mRunners.GetRunner()->RunAction_Read(FinalizeInput(input, session)));
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::RunAction_Write(RunnerInput& input)
+nlohmann::json BackendImpl::RunAction_Write(RunnerInput& input, const Session* session)
 {
-    return GetJSON(mRunners.GetRunner()->RunAction_Write(FinalizeInput(input)));
+    return GetJSON(mRunners.GetRunner()->RunAction_Write(FinalizeInput(input, session)));
 }
 
 /*****************************************************/
@@ -226,149 +219,20 @@ void BackendImpl::RunAction_StreamOut(RunnerInput_StreamOut& input)
 }
 
 /*****************************************************/
-void BackendImpl::Authenticate(const std::string& username, const std::string& password, const std::string& twofactor)
+bool BackendImpl::RequiresSession() const
 {
-    MDBG_INFO("(username:" << username << ")");
-
-    CloseSession();
-
-    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?)
-    const SecureBuffer passwordBuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
-
-    const std::string password_salt { GetPasswordSalt(username) };
-    if (password_salt.size() != Crypto::SaltLength())
-        throw JSONErrorException("incorrect salt length "+std::to_string(password_salt.size()));
-    MDBG_INFO("... password_salt:"); mDebug.Info(mDebug.DumpBytes(password_salt.data(), password_salt.size()));
-
-    const SecureBuffer password_superkey { Crypto::DeriveKey(passwordBuf, password_salt, Crypto::SuperKeyLength()) };
-    MDBG_INFO("... password_superkey:"); mDebug.Info(mDebug.DumpBytes(password_superkey.data(), password_superkey.size()));
-    
-    const SecureBuffer password_cryptkey { Crypto::DeriveSubkey(password_superkey, 0, "a2pwe2ee") };
-    const SecureBuffer password_authkey { Crypto::DeriveSubkey(password_superkey, 1, "a2pwauth") };
-    MDBG_INFO("... password_cryptkey:"); mDebug.Info(mDebug.DumpBytes(password_cryptkey.data(), password_cryptkey.size()));
-    MDBG_INFO("... password_authkey:"); mDebug.Info(mDebug.DumpBytes(password_authkey.data(), password_authkey.size()));
-
-    const std::string authkey64 { StringUtil::base64_encode(
-        std::string(password_authkey.data(), password_authkey.size())) }; // not secure
-    
-    RunnerInput input { "accounts", "createsession", {{ "username", username }}, // plainParams
-        {{ "auth_passkey", authkey64 }}}; // dataParams
-
-    if (!twofactor.empty()) 
-        input.dataParams["auth_twofactor"] = twofactor; 
-    MDBG_BACKEND(input);
-
-    nlohmann::json resp(RunAction_Write(input));
-    mDeleteSession = true;
-
-    try
-    {
-        resp.at("account").at("id").get_to(mAccountID);
-        resp.at("client").at("session").at("id").get_to(mSessionID);
-        resp.at("client").at("session").at("authkey").get_to(mSessionKey);
-
-        MDBG_INFO("... accountID:" << mAccountID << " sessionID:" << mSessionID);
-    }
-    catch (const nlohmann::json::exception& ex) {
-        throw JSONErrorException(ex.what()); }
-
-    mUsername = username;
-    mConfig.LoadAccountPolicy(*this);
+    return mRunners.GetUnlocked().RequiresSession();
 }
 
 /*****************************************************/
-void BackendImpl::AuthInteractive(const std::string& username, std::string password, bool forceSession)
+void BackendImpl::SetSession(Session* session)
 {
-    MDBG_INFO("(username:" << username << ")");
-
-    CloseSession();
-
-    if (mRunners.GetUnlocked().RequiresSession() || forceSession || !password.empty())
+    mSession = session;
+    if (session != nullptr)
     {
-        if (password.empty())
-        {
-            if (mOptions.quiet) throw AuthenticationFailedException();
-
-            std::cout << "Password? ";
-            PlatformUtil::SilentReadConsole(password);
-        }
-
-        try
-        {
-            Authenticate(username, password);
-        }
-        catch (const TwoFactorRequiredException&)
-        {
-            if (mOptions.quiet) throw; // rethrow
-
-            std::string twofactor; std::cout << "Two Factor? ";
-            PlatformUtil::SilentReadConsole(twofactor);
-
-            Authenticate(username, password, twofactor);
-        }
+        // TODO what about resetting the policy if session is nullptr?
+        mConfig.LoadFilesPolicy(*this);
     }
-    else 
-    {
-        mUsername = username;
-        mConfig.LoadAccountPolicy(*this);
-    }
-}
-
-/*****************************************************/
-void BackendImpl::PreAuthenticate(const std::string& sessionID, const std::string& sessionKey)
-{
-    MDBG_INFO("()");
-
-    CloseSession();
-
-    mSessionID = sessionID;
-    mSessionKey = sessionKey;
-
-    RunnerInput input {"accounts", "getaccount"}; MDBG_BACKEND(input);
-    nlohmann::json resp(RunAction_Read(input));
-
-    try
-    {
-        resp.at("id").get_to(mAccountID);
-        resp.at("username").get_to(mUsername);
-    }
-    catch (const nlohmann::json::exception& ex) {
-        throw JSONErrorException(ex.what()); }
-}
-
-/*****************************************************/
-void BackendImpl::PreAuthenticate(const SessionStore& session)
-{
-    // TODO in the future with the logged-out state, need to check for null ID/key... also will need to store the username!
-    // or maybe the server could allow login via just the account ID? would be nicer
-
-    PreAuthenticate(*session.GetSessionID(), *session.GetSessionKey());
-}
-
-/*****************************************************/
-void BackendImpl::CloseSession()
-{
-    MDBG_INFO("()");
-    
-    if (mDeleteSession)
-    {
-        RunnerInput input {"accounts", "deleteclient"}; MDBG_BACKEND(input);
-        RunAction_Write(input);
-    }
-
-    mDeleteSession = false;
-    mUsername.clear();
-    mSessionID.clear();
-    mSessionKey.clear();
-}
-
-/*****************************************************/
-void BackendImpl::StoreSession(SessionStore& sessionObj)
-{
-    if (mSessionID.empty()) sessionObj.SetSession(nullptr);
-    else sessionObj.SetSession(mSessionID, mSessionKey);
-
-    mDeleteSession = false;
 }
 
 /*****************************************************/
@@ -381,7 +245,6 @@ bool BackendImpl::isMemory() const
 nlohmann::json BackendImpl::GetCoreConfigJ()
 {
     MDBG_INFO("()");
-
 
     RunnerInput input {"core", "getconfig"}; MDBG_BACKEND(input);
     return RunAction_Read(input);
@@ -397,14 +260,43 @@ nlohmann::json BackendImpl::GetFilesConfigJ()
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetAccountPolicy()
+nlohmann::json BackendImpl::GetFilesPolicy()
 {
-    if (mAccountID.empty())
-        return nullptr;
+    MDBG_INFO("()");
 
-    RunnerInput input {"files", "getpolicy", {{"account", mAccountID}}}; MDBG_BACKEND(input);
-
+    RunnerInput input {"files", "getpolicy"}; MDBG_BACKEND(input);
     return RunAction_Read(input);
+}
+
+/*****************************************************/
+nlohmann::json BackendImpl::GetAccount(const Session* session)
+{
+    MDBG_INFO("()");
+
+    RunnerInput input {"accounts", "getaccount"}; MDBG_BACKEND(input);
+    return RunAction_Read(input, session);
+}
+
+/*****************************************************/
+nlohmann::json BackendImpl::CreateSession(const std::string& username, const std::string& passkeyb64, const std::string& twofactor)
+{
+    MDBG_INFO("()");
+
+    RunnerInput input { "accounts", "createsession", {{ "username", username }}, // plainParams
+        {{ "auth_passkey", passkeyb64 }}}; // dataParams
+
+    if (!twofactor.empty()) 
+        input.dataParams["auth_twofactor"] = twofactor; 
+    MDBG_BACKEND(input);
+
+    return RunAction_Write(input);
+}
+
+/*****************************************************/
+void BackendImpl::DeleteClient(const Session* session)
+{
+    RunnerInput input {"accounts", "deleteclient"}; MDBG_BACKEND(input);
+    (void)RunAction_Write(input, session);
 }
 
 /*****************************************************/
