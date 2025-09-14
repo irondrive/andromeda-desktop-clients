@@ -15,7 +15,7 @@ std::string BaseOptions::CoreBaseHelpText()
 {
     std::ostringstream output;
 
-    output << "(-h|--help | -V|--version)";
+    output << "(-h|--help | -V|--version) [-q|--quiet]";
 
     return output.str();
 }
@@ -159,6 +159,8 @@ bool BaseOptions::AddFlag(const std::string& flag)
         throw ShowHelpException();
     else if (flag == "V" || flag == "version")
         throw ShowVersionException();
+    else if (flag == "q" || flag == "quiet")
+        mQuiet = true;
     else return false; // not used
 
     return true;

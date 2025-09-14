@@ -18,7 +18,7 @@ std::string ConfigOptions::HelpText()
     const size_t stBits { sizeof(size_t)*8 };
 
     using std::endl; output 
-        << "Advanced:        [-q|--quiet] [-r|--read-only] [--dir-refresh secs(" << defRefresh << ")] [--cachemode none|memory|normal] [--backend-runners uint"<<stBits<<"(" << optDefault.runnerPoolSize << ")]" << endl
+        << "Advanced:        [-r|--read-only] [--dir-refresh secs(" << defRefresh << ")] [--cachemode none|memory|normal] [--backend-runners uint"<<stBits<<"(" << optDefault.runnerPoolSize << ")]" << endl
         << "Data Advanced:   [--pagesize bytes"<<stBits<<"(" << StringUtil::bytesToString(optDefault.pageSize) << ")] [--read-ahead ms(" << defReadAhead << ")]"
             << " [--read-max-cache-frac uint32(" << optDefault.readMaxCacheFrac << ")] [--read-ahead-buffer pages(" << optDefault.readAheadBuffer << ")]";
 
@@ -28,9 +28,7 @@ std::string ConfigOptions::HelpText()
 /*****************************************************/
 bool ConfigOptions::AddFlag(const std::string& flag)
 {
-    if (flag == "q" || flag == "quiet")
-        quiet = true;
-    else if (flag == "r" || flag == "read-only")
+    if (flag == "r" || flag == "read-only")
         readOnly = true;
     else return false; // not used
 

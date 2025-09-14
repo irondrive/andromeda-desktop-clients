@@ -22,9 +22,6 @@ struct ConfigOptions
      */
     bool AddOption(const std::string& option, const std::string& value);
 
-    /** True if terminal prompting is not allowed */
-    bool quiet { false };
-
     /** Whether we are in read-only mode */
     bool readOnly { false };
     

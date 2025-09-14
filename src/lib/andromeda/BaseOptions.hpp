@@ -122,6 +122,9 @@ public:
      */
     virtual void Validate() = 0;
 
+    /** Returns true if terminal prompting is not allowed */
+    [[nodiscard]] bool isQuiet() const { return mQuiet; }
+
 protected:
 
     /** Retrieve the standard help text string */
@@ -132,6 +135,9 @@ protected:
      * @param name suffix of andromeda-*.conf the user can use (or blank)
      */
     static std::string DetailBaseHelpText(const std::string& name = "");
+
+    /** True if terminal prompting is not allowed */
+    bool mQuiet { false };
 };
 
 } // namespace Andromeda

@@ -47,9 +47,9 @@ public:
 
     /** 
      * Initialize the pool from a single runner that will be cloned as necessary
-     * @param options ConfigOptions containing the max pool size
+     * @param numRunners the max pool size (number of parallel runners)
      */
-    explicit RunnerPool(BaseRunner& runner, const Andromeda::ConfigOptions& options);
+    explicit RunnerPool(BaseRunner& runner, size_t numRunners);
 
     ~RunnerPool() = default;
     DELETE_COPY(RunnerPool)

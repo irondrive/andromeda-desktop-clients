@@ -7,9 +7,9 @@ namespace Andromeda {
 namespace Backend {
 
 /*****************************************************/
-RunnerPool::RunnerPool(BaseRunner& runner, const ConfigOptions& options) :
-    mRunnerPool(options.runnerPoolSize, nullptr),
-    mRunnerLocks(options.runnerPoolSize),
+RunnerPool::RunnerPool(BaseRunner& runner, size_t numRunners) :
+    mRunnerPool(numRunners, nullptr),
+    mRunnerLocks(numRunners),
     mDebug(__func__,this)
 {
     MDBG_INFO("(poolSize:" << mRunnerPool.size() << ")");

@@ -30,7 +30,7 @@ std::string Options::HelpText()
         << RunnerOptions::HelpText() << endl << endl
         << ConfigOptions::HelpText() << endl
            
-        << DetailBaseHelpText("e2ee") << endl;
+        << DetailBaseHelpText("util") << endl;
 
     return output.str();
 }

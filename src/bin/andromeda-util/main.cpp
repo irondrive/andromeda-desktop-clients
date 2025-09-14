@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         case Options::ApiType::API_INVALID: break; // can't happen due to Validate() call
     }
 
-    RunnerPool runners(*runner, configOptions);
+    RunnerPool runners(*runner, configOptions.runnerPoolSize);
     std::unique_ptr<BackendImpl> backend;
     std::unique_ptr<Session> session;
     // TODO RAY !! do we really need to do a GetCoreConfig call here? yes - but combine into a single call, server side
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
             // TODO RAY !! make this a SessionOptions function for commonality
             if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
             {
-                if (configOptions.quiet)
+                if (options.isQuiet())
                     session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
                 else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
             }

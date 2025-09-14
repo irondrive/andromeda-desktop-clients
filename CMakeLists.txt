@@ -6,7 +6,7 @@ add_subdirectory(src/lib/andromeda-fuse lib/fuse)
 add_subdirectory(src/lib/andromeda-sync lib/sync)
 
 add_subdirectory(src/bin/andromeda-cli bin/cli)
-add_subdirectory(src/bin/andromeda-util bin/e2ee)
+add_subdirectory(src/bin/andromeda-util bin/util)
 add_subdirectory(src/bin/andromeda-fuse bin/fuse)
 add_subdirectory(src/bin/andromeda-sync bin/sync)
 

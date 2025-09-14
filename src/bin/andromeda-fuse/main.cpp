@@ -121,7 +121,7 @@ int main(int argc, char** argv)
         case Options::ApiType::API_INVALID: break; // can't happen due to Validate() call
     }
 
-    RunnerPool runners(*runner, configOptions);
+    RunnerPool runners(*runner, configOptions.runnerPoolSize);
     
     std::unique_ptr<CacheManager> cacheMgr;
     std::unique_ptr<CachingAllocator> pageAlloc;
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
         {
             if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
             {
-                if (configOptions.quiet)
+                if (options.isQuiet())
                     session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
                 else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
             }
