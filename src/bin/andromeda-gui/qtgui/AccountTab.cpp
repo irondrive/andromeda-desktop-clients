@@ -12,6 +12,8 @@
 using Andromeda::BaseException;
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
+#include "andromeda/filesystem/filedata/CacheManager.hpp"
+using Andromeda::Filesystem::Filedata::CacheManager;
 
 #include "andromeda-fuse/FuseOptions.hpp"
 using AndromedaFuse::FuseOptions;
@@ -23,8 +25,10 @@ namespace AndromedaGui {
 namespace QtGui {
 
 /*****************************************************/
-AccountTab::AccountTab(QWidget& parent, std::unique_ptr<BackendContext> backendContext) : QWidget(&parent),
+AccountTab::AccountTab(QWidget& parent, std::unique_ptr<BackendContext> backendContext, CacheManager& cacheMgr) : 
+    QWidget(&parent),
     mBackendContext(std::move(backendContext)),
+    mCacheMgr(cacheMgr),
     mQtUi(std::make_unique<Ui::AccountTab>()),
     mDebug(__func__,this)
 {
@@ -58,7 +62,7 @@ void AccountTab::Mount(bool autoMount)
     try
     {
         mMountContext = std::make_unique<MountContext>(
-            backend, true, mountPath, fuseOptions);
+            backend, mCacheMgr, true, mountPath, fuseOptions);
     }
     catch (const BaseException& ex) // MountContext::Exception or FuseAdapter::Exception
     {

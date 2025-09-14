@@ -124,15 +124,15 @@ protected:
 
     /** 
      * Construct a new abstract folder
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      */
-    explicit Folder(Backend::BackendImpl& backend);
+    explicit Folder(FSResource& fsResource);
 
     /** 
      * Initialize from the given JSON data
      * @throws BackendImpl::JSONErrorException on JSON errors
      */
-    Folder(Backend::BackendImpl& backend, const nlohmann::json& data);
+    Folder(FSResource& fsResource, const nlohmann::json& data);
 
     friend class Item; // calls DeleteItem(), RenameItem(), MoveItem()
 

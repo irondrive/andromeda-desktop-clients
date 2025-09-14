@@ -8,7 +8,7 @@ namespace Andromeda {
 namespace Filesystem {
 namespace Filedata {
 
-class CachingAllocator;
+class MemoryAllocator;
 
 /** A file data page (manages memory pages) */
 class Page
@@ -16,7 +16,7 @@ class Page
 public:
 
     /** Construct a page with the given size in bytes and allocator */
-    explicit Page(size_t pageSize, CachingAllocator& memAlloc);
+    explicit Page(size_t pageSize, MemoryAllocator& memAlloc);
 
     virtual ~Page();
     Page(Page&& page) noexcept; // move
@@ -45,7 +45,7 @@ private:
     // but vector lies about its actual memory usage... size vs. capacity
 
     /** Allocator to use for memory pages */
-    CachingAllocator& mAlloc;
+    MemoryAllocator& mAlloc;
     /** Size of this page in bytes */
     size_t mBytes;
     /** Number of memory pages allocated */

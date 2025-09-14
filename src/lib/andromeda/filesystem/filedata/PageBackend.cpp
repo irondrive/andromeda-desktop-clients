@@ -12,6 +12,7 @@
 using Andromeda::Backend::WriteFunc;
 #include "andromeda/filesystem/File.hpp"
 #include "andromeda/filesystem/Folder.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 
 namespace Andromeda {
 namespace Filesystem {
@@ -24,7 +25,8 @@ PageBackend::PageBackend(File& file, const std::string& fileID, uint64_t backend
     mBackendExists(true),
     mFile(file),
     mFileID(fileID),
-    mBackend(file.GetBackend()),
+    mBackend(file.GetFSResource().backend),
+    mPageAlloc(file.GetFSResource().pageAlloc),
     mDebug(__func__,this) { }
 
 /*****************************************************/
@@ -37,7 +39,8 @@ PageBackend::PageBackend(File& file, const std::string& fileID, const size_t pag
     mUploadFunc(uploadFunc),
     mFile(file),
     mFileID(fileID),
-    mBackend(file.GetBackend()),
+    mBackend(file.GetFSResource().backend),
+    mPageAlloc(file.GetFSResource().pageAlloc),
     mDebug(__func__,this) { }
 
 /*****************************************************/
@@ -68,7 +71,7 @@ size_t PageBackend::FetchPages(const uint64_t index, const size_t count,
             const uint64_t curPageStart { curIndex*mPageSize };
             const size_t pageSize { min64st(mBackendSize-curPageStart, mPageSize) };
 
-            if (!curPage) curPage = std::make_unique<Page>(pageSize, mBackend.GetPageAllocator());
+            if (!curPage) curPage = std::make_unique<Page>(pageSize, mPageAlloc);
 
             const uint64_t rindex { rbyte / mPageSize }; // page index for this data
             const size_t pwOffset { static_cast<size_t>(rbyte - rindex*mPageSize) }; // offset within the page

@@ -7,6 +7,8 @@
 #include "andromeda/common.hpp"
 #include "andromeda/Debug.hpp"
 
+namespace Andromeda::Filesystem::Filedata { class CacheManager; }
+
 namespace Ui { class AccountTab; }
 
 namespace AndromedaGui {
@@ -26,8 +28,10 @@ public:
     /** 
      * Creates a new AccountTab
      * @param backendContext unique_ptr to backend (takes ownership)
+     * @param cacheMgr reference to the global cache manager
      */
-    explicit AccountTab(QWidget& parent, std::unique_ptr<BackendContext> backendContext);
+    explicit AccountTab(QWidget& parent, std::unique_ptr<BackendContext> backendContext, 
+        Andromeda::Filesystem::Filedata::CacheManager& cacheMgr);
     
     ~AccountTab() override;
     DELETE_COPY(AccountTab)
@@ -57,6 +61,8 @@ private:
 
     /** The BackendContext associated with this account (never null) */
     std::unique_ptr<BackendContext> mBackendContext;
+    /** Global cache manager instance */
+    Andromeda::Filesystem::Filedata::CacheManager& mCacheMgr;
     /** The MountContext associated with this account, if mounted */
     std::unique_ptr<MountContext> mMountContext;
 

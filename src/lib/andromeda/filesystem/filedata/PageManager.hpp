@@ -29,6 +29,7 @@ namespace Backend { class BackendImpl; }
 namespace Filesystem {
 namespace Filedata {
 
+class MemoryAllocator;
 class CacheManager;
 class Page;
 
@@ -250,6 +251,8 @@ private:
     Backend::BackendImpl& mBackend;
     /** Pointer to the cache manager to use */
     CacheManager* mCacheMgr { nullptr };
+    /** Reference to the page allocator */
+    MemoryAllocator& mPageAlloc;
     /** The size of each page - see description in ConfigOptions */
     const size_t mPageSize;
     /** The current size of the file including dirty extending writes */

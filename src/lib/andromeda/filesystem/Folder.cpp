@@ -7,21 +7,20 @@
 #include "andromeda/ConfigOptions.hpp"
 #include "andromeda/StringUtil.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
-using Andromeda::Backend::BackendImpl;
 
 namespace Andromeda {
 namespace Filesystem {
 
 /*****************************************************/
-Folder::Folder(BackendImpl& backend) : 
-    Item(backend), mDebug(__func__,this)
+Folder::Folder(FSResource& fsResource) : 
+    Item(fsResource), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 }
 
 /*****************************************************/
-Folder::Folder(BackendImpl& backend, const nlohmann::json& data) : 
-    Item(backend, data), mDebug(__func__,this)
+Folder::Folder(FSResource& fsResource, const nlohmann::json& data) : 
+    Item(fsResource, data), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 }

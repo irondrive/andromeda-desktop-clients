@@ -17,7 +17,7 @@ namespace Backend { class BackendImpl; }
 namespace Filesystem {
 
 namespace Filedata {
-
+class MemoryAllocator;
 class Page;
 
 /** return the size_t min of a (uint64_t and size_t) */
@@ -124,6 +124,8 @@ private:
     const std::string& mFileID;
     /** Reference to the file's backend */
     Backend::BackendImpl& mBackend;
+    /** Reference to the page allocator */
+    MemoryAllocator& mPageAlloc;
 
     mutable Debug mDebug;
 };

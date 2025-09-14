@@ -19,7 +19,6 @@
 namespace Andromeda {
 
 namespace Account { class Session; }
-namespace Filesystem { namespace Filedata { class CacheManager; class CachingAllocator; } }
 
 namespace Backend {
 class RunnerPool;
@@ -108,15 +107,6 @@ public:
 
     /** Returns the backend options in use */
     [[nodiscard]] inline const Andromeda::ConfigOptions& GetOptions() const { return mOptions; }
-
-    /** Returns the cache manager to use for file data */
-    [[nodiscard]] inline Filesystem::Filedata::CacheManager* GetCacheManager() const { return mCacheMgr; } // TODO RAY !! these three seem dumb to have here
-
-    /** Sets the cache manager to use (or nullptr to disable) */
-    inline void SetCacheManager(Filesystem::Filedata::CacheManager* cacheMgr) { mCacheMgr = cacheMgr; }
-
-    /** Returns the CachingAllocator to use for file data */
-    Filesystem::Filedata::CachingAllocator& GetPageAllocator();
 
     /** Returns true if doing memory only */
     [[nodiscard]] bool isMemory() const;
@@ -416,11 +406,6 @@ private:
     ConfigOptions mOptions;
     RunnerPool& mRunners;
 
-    Filesystem::Filedata::CacheManager* mCacheMgr { nullptr };
-
-    /** Allocator to use for all file pages (null if no cacheMgr) */
-    std::unique_ptr<Filesystem::Filedata::CachingAllocator> mPageAllocator;
-    
     mutable Debug mDebug;
     Config mConfig;
 };

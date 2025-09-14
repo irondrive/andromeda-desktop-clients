@@ -56,6 +56,7 @@ bool ConfigOptions::AddOption(const std::string& option, const std::string& valu
     else if (option == "backend-runners") 
     // TODO RAY !! these should all be separated out.  many are filesystem-specific.  this one is backend-specific. has nothing to do with config
     // really quiet should be moved to SessionOptions, everything else is filesystem-related... actually honestly they are all fuse related, move to lib/fuse?
+    // make SessionOptions + FilesystemOptions (can go in FSResource!), no generic "ConfigOptions"
     {
         try { runnerPoolSize = static_cast<decltype(runnerPoolSize)>(stoul(value)); }
         catch (const std::logic_error& e) { 

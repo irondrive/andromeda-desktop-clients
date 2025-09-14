@@ -12,8 +12,6 @@
 
 namespace Andromeda {
 
-namespace Backend { class BackendImpl; }
-
 namespace Filesystem {
 namespace Folders {
 
@@ -26,20 +24,20 @@ public:
 
     /**
      * Load a filesystem from the backend with the given ID
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param fsid ID of filesystem to load
      * @throws BackendException on backend errors
      */
-    static std::unique_ptr<Filesystem> LoadByID(Backend::BackendImpl& backend, const std::string& fsid);
+    static std::unique_ptr<Filesystem> LoadByID(FSResource& fsResource, const std::string& fsid);
 
     /** 
      * Construct with root folder JSON data
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param data pre-loaded JSON data
      * @param parent optional pointer to parent
      * @throws BackendException on backend errors
      */
-    Filesystem(Backend::BackendImpl& backend, const nlohmann::json& data, Folder* parent);
+    Filesystem(FSResource& fsResource, const nlohmann::json& data, Folder* parent);
 
     void Refresh(const nlohmann::json& data, const Andromeda::SharedLockW& thisLock) override { } // TODO probably need to do something here...?
 

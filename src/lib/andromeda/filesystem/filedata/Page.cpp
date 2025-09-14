@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "CachingAllocator.hpp"
+#include "MemoryAllocator.hpp"
 #include "Page.hpp"
 
 namespace Andromeda {
@@ -10,7 +10,7 @@ namespace Filesystem {
 namespace Filedata {
 
 /*****************************************************/
-Page::Page(size_t pageSize, CachingAllocator& memAlloc) : 
+Page::Page(size_t pageSize, MemoryAllocator& memAlloc) : 
     mAlloc(memAlloc), 
     mBytes(pageSize), 
     mPages(mAlloc.getNumPages(mBytes)), 

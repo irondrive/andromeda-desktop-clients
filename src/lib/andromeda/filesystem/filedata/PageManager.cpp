@@ -16,6 +16,7 @@ using Andromeda::Backend::BackendException;
 #include "andromeda/filesystem/File.hpp"
 #include "andromeda/filesystem/Folder.hpp"
 #include "andromeda/filesystem/Item.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 
 namespace Andromeda {
 namespace Filesystem {
@@ -25,8 +26,9 @@ namespace Filedata {
 PageManager::PageManager(File& file, const uint64_t fileSize, const size_t pageSize, PageBackend& pageBackend) :
     mDebug(__func__,this),
     mFile(file),
-    mBackend(file.GetBackend()),
-    mCacheMgr(mBackend.GetCacheManager()),
+    mBackend(file.GetFSResource().backend),
+    mCacheMgr(file.GetFSResource().cacheMgr),
+    mPageAlloc(file.GetFSResource().pageAlloc),
     mPageSize(pageSize), 
     mFileSize(fileSize), 
     mBandwidth(__func__, mBackend.GetOptions().readAheadTime),
@@ -115,7 +117,7 @@ const Page& PageManager::GetPageRead(const uint64_t index, const SharedLock& thi
         if (!fetchSize) // must be between backend end and dirty write, create empty
         {
             MDBG_INFO("... create empty page");
-            Page& newPage { mPages.try_emplace(index, 0, mBackend.GetPageAllocator()).first->second };
+            Page& newPage { mPages.try_emplace(index, 0, mPageAlloc).first->second };
             
             ResizePage(newPage, mPageSize, false); // zeroize
             // hold pagesLock because if inform fails, we will remove this page
@@ -177,7 +179,7 @@ Page& PageManager::GetPageWrite(const uint64_t index, const size_t pageSize, con
         }
 
         MDBG_INFO("... create empty page");
-        Page& newPage { mPages.try_emplace(index, 0, mBackend.GetPageAllocator()).first->second };
+        Page& newPage { mPages.try_emplace(index, 0, mPageAlloc).first->second };
         ResizePage(newPage, pageSize, false); // zeroize
         InformNewPageWrite(index, newPage, true, thisLock);
         return newPage;

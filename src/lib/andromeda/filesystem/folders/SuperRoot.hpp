@@ -14,8 +14,8 @@ class SuperRoot : public Folder
 {
 public:
 
-    /** @param backend backend reference */
-    explicit SuperRoot(Backend::BackendImpl& backend);
+    /** @param fsResource filesystem resources */
+    explicit SuperRoot(FSResource& fsResource);
     
     ~SuperRoot() override = default;
 

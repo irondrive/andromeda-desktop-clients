@@ -8,11 +8,12 @@
 #include "andromeda/common.hpp"
 #include "andromeda/BaseException.hpp"
 #include "andromeda/Debug.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 #include "andromeda-fuse/FuseAdapter.hpp"
 
 namespace Andromeda { 
     namespace Backend { class BackendImpl; }
-    namespace Filesystem { class Folder; }
+    namespace Filesystem { class Folder; namespace Filedata { class CacheManager; } }
 }
 
 namespace AndromedaGui {
@@ -46,6 +47,7 @@ public:
     /**
      * Create a new MountContext
      * @param backend the backend resource to use
+     * @param cacheMgr the global cache manager instance
      * @param autoHome if true, mountPath is $HOME-relative and will be created, else path is absolute
      * @param mountPath filesystem path to mount - must already exist if not autoHome
      * @param options FUSE adapter options
@@ -53,6 +55,7 @@ public:
      * @throws FuseAdapter::Exception if there is a FUSE error
      */
     MountContext(Andromeda::Backend::BackendImpl& backend,
+        Andromeda::Filesystem::Filedata::CacheManager& cacheMgr,
         bool autoHome, std::string mountPath, 
         AndromedaFuse::FuseOptions& options);
 
@@ -68,6 +71,7 @@ private:
     /** True if the mount point is auto created */
     bool mCreateMount { false };
 
+    Andromeda::Filesystem::FSResource mFsResource;
     std::unique_ptr<Andromeda::Filesystem::Folder> mRootFolder;
     std::unique_ptr<AndromedaFuse::FuseAdapter> mFuseAdapter;
 

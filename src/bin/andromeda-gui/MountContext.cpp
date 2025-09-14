@@ -6,6 +6,9 @@
 
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
+#include "andromeda/filesystem/filedata/CacheManager.hpp"
+using Andromeda::Filesystem::Filedata::CacheManager;
+#include "andromeda/filesystem/filedata/CachingAllocator.hpp"
 #include "andromeda/filesystem/folders/SuperRoot.hpp"
 using Andromeda::Filesystem::Folders::SuperRoot;
 #include "andromeda-fuse/FuseAdapter.hpp"
@@ -18,8 +21,11 @@ namespace fs = std::filesystem;
 namespace AndromedaGui {
 
 /*****************************************************/
-MountContext::MountContext(BackendImpl& backend, bool autoHome, std::string mountPath, FuseOptions& options) : 
-    mCreateMount(autoHome), mDebug(__func__,this) 
+MountContext::MountContext(BackendImpl& backend, CacheManager& cacheMgr, 
+    bool autoHome, std::string mountPath, FuseOptions& options) : 
+    mCreateMount(autoHome), 
+    mFsResource(backend, &cacheMgr, cacheMgr.GetPageAllocator()),
+    mDebug(__func__,this) 
 {
     MDBG_INFO("(mountPath:" << mountPath << ")");
 
@@ -53,7 +59,7 @@ MountContext::MountContext(BackendImpl& backend, bool autoHome, std::string moun
         throw FilesystemErrorException(err);
     }
 
-    mRootFolder = std::make_unique<SuperRoot>(backend);
+    mRootFolder = std::make_unique<SuperRoot>(mFsResource);
 
     mFuseAdapter = std::make_unique<FuseAdapter>(
         mountPath, *mRootFolder, options);

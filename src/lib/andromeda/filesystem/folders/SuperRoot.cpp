@@ -3,16 +3,14 @@
 #include "Adopted.hpp"
 #include "Filesystems.hpp"
 #include "SuperRoot.hpp"
-#include "andromeda/backend/BackendImpl.hpp"
-using Andromeda::Backend::BackendImpl;
 
 namespace Andromeda {
 namespace Filesystem {
 namespace Folders {
 
 /*****************************************************/
-SuperRoot::SuperRoot(BackendImpl& backend) : 
-    Folder(backend), mDebug(__func__,this)
+SuperRoot::SuperRoot(FSResource& fsResource) : 
+    Folder(fsResource), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 
@@ -26,11 +24,11 @@ void SuperRoot::LoadItems(const SharedLockW& thisLock, bool canRefresh)
 
     MDBG_INFO("()");
 
-    { std::unique_ptr<Adopted> adopted(std::make_unique<Adopted>(mBackend, *this));
+    { std::unique_ptr<Adopted> adopted(std::make_unique<Adopted>(mFsResource, *this));
     const SharedLockR subLock { adopted->GetReadLock() };
     mItemMap[adopted->GetName(subLock)] = std::move(adopted); }
 
-    { std::unique_ptr<Filesystems> filesystems(std::make_unique<Filesystems>(mBackend, *this));
+    { std::unique_ptr<Filesystems> filesystems(std::make_unique<Filesystems>(mFsResource, *this));
     const SharedLockR subLock { filesystems->GetReadLock() };
     mItemMap[filesystems->GetName(subLock)] = std::move(filesystems); }
 

@@ -5,6 +5,7 @@
 
 #include "Folder.hpp"
 #include "FSConfig.hpp"
+#include "FSResource.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
 
@@ -12,15 +13,15 @@ namespace Andromeda {
 namespace Filesystem {
 
 /*****************************************************/
-Item::Item(BackendImpl& backend) : 
-    mBackend(backend), mDebug(__func__,this)
+Item::Item(FSResource& fsResource) : 
+    mFsResource(fsResource), mBackend(fsResource.backend), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 }
 
 /*****************************************************/
-Item::Item(BackendImpl& backend, const nlohmann::json& data) : 
-    mBackend(backend), mDebug(__func__,this)
+Item::Item(FSResource& fsResource, const nlohmann::json& data) : 
+    mFsResource(fsResource), mBackend(fsResource.backend), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 

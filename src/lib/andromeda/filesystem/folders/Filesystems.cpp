@@ -11,8 +11,8 @@ namespace Filesystem {
 namespace Folders {
 
 /*****************************************************/
-Filesystems::Filesystems(BackendImpl& backend, Folder& parent) : 
-    Folder(backend), mDebug(__func__,this)
+Filesystems::Filesystems(FSResource& fsResource, Folder& parent) : 
+    Folder(fsResource), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 
@@ -30,7 +30,7 @@ void Filesystems::SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisL
     Folder::NewItemMap newItems;
 
     NewItemFunc newFilesystem { [&](const nlohmann::json& fsJ)->std::unique_ptr<Item> {
-        return std::make_unique<Filesystem>(mBackend, fsJ, this); } };
+        return std::make_unique<Filesystem>(mFsResource, fsJ, this); } };
 
     try
     {

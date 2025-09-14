@@ -38,6 +38,8 @@ using Andromeda::Backend::RunnerPool;
 
 #include "andromeda/filesystem/Folder.hpp"
 using Andromeda::Filesystem::Folder;
+#include "andromeda/filesystem/FSResource.hpp"
+using Andromeda::Filesystem::FSResource;
 #include "andromeda/filesystem/folders/PlainFolder.hpp"
 using Andromeda::Filesystem::Folders::PlainFolder;
 #include "andromeda/filesystem/folders/Filesystem.hpp"
@@ -48,6 +50,8 @@ using Andromeda::Filesystem::Folders::SuperRoot;
 using Andromeda::Filesystem::Filedata::CacheManager;
 #include "andromeda/filesystem/filedata/CacheOptions.hpp"
 using Andromeda::Filesystem::Filedata::CacheOptions;
+#include "andromeda/filesystem/filedata/CachingAllocator.hpp"
+using Andromeda::Filesystem::Filedata::CachingAllocator;
 
 enum class ExitCode : uint8_t
 {
@@ -120,46 +124,48 @@ int main(int argc, char** argv)
     RunnerPool runners(*runner, configOptions);
     
     std::unique_ptr<CacheManager> cacheMgr;
-    if (!cacheOptions.disable) cacheMgr = 
-        std::make_unique<CacheManager>(cacheOptions, false); // don't start thread yet
+    std::unique_ptr<CachingAllocator> pageAlloc;
+    if (cacheOptions.disable)
+        pageAlloc = std::make_unique<CachingAllocator>(0);
+    else cacheMgr = std::make_unique<CacheManager>(cacheOptions, false); // don't start thread yet
 
     // these must be after cacheMgr/runners!
     std::unique_ptr<BackendImpl> backend;
     std::unique_ptr<Session> session;
+
+    std::unique_ptr<FSResource> fsResource;
     std::unique_ptr<Folder> folder;
     
     try
     {
         backend = std::make_unique<BackendImpl>(configOptions, runners);
-        backend->SetCacheManager(cacheMgr.get());
 
         if (options.HasSession())
-        {
             session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
-        }
         else if (options.HasUsername())
         {
-            // TODO RAY !! make this a SessionOptions function for commonality
             if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
             {
                 if (configOptions.quiet)
                     session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
-                else
-                    session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
+                else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
             }
             else backend->SetSudoUsername(options.GetUsername());
         }
 
         backend->SetSession(session.get());
 
+        fsResource = std::make_unique<FSResource>(*backend, cacheMgr.get(),
+            cacheMgr ? cacheMgr->GetPageAllocator() : *pageAlloc);
+
         switch (options.GetMountRootType())
         {
             case Options::RootType::SUPERROOT:
-                folder = std::make_unique<SuperRoot>(*backend); break;
+                folder = std::make_unique<SuperRoot>(*fsResource); break;
             case Options::RootType::STORAGE:
-                folder = Filesystem::LoadByID(*backend, options.GetMountItemID()); break;
+                folder = Filesystem::LoadByID(*fsResource, options.GetMountItemID()); break;
             case Options::RootType::FOLDER:
-                folder = PlainFolder::LoadByID(*backend, options.GetMountItemID()); break;
+                folder = PlainFolder::LoadByID(*fsResource, options.GetMountItemID()); break;
         }
     }
     catch (const BackendException& ex)

@@ -93,11 +93,7 @@ void MainWindow::TryLoadAccount(SessionStore& session)
 
     try
     {
-        std::unique_ptr<BackendContext> backendCtx {
-            std::make_unique<BackendContext>(session) };
-
-        backendCtx->GetBackend().SetCacheManager(mCacheManager);
-        AddAccountTab(std::move(backendCtx));
+        AddAccountTab(std::make_unique<BackendContext>(session));
     }
     catch (const BackendException& ex)
     {
@@ -124,7 +120,6 @@ void MainWindow::AddAccount()
             Utilities::warningBox(this, "Database Error", msg, ex);
         }
 
-        backendCtx->GetBackend().SetCacheManager(mCacheManager);
         AddAccountTab(std::move(backendCtx));
     }
 }
@@ -134,7 +129,7 @@ void MainWindow::AddAccountTab(std::unique_ptr<BackendContext> backendCtx)
 {
     MDBG_INFO("()");
 
-    AccountTab* accountTab { new AccountTab(*this, std::move(backendCtx)) };
+    AccountTab* accountTab { new AccountTab(*this, std::move(backendCtx), *mCacheManager) };
 
     const int idx = mQtUi->tabAccounts->addTab(accountTab, accountTab->GetTabName().c_str());
     MDBG_INFO("... idx:" << idx << " accountTab:" << accountTab);

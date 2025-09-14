@@ -4,22 +4,23 @@
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
 #include "andromeda/filesystem/FSConfig.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 
 namespace Andromeda {
 namespace Filesystem {
 namespace Folders {
 
 /*****************************************************/
-std::unique_ptr<Filesystem> Filesystem::LoadByID(BackendImpl& backend, const std::string& fsid)
+std::unique_ptr<Filesystem> Filesystem::LoadByID(FSResource& fsResource, const std::string& fsid)
 {
-    const nlohmann::json data(backend.GetStorage(fsid));
+    const nlohmann::json data(fsResource.backend.GetStorage(fsid));
 
-    return std::make_unique<Filesystem>(backend, data, nullptr);
+    return std::make_unique<Filesystem>(fsResource, data, nullptr);
 }
 
 /*****************************************************/
-Filesystem::Filesystem(BackendImpl& backend, const nlohmann::json& data, Folder* parent) :
-    PlainFolder(backend, data, parent), mFsid(mId), mDebug(__func__,this) 
+Filesystem::Filesystem(FSResource& fsResource, const nlohmann::json& data, Folder* parent) :
+    PlainFolder(fsResource, data, parent), mFsid(mId), mDebug(__func__,this) 
 {
     MDBG_INFO("()");
 
@@ -30,7 +31,7 @@ Filesystem::Filesystem(BackendImpl& backend, const nlohmann::json& data, Folder*
     // only when needed, both to avoid an unnecessary request that might not be needed
     // and also so that this object can still be loaded when the storage has a configuration issue
 
-    mStConfig = &FSConfig::LoadByID(backend, mFsid);
+    mStConfig = &FSConfig::LoadByID(mBackend, mFsid);
 }
 
 /*****************************************************/

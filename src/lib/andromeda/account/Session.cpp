@@ -20,13 +20,13 @@ Debug sDebug("Session",nullptr); // NOLINT(cert-err58-cpp)
 Session::Session(BackendImpl& backend, const std::string& username, const std::string& sessionID, const std::string& sessionKey, bool temporary):
     mDebug(__func__, this), mBackend(backend), mUsername(username), mSessionID(sessionID), mSessionKey(sessionKey), mTemporary(temporary)
 {
-    MDBG_INFO("(username: " << username << " sessionID: " << sessionID << ")");
+    MDBG_INFO("(username:" << username << " sessionID:" << sessionID << ")");
 }
 
 /*****************************************************/
 Session::~Session()
 {
-    MDBG_INFO("(username: " << mUsername << " sessionID: " << mSessionID << ")");
+    MDBG_INFO("(username:" << mUsername << " sessionID:" << mSessionID << ")");
     if (mTemporary)
     {
         try { mBackend.DeleteClient(this); }

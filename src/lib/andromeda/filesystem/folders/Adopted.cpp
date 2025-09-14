@@ -2,7 +2,6 @@
 
 #include "Adopted.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
-using Andromeda::Backend::BackendImpl;
 #include "andromeda/filesystem/Folder.hpp"
 
 namespace Andromeda {
@@ -10,8 +9,8 @@ namespace Filesystem {
 namespace Folders {
 
 /*****************************************************/
-Adopted::Adopted(BackendImpl& backend, Folder& parent) :
-    PlainFolder(backend, &parent), mDebug(__func__,this)
+Adopted::Adopted(FSResource& fsResource, Folder& parent) :
+    PlainFolder(fsResource, &parent), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 

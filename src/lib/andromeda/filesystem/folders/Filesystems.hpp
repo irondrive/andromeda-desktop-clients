@@ -14,10 +14,10 @@ class Filesystems : public Folder
 public:
 
     /**
-     * @param backend backend reference
+     * @param fsResource filesystem resources
      * @param parent parent folder reference
      */
-    Filesystems(Backend::BackendImpl& backend, Folder& parent);
+    Filesystems(FSResource& fsResource, Folder& parent);
     
     ~Filesystems() override = default;
 

@@ -20,8 +20,8 @@ namespace Andromeda {
 namespace Filesystem {
 
 /*****************************************************/
-File::File(BackendImpl& backend, const nlohmann::json& data, Folder& parent) : 
-    Item(backend, data), mDebug(__func__,this)
+File::File(FSResource& fsResource, const nlohmann::json& data, Folder& parent) : 
+    Item(fsResource, data), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 
@@ -47,9 +47,9 @@ File::File(BackendImpl& backend, const nlohmann::json& data, Folder& parent) :
 }
 
 /*****************************************************/
-File::File(BackendImpl& backend, Folder& parent, const std::string& name, const FSConfig& stConfig,
+File::File(FSResource& fsResource, Folder& parent, const std::string& name, const FSConfig& stConfig,
     const File::CreateFunc& createFunc, const File::UploadFunc& uploadFunc) : 
-    Item(backend), mDebug(__func__,this)
+    Item(fsResource), mDebug(__func__,this)
 {
     MDBG_INFO("()");
 

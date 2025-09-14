@@ -18,9 +18,6 @@
 #include "andromeda/StringUtil.hpp"
 #include "andromeda/account/Session.hpp"
 using Andromeda::Account::Session;
-#include "andromeda/filesystem/filedata/CacheManager.hpp"
-#include "andromeda/filesystem/filedata/CachingAllocator.hpp"
-using Andromeda::Filesystem::Filedata::CachingAllocator;
 
 namespace Andromeda {
 namespace Backend {
@@ -41,17 +38,6 @@ BackendImpl::BackendImpl(const ConfigOptions& options, RunnerPool& runners) :
 BackendImpl::~BackendImpl()
 {
     MDBG_INFO("()");
-}
-
-/*****************************************************/
-CachingAllocator& BackendImpl::GetPageAllocator() // TODO RAY !! this is an odd place for this - make a FilesystemResource class that contains BackendImpl + the other things
-{
-    if (mCacheMgr) 
-        return mCacheMgr->GetPageAllocator();
-
-    if (!mPageAllocator)
-        mPageAllocator = std::make_unique<CachingAllocator>(0);
-    return *mPageAllocator;
 }
 
 /*****************************************************/

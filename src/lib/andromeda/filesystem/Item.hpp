@@ -18,6 +18,7 @@ namespace Backend { class BackendImpl; }
 
 namespace Filesystem {
 class FSConfig;
+struct FSResource;
 
 class Folder;
 
@@ -98,8 +99,8 @@ public:
     /** Returns the FS type */
     virtual Type GetType() const = 0;
 
-    /** Returns a reference to the backend for this item */
-    virtual Backend::BackendImpl& GetBackend() const final { return mBackend; }
+    /** Returns a reference to FS resources for this item */
+    virtual FSResource& GetFSResource() const final { return mFsResource; }
 
     /** Returns true if this item has a parent */
     virtual bool HasParent(const SharedLock& thisLock) const { return mParent != nullptr; }
@@ -211,15 +212,15 @@ protected:
 
     /** 
      * Construct a new item
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      */
-    explicit Item(Backend::BackendImpl& backend);
+    explicit Item(FSResource& fsResource);
 
     /** 
      * Initialize from the given JSON data
      * @throws BackendImpl::JSONErrorException on JSON errors
      */
-    Item(Backend::BackendImpl& backend, const nlohmann::json& data);
+    Item(FSResource& fsResource, const nlohmann::json& data);
 
     friend class Folder; // calls SubDelete(), SubRename(), SubMove(), GetDeleteLock()
 
@@ -254,7 +255,9 @@ protected:
      */
     virtual void SubMove(const std::string& parentID, const SharedLockW& thisLock, bool overwrite) = 0;
 
-    /** Reference to the API backend */
+    /** Reference to the FS Resource */
+    FSResource& mFsResource;
+    /** Reference to the API backend (convenience) */
     Backend::BackendImpl& mBackend;
 
     /** Pointer to parent folder */

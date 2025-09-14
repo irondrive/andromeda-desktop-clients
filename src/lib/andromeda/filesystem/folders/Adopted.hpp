@@ -7,8 +7,6 @@
 
 namespace Andromeda {
 
-namespace Backend { class BackendImpl; }
-
 namespace Filesystem {
 class Folder;
 
@@ -22,10 +20,10 @@ public:
     ~Adopted() override = default;
 
     /**
-     * @param backend backend reference
+     * @param fsResource filesystem resources
      * @param parent reference to parent 
      */
-    Adopted(Backend::BackendImpl& backend, Folder& parent);
+    Adopted(FSResource& fsResource, Folder& parent);
 
 protected:
 

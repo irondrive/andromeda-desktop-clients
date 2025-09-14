@@ -8,6 +8,7 @@ using Andromeda::Backend::BackendImpl;
 #include "andromeda/backend/RunnerInput.hpp"
 using Andromeda::Backend::WriteFunc;
 #include "andromeda/filesystem/FSConfig.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 #include "andromeda/filesystem/File.hpp"
 using Andromeda::Filesystem::File;
 
@@ -16,24 +17,24 @@ namespace Filesystem {
 namespace Folders {
 
 /*****************************************************/
-std::unique_ptr<PlainFolder> PlainFolder::LoadByID(BackendImpl& backend, const std::string& id)
+std::unique_ptr<PlainFolder> PlainFolder::LoadByID(FSResource& fsResource, const std::string& id)
 {
-    const nlohmann::json data(backend.GetFolder(id));
+    const nlohmann::json data(fsResource.backend.GetFolder(id));
 
-    return std::make_unique<PlainFolder>(backend, data, true, nullptr);
+    return std::make_unique<PlainFolder>(fsResource, data, true, nullptr);
 }
 
 /*****************************************************/
-PlainFolder::PlainFolder(BackendImpl& backend, Folder* parent) : // for child classes
-    Folder(backend), mDebug(__func__,this)
+PlainFolder::PlainFolder(FSResource& fsResource, Folder* parent) : // for child classes
+    Folder(fsResource), mDebug(__func__,this)
 {
     MDBG_INFO("(2)");
     mParent = parent;
 }
 
 /*****************************************************/
-PlainFolder::PlainFolder(BackendImpl& backend, const nlohmann::json& data, Folder* parent) : // for child classes
-    Folder(backend, data), mDebug(__func__,this)
+PlainFolder::PlainFolder(FSResource& fsResource, const nlohmann::json& data, Folder* parent) : // for child classes
+    Folder(fsResource, data), mDebug(__func__,this)
 {
     MDBG_INFO("(3)");
     mParent = parent;
@@ -42,8 +43,8 @@ PlainFolder::PlainFolder(BackendImpl& backend, const nlohmann::json& data, Folde
 }
 
 /*****************************************************/
-PlainFolder::PlainFolder(BackendImpl& backend, const nlohmann::json& data, bool haveItems, Folder* parent) :
-    PlainFolder(backend, data, parent)
+PlainFolder::PlainFolder(FSResource& fsResource, const nlohmann::json& data, bool haveItems, Folder* parent) :
+    PlainFolder(fsResource, data, parent)
 {
     MDBG_INFO("(4)");
 
@@ -60,7 +61,7 @@ PlainFolder::PlainFolder(BackendImpl& backend, const nlohmann::json& data, bool 
     catch (const nlohmann::json::exception& ex) {
         throw BackendImpl::JSONErrorException(ex.what()); }
 
-    mStConfig = &FSConfig::LoadByID(backend, fsid);
+    mStConfig = &FSConfig::LoadByID(mBackend, fsid);
 }
 
 /*****************************************************/
@@ -79,10 +80,10 @@ void PlainFolder::LoadItemsFrom(const nlohmann::json& data, ItemLockMap& itemsLo
     Folder::NewItemMap newItems;
 
     NewItemFunc newFile { [&](const nlohmann::json& fileJ)->std::unique_ptr<Item> {
-        return std::make_unique<File>(mBackend, fileJ, *this); } };
+        return std::make_unique<File>(mFsResource, fileJ, *this); } };
 
     NewItemFunc newFolder { [&](const nlohmann::json& folderJ)->std::unique_ptr<Item> {
-        return std::make_unique<Folders::PlainFolder>(mBackend, folderJ, false, this); } };
+        return std::make_unique<Folders::PlainFolder>(mFsResource, folderJ, false, this); } };
 
     try
     {
@@ -114,9 +115,9 @@ void PlainFolder::SubCreateFile(const std::string& name, const SharedLockW& this
     if (mBackend.GetOptions().cacheType == ConfigOptions::CacheType::NONE)
     {
         const nlohmann::json data(mBackend.CreateFile(GetID(), name));
-        file = std::make_unique<File>(mBackend, data, *this);
+        file = std::make_unique<File>(mFsResource, data, *this);
     }
-    else file = std::make_unique<File>(mBackend, *this, name, *mStConfig, // create later
+    else file = std::make_unique<File>(mFsResource, *this, name, *mStConfig, // create later
         [&](const std::string& fname){ 
             return mBackend.CreateFile(GetID(), fname); },
         [&](const std::string& fname, const WriteFunc& ffunc, bool oneshot){ 
@@ -135,7 +136,7 @@ void PlainFolder::SubCreateFolder(const std::string& name, const SharedLockW& th
 
     const nlohmann::json data(mBackend.CreateFolder(GetID(), name));
 
-    std::unique_ptr<PlainFolder> folder(std::make_unique<PlainFolder>(mBackend, data, false, this));
+    std::unique_ptr<PlainFolder> folder(std::make_unique<PlainFolder>(mFsResource, data, false, this));
 
     const SharedLockR subLock { folder->GetReadLock() };
     mItemMap[folder->GetName(subLock)] = std::move(folder);

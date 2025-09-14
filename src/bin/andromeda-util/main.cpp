@@ -108,9 +108,7 @@ int main(int argc, char** argv)
         // TODO RAY !! some actions will need pre-auth, some not, not sure how to do this
 
         if (options.HasSession())
-        {
             session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
-        }
         else if (options.HasUsername())
         {
             // TODO RAY !! make this a SessionOptions function for commonality
@@ -118,8 +116,7 @@ int main(int argc, char** argv)
             {
                 if (configOptions.quiet)
                     session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
-                else
-                    session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
+                else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
             }
             else backend->SetSudoUsername(options.GetUsername());
         }

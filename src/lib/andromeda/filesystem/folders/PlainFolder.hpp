@@ -24,39 +24,39 @@ public:
 
     /**
      * Load from the backend with the given ID
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param id ID of folder to load
      * @throws BackendException on backend errors
      */
-    static std::unique_ptr<PlainFolder> LoadByID(Backend::BackendImpl& backend, const std::string& id);
+    static std::unique_ptr<PlainFolder> LoadByID(FSResource& fsResource, const std::string& id);
     
     /** 
      * Construct with JSON data, load stConfig
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param data json data from backend
      * @param haveItems true if JSON has subitems
      * @param parent pointer to parent
      * @throws BackendException on backend errors
      */
-    PlainFolder(Backend::BackendImpl& backend, const nlohmann::json& data, bool haveItems, Folder* parent);
+    PlainFolder(FSResource& fsResource, const nlohmann::json& data, bool haveItems, Folder* parent);
 
 protected:
     
     /** 
      * Construct without JSON data
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param parent pointer to parent
      */
-    PlainFolder(Backend::BackendImpl& backend, Folder* parent);
+    PlainFolder(FSResource& fsResource, Folder* parent);
     
     /** 
      * Construct with JSON data without items and NO stConfig
-     * @param backend reference to backend
+     * @param fsResource filesystem resources
      * @param data json data from backend
      * @param parent pointer to parent
      * @throws BackendImpl::JSONErrorException on JSON errors
      */
-    PlainFolder(Backend::BackendImpl& backend, const nlohmann::json& data, Folder* parent);
+    PlainFolder(FSResource& fsResource, const nlohmann::json& data, Folder* parent);
 
     void SubLoadItems(ItemLockMap& itemsLocks, const SharedLockW& thisLock) override;
 

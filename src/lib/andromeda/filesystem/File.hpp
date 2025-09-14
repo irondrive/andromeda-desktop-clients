@@ -18,8 +18,6 @@
 
 namespace Andromeda {
 
-namespace Backend { class BackendImpl; }
-
 namespace Filesystem {
 class Folder;
 
@@ -64,12 +62,12 @@ public:
 
     /**
      * @brief Construct a File using backend data
-     * @param backend backend reference
+     * @param fsResource filesystem resources
      * @param data JSON data from backend
      * @param parent reference to parent folder
      * @throws BackendException on backend errors
      */
-    File(Backend::BackendImpl& backend, const nlohmann::json& data, Folder& parent);
+    File(FSResource& fsResource, const nlohmann::json& data, Folder& parent);
 
     /** Function to create the file on the backend and return its JSON */
     using CreateFunc = std::function<nlohmann::json (const std::string&)>;
@@ -78,14 +76,14 @@ public:
 
     /**
      * @brief Construct a new file in memory only to be created on the backend when flushed
-     * @param backend backend reference
+     * @param fsResource filesystem resources
      * @param parent reference to parent folder
      * @param name name of the new file
      * @param stConfig reference to storage config
      * @param createFunc function to create on the backend
      * @param uploadFunc function to upload on the backend
      */
-    File(Backend::BackendImpl& backend, Folder& parent, 
+    File(FSResource& fsResource, Folder& parent, 
         const std::string& name, const FSConfig& stConfig,
         const CreateFunc& createFunc, const UploadFunc& uploadFunc);
 
