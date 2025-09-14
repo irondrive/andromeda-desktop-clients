@@ -7,7 +7,7 @@
 #include <cstdlib>
 
 #include "Options.hpp"
-using AndromedaE2ee::Options;
+using AndromedaUtil::Options;
 
 #include "andromeda/ConfigOptions.hpp"
 using Andromeda::ConfigOptions;
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     try
     {
         options.ParseConfig("libandromeda");
-        options.ParseConfig("andromeda-e2ee");
+        options.ParseConfig("andromeda-util");
 
         options.ParseArgs(static_cast<size_t>(argc), argv);
 
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     {
         case Options::ApiType::API_URL:
         {
-            const std::string userAgent(std::string("andromeda-e2ee/")
+            const std::string userAgent(std::string("andromeda-util/")
                 +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
             runner = std::make_unique<HTTPRunner>(options.GetApiPath(),
@@ -101,8 +101,6 @@ int main(int argc, char** argv)
     std::unique_ptr<Session> session;
     // TODO RAY !! do we really need to do a GetCoreConfig call here? yes - but combine into a single call, server side
     
-    // TODO RAY !! rename to just andromeda-util
-
     try
     {
         // TODO RAY !! make an alternate BackendImpl signature that takes only 1 runner

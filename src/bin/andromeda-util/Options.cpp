@@ -10,7 +10,7 @@ using Andromeda::Backend::HTTPOptions;
 #include "andromeda/backend/RunnerOptions.hpp"
 using Andromeda::Backend::RunnerOptions;
 
-namespace AndromedaE2ee {
+namespace AndromedaUtil {
 
 /*****************************************************/
 std::string Options::HelpText()
@@ -21,8 +21,8 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-e2ee " << CoreBaseHelpText() << endl
-        << "andromeda-e2ee (-a|--apiurl url | -p|--apipath [path])" << endl << endl
+        << "andromeda-util " << CoreBaseHelpText() << endl
+        << "andromeda-util (-a|--apiurl url | -p|--apipath [path])" << endl << endl
 
         << "Remote Auth:     [-u|--username str] [--password str] | [--sessionid id] [--sessionkey key] [--force-session]" << endl << endl
        
@@ -117,4 +117,4 @@ void Options::Validate()
         throw MissingOptionException("apiurl/apipath");
 }
 
-} // namespace AndromedaE2ee
+} // namespace AndromedaUtil

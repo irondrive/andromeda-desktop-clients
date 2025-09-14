@@ -1,0 +1,5 @@
+@INCLUDE = tools/Doxyfile.inc
+
+INPUT = src/bin/andromeda-util
+OUTPUT_DIRECTORY = docs/bin/andromeda-util
+PROJECT_NAME = andromeda-util

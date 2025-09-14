@@ -1,5 +1,5 @@
-#ifndef A2E2EE_OPTIONS_H_
-#define A2E2EE_OPTIONS_H_
+#ifndef A2UTIL_OPTIONS_H_
+#define A2UTIL_OPTIONS_H_
 
 #include <string>
 
@@ -11,7 +11,7 @@ namespace Andromeda {
     namespace Filesystem { namespace Filedata { struct CacheOptions; } }
 }
 
-namespace AndromedaE2ee {
+namespace AndromedaUtil {
 
 /** Manages command line options and config */
 class Options : public Andromeda::BaseOptions
@@ -99,6 +99,6 @@ private:
     std::string mSessionkey;
 };
 
-} // namespace AndromedaE2ee
+} // namespace AndromedaUtil
 
-#endif // A2E2EE_OPTIONS_H_
+#endif // A2UTIL_OPTIONS_H_

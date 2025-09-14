@@ -1,5 +1,5 @@
-#ifndef A2E2EE_ACTIONS_H_
-#define A2E2EE_ACTIONS_H_
+#ifndef A2UTIL_ACTIONS_H_
+#define A2UTIL_ACTIONS_H_
 
 // TODO RAY !! comments
 namespace Actions
@@ -11,4 +11,4 @@ namespace Actions
 
 }; // namespace Actions
 
-#endif // A2E2EE_ACTIONS_H_
+#endif // A2UTIL_ACTIONS_H_

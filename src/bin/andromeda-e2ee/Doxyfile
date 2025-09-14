@@ -1,5 +1,0 @@
-@INCLUDE = tools/Doxyfile.inc
-
-INPUT = src/bin/andromeda-e2ee
-OUTPUT_DIRECTORY = docs/bin/andromeda-e2ee
-PROJECT_NAME = andromeda-e2ee
