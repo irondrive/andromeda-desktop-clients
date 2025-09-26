@@ -60,13 +60,10 @@ public:
         public: explicit MissingOptionException(const std::string& option) :
             Exception("Missing Option: "+option) {} };
 
-    using Flags = std::list<std::string>;
-    using Options = std::multimap<std::string, std::string>;
-
     /** 
      * Parses command line arguments from main (skips argv[0]!) 
      * @throws Exception if invalid arguments
-     * @param stopmm if true, stop processing when "--" is encountered
+     * @param stopmm if true, stop processing when a non-key is encountered
      * @return number of arguments consumed (matches argc if stopmm is false)
      */
     virtual size_t ParseArgs(size_t argc, const char* const* argv, bool stopmm = false);
@@ -120,7 +117,7 @@ public:
      * Makes sure all required options were provided 
      * @throws MissingOptionException if a required option is missing
      */
-    virtual void Validate() = 0;
+    virtual void Validate() { }
 
     /** Returns true if terminal prompting is not allowed */
     [[nodiscard]] bool isQuiet() const { return mQuiet; }

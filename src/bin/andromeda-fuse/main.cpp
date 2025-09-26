@@ -77,9 +77,7 @@ int main(int argc, char** argv)
     {
         options.ParseConfig("libandromeda");
         options.ParseConfig("andromeda-fuse");
-
-        options.ParseArgs(static_cast<size_t>(argc), argv);
-
+        options.ParseArgs(static_cast<size_t>(argc-1), argv+1);
         options.Validate();
     }
     catch (const Options::ShowHelpException& ex)

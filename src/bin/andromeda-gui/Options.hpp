@@ -26,8 +26,6 @@ public:
 
     bool AddOption(const std::string& option, const std::string& value) override;
 
-    void Validate() override { }
-
 private:
 
     Andromeda::Filesystem::Filedata::CacheOptions& mCacheOptions; // cppcheck-suppress uninitMemberVarPrivate

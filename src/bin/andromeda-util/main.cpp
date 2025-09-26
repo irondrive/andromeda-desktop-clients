@@ -8,7 +8,11 @@
 
 #include "Options.hpp"
 using AndromedaUtil::Options;
+#include "Actions.hpp"
+using AndromedaUtil::Actions;
 
+#include "andromeda/BaseException.hpp"
+using Andromeda::BaseException;
 #include "andromeda/ConfigOptions.hpp"
 using Andromeda::ConfigOptions;
 #include "andromeda/Debug.hpp"
@@ -36,7 +40,8 @@ enum class ExitCode : uint8_t
 {
     SUCCESS,
     BAD_USAGE,
-    BACKEND_INIT
+    BACKEND_INIT,
+    ACTION_FAIL
 };
 
 int main(int argc, char** argv)
@@ -53,9 +58,8 @@ int main(int argc, char** argv)
     {
         options.ParseConfig("libandromeda");
         options.ParseConfig("andromeda-util");
-
-        options.ParseArgs(static_cast<size_t>(argc), argv);
-
+        const size_t args = options.ParseArgs(static_cast<size_t>(--argc), ++argv, true);
+        argc -= static_cast<int>(args); argv += args;
         options.Validate();
     }
     catch (const Options::ShowHelpException& ex)
@@ -99,17 +103,16 @@ int main(int argc, char** argv)
     RunnerPool runners(*runner, configOptions.runnerPoolSize);
     std::unique_ptr<BackendImpl> backend;
     std::unique_ptr<Session> session;
-    // TODO RAY !! do we really need to do a GetCoreConfig call here? yes - but combine into a single call, server side
+    // TODO RAY !! do we really need to do a GetConfig call here? probably for versioning - maybe andromeda-cli could do it too, given an option? not by default
     
     try
     {
         // TODO RAY !! make an alternate BackendImpl signature that takes only 1 runner
         backend = std::make_unique<BackendImpl>(configOptions, runners);
-        // TODO RAY !! some actions will need pre-auth, some not, not sure how to do this
 
         if (options.HasSession())
             session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
-        else if (options.HasUsername())
+        /*else if (options.HasUsername())
         {
             // TODO RAY !! make this a SessionOptions function for commonality
             if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
@@ -119,7 +122,7 @@ int main(int argc, char** argv)
                 else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
             }
             else backend->SetSudoUsername(options.GetUsername());
-        }
+        }*/
 
         backend->SetSession(session.get());
     }
@@ -129,8 +132,21 @@ int main(int argc, char** argv)
         return static_cast<int>(ExitCode::BACKEND_INIT);
     }
 
-    // TODO RAY !! implement me further - need a "action" on the command line - move to a new class
-    DDBG_INFO(": action:" << options.GetAction());
+    try
+    {
+        Actions actions(backend.get(), session.get());
+        actions.RunAction(argc, argv);
+    }
+    catch (const Options::Exception& ex)
+    {
+        std::cout << Options::HelpText() << std::endl;
+        return static_cast<int>(ExitCode::BAD_USAGE);
+    }
+    catch (const BaseException& ex)
+    {
+        std::cout << ex.what() << std::endl;
+        return static_cast<int>(ExitCode::ACTION_FAIL);
+    }
 
     DDBG_INFO(": returning success...");
     return static_cast<int>(ExitCode::SUCCESS);

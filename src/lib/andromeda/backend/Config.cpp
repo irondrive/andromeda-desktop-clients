@@ -15,11 +15,12 @@ Config::Config(BackendImpl& backend) :
 {
     MDBG_INFO("()");
 
-    nlohmann::json coreConfig(mBackend.GetCoreConfigJ());
-    nlohmann::json filesConfig(mBackend.GetFilesConfigJ());
+    const nlohmann::json config(mBackend.GetConfigJ());
 
     try
     {
+        const nlohmann::json& coreConfig { config.at("core") };
+
         // parse the major API version
         const std::string apiver { coreConfig.at("apiver").get<std::string>() };
         const StringUtil::StringList apivers { StringUtil::explode(apiver,".") };
@@ -48,6 +49,8 @@ Config::Config(BackendImpl& backend) :
         // can't get_to() with std::atomic
         mReadOnly.store(coreConfig.at("read_only").get<bool>());
 
+        const nlohmann::json& filesConfig { config.at("files") };
+        
         const nlohmann::json& maxbytes { filesConfig.at("upload_maxbytes") };
         if (!maxbytes.is_null()) mUploadMaxBytes.store(maxbytes.get<size_t>());
 

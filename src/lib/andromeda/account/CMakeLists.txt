@@ -1,5 +1,6 @@
 
 set(SOURCE_FILES 
+    Account.cpp
     Session.cpp
     SessionOptions.cpp
     SessionStore.cpp

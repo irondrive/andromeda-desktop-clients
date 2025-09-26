@@ -125,18 +125,11 @@ public:
     // ---- Actual backend functions below here ---- //
 
     /**
-     * Loads server core config
+     * Loads all server app config
      * @return loaded config as JSON
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetCoreConfigJ();
-
-    /**
-     * Loads server files config
-     * @return loaded config as JSON
-     * @throws BackendException for backend issues
-     */
-    nlohmann::json GetFilesConfigJ();
+    nlohmann::json GetConfigJ();
 
     /** 
      * Load files policy for the current account

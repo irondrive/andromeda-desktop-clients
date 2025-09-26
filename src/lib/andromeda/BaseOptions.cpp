@@ -15,7 +15,7 @@ std::string BaseOptions::CoreBaseHelpText()
 {
     std::ostringstream output;
 
-    output << "(-h|--help | -V|--version) [-q|--quiet]";
+    output << "[-h|--help | -V|--version] [-q|--quiet]";
 
     return output.str();
 }
@@ -37,48 +37,54 @@ std::string BaseOptions::DetailBaseHelpText(const std::string& name)
 }
 
 /*****************************************************/
-size_t BaseOptions::ParseArgs(size_t argc, const char* const* argv, bool stopmm)
+size_t BaseOptions::ParseArgs(size_t argc, const char* const* argv, bool stopmm) // NOLINT(readability-function-cognitive-complexity)
 {
-    Flags flags; Options options;
-
-    size_t argIdx { 1 }; for (; argIdx < argc; argIdx++)
+    size_t argIdx { 0 }; for (; argIdx < argc; argIdx++)
     {
         std::string key { argv[argIdx] };
         if (key.empty())
             throw BadUsageException(
                 "empty key at arg "+std::to_string(argIdx));
         if (key[0] != '-')
-            throw BadUsageException(
+        {
+            if (stopmm) return argIdx;
+            else throw BadUsageException(
                 "expected key at arg "+std::to_string(argIdx));
+        }
 
         key.erase(0, 1); // key++
         const bool ext { (key[0] == '-') };
         if (ext) key.erase(0, 1); // --opt
 
         if (key.empty() || std::isspace(key[0]))
-        {
-            if (stopmm) { ++argIdx; break; }
-            else throw BadUsageException(
+            throw BadUsageException(
                 "empty key at arg "+std::to_string(argIdx));
-        }
-        
+
         if (key.find('=') != std::string::npos) // -x=3 or --x=3
         {
             const StringUtil::StringPair pair { StringUtil::split(key, "=") };
-            options.emplace(pair.first, pair.second);
+            if (!AddOption(pair.first, pair.second))
+                throw BadOptionException(pair.first);
         }
-        else if (!ext && key.size() > 1)
-            options.emplace(key.substr(0, 1), key.substr(1)); // -x3
-        else if (argc > argIdx+1 && argv[argIdx+1][0] != '-')
-            options.emplace(key, argv[++argIdx]); // -x 3, --x 3
-        else flags.push_back(key); // -x, --x
+        else if (!ext && key.size() > 1) // -x3
+        {
+            if (!AddOption(key.substr(0,1), key.substr(1)))
+                throw BadOptionException(key.substr(0,1));
+        }
+        else if (argc > argIdx+1 && argv[argIdx+1][0] != '-') // -x 3, --x 3
+        {
+            if (!AddOption(key, argv[++argIdx]))
+            {
+                if (!stopmm) throw BadOptionException(key);
+                else if (!AddFlag(key)) throw BadFlagException(key);
+                else return argIdx;
+            }
+        }
+        else // -x, --x
+        {
+            if (!AddFlag(key)) throw BadFlagException(key);
+        }
     }
-
-    for (const decltype(flags)::value_type& flag : flags) 
-        if (!AddFlag(flag)) throw BadFlagException(flag);
-
-    for (const decltype(options)::value_type& pair : options)
-        if (!AddOption(pair.first, pair.second)) throw BadOptionException(pair.first);
 
     return argIdx;
 }
@@ -86,8 +92,6 @@ size_t BaseOptions::ParseArgs(size_t argc, const char* const* argv, bool stopmm)
 /*****************************************************/
 void BaseOptions::ParseFile(const std::filesystem::path& path)
 {
-    Flags flags; Options options;
-
     std::ifstream file(path, std::ios::in | std::ios::binary);
 
     while (file.good())
@@ -99,15 +103,18 @@ void BaseOptions::ParseFile(const std::filesystem::path& path)
 
         if (line.empty() || line.at(0) == '#' || line.at(0) == ' ') continue;
 
-        if (line.find('=') == std::string::npos) flags.push_back(line);
-        else options.emplace(StringUtil::split(line, "="));
+        if (line.find('=') == std::string::npos)
+        {
+            if (!AddFlag(line))
+                throw BadFlagException(line);
+        }
+        else
+        {
+            const StringUtil::StringPair pair { StringUtil::split(line, "=") };
+            if (!AddOption(pair.first, pair.second))
+                throw BadOptionException(pair.first);
+        }
     }
-
-    for (const decltype(flags)::value_type& flag : flags) 
-        if (!AddFlag(flag)) throw BadFlagException(flag);
-
-    for (const decltype(options)::value_type& pair : options)
-        if (!AddOption(pair.first, pair.second)) throw BadOptionException(pair.first);
 }
 
 /*****************************************************/
@@ -130,8 +137,6 @@ void BaseOptions::ParseConfig(const std::string& prefix)
 /*****************************************************/
 void BaseOptions::ParseUrl(const std::string& url)
 {
-    Flags flags; Options options;
-
     const size_t sep(url.find('?'));
 
     if (sep != std::string::npos)
@@ -140,16 +145,15 @@ void BaseOptions::ParseUrl(const std::string& url)
 
         for (const std::string& param : StringUtil::explode(substr,"&"))
         {
-            if (param.find('=') == std::string::npos) flags.push_back(param);
-            else options.emplace(StringUtil::split(param, "="));
+            if (param.find('=') == std::string::npos)
+                TryAddUrlFlag(param);
+            else
+            {
+                const StringUtil::StringPair pair { StringUtil::split(param, "=") };
+                TryAddUrlOption(pair.first, pair.second);
+            }
         }
     }
-
-    for (const decltype(flags)::value_type& flag : flags) 
-        TryAddUrlFlag(flag);
-
-    for (const decltype(options)::value_type& pair : options)
-        TryAddUrlOption(pair.first, pair.second);
 }
 
 /*****************************************************/

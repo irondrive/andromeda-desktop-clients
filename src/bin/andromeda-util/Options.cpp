@@ -21,8 +21,8 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-util " << CoreBaseHelpText() << endl
-        << "andromeda-util (-a|--apiurl url | -p|--apipath [path])" << endl << endl
+        << "andromeda-util [flags] action [action flags]" << endl
+        << "andromeda-util " << CoreBaseHelpText() << " (-a|--apiurl url | -p|--apipath [path])" << endl << endl
 
         << "Remote Auth:     [-u|--username str] [--password str] | [--sessionid id] [--sessionkey key] [--force-session]" << endl << endl
        
@@ -42,16 +42,6 @@ Options::Options(ConfigOptions& configOptions,
     mConfigOptions(configOptions), 
     mHttpOptions(httpOptions), 
     mRunnerOptions(runnerOptions) { }
-
-/*****************************************************/
-size_t Options::ParseArgs(size_t argc, const char* const* argv, bool stopmm)
-{
-    if (argc < 2) throw BadUsageException("what action?");
-    mAction = argv[1]; --argc; ++argv; // TODO RAY !! add help text
-    // TODO RAY !! where is the validation for this? probably in the runner
-
-    return BaseOptions::ParseArgs(argc, argv, stopmm);
-}
 
 /*****************************************************/
 bool Options::AddFlag(const std::string& flag)

@@ -70,7 +70,7 @@ struct FuseArguments
 
 /*****************************************************/
 /** fuse_mount (manual unmount, not scope-managed) */
-struct FuseMount
+struct FuseMount // FUSE2
 {
     /** @param fargs FuseArguments reference
       * @param path filesystem path to mount */
@@ -104,7 +104,7 @@ struct FuseMount
 
 /*****************************************************/
 /** Scope-managed fuse_new/fuse_destroy (also unmounts) */
-struct FuseContext
+struct FuseContext // FUSE2
 {
     /** @param mount FuseMount reference 
       * @param fargs FuseArguments reference */
@@ -176,7 +176,7 @@ struct FuseContext
 
 /*****************************************************/
 /** Scope-managed fuse_new/fuse_destroy */
-struct FuseContext
+struct FuseContext // FUSE3
 {
     /** @param fargs FuseArguments reference */
     FuseContext(FuseAdapter& adapter, FuseArguments& fargs): mDebug(__func__,this)
@@ -206,7 +206,7 @@ struct FuseContext
 
 /*****************************************************/
 /** Scope-managed fuse_mount/fuse_unmount */
-struct FuseMount
+struct FuseMount // FUSE3
 {
     /** @param context FuseContext reference
       * @param path filesystem path to mount */

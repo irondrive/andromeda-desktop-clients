@@ -18,7 +18,7 @@ public:
 
     StringUtil() = delete; // static only
 
-    /** Returns a random string of the given size */
+    /** Returns a random alphanumeric string of the given size */
     [[nodiscard]] static std::string Random(size_t size);
 
     template<typename T>

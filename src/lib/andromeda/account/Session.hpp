@@ -74,15 +74,6 @@ private:
 
     Session(Backend::BackendImpl& backend, const std::string& username, const std::string& sessionID, const std::string& sessionKey, bool temporary); // constructor
 
-    /**
-     * Returns the passkey (client-side hashing) to use with the backend for authentication
-     * @param backend backend reference (will call GetPasswordSalt)
-     * @param username username of the account
-     * @param password raw password of the account
-     * @return std::string passkey derived from the password
-     */
-    static std::string GetPasskey(Backend::BackendImpl& backend, const std::string& username, const std::string& password);
-
     mutable Debug mDebug;
     Backend::BackendImpl& mBackend;
 

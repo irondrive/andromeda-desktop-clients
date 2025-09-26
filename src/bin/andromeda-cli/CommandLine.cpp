@@ -35,9 +35,8 @@ std::string CommandLine::HelpText()
     output 
         << "Usage Syntax: " << endl
         << "andromeda-cli " << Options::CoreHelpText() << endl
-        << "andromeda-cli " << Options::MainHelpText() << " -- app action [action params+]" << endl << endl
+        << "andromeda-cli " << Options::MainHelpText() << " app action [action params+]" << endl << endl
 
-        << "NOTE that -- always comes before the server action command! This is different than andromeda-server." << endl
         << "NOTE as with the andromeda-server CLI, any action param can be given as an andromeda_key=value environment variable." << endl
         << "NOTE all non-file and non-environment parameters will be sent as URL variables. Use stdin (opt@ or opt!) " << endl
         << "    or environment variables for private data, as they will be sent in the POST body instead." << endl << endl

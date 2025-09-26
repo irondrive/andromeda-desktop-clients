@@ -228,20 +228,11 @@ bool BackendImpl::isMemory() const
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetCoreConfigJ()
+nlohmann::json BackendImpl::GetConfigJ()
 {
     MDBG_INFO("()");
 
-    RunnerInput input {"core", "getconfig"}; MDBG_BACKEND(input);
-    return RunAction_Read(input);
-}
-
-/*****************************************************/
-nlohmann::json BackendImpl::GetFilesConfigJ()
-{
-    MDBG_INFO("()");
-
-    RunnerInput input {"files", "getconfig"}; MDBG_BACKEND(input);
+    RunnerInput input {"core", "getappconfig"}; MDBG_BACKEND(input);
     return RunAction_Read(input);
 }
 

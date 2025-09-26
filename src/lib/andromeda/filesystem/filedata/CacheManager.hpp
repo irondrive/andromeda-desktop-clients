@@ -82,6 +82,7 @@ public:
 
     /** Returns the allocator to use for all file data */
     inline CachingAllocator& GetPageAllocator(){ return *mPageAllocator; }
+    // TODO FUTURE decouple these things, this design is weird, PageAllocator should be independent of CacheManager
     
     /** 
      * Inform us that a page was used, putting at the front of the LRU

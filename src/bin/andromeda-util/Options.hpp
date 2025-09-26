@@ -30,8 +30,6 @@ public:
             Andromeda::Backend::HTTPOptions& httpOptions, 
             Andromeda::Backend::RunnerOptions& runnerOptions);
 
-    size_t ParseArgs(size_t argc, const char* const* argv, bool stopmm = false) override;
-
     bool AddFlag(const std::string& flag) override;
 
     bool AddOption(const std::string& option, const std::string& value) override;
@@ -46,9 +44,6 @@ public:
 
         API_INVALID
     };
-
-    /** Returns the requested action to run */
-    [[nodiscard]] const std::string& GetAction() { return mAction; }
 
     /** Returns the specified API type */
     [[nodiscard]] ApiType GetApiType() const { return mApiType; }
@@ -85,8 +80,6 @@ private:
     Andromeda::ConfigOptions& mConfigOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::HTTPOptions& mHttpOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::RunnerOptions& mRunnerOptions; // cppcheck-suppress uninitMemberVarPrivate
-
-    std::string mAction;
 
     ApiType mApiType { ApiType::API_INVALID };
     std::string mApiPath;

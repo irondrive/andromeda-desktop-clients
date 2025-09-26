@@ -46,7 +46,7 @@ int main(int argc, char** argv)
         options.ParseConfig("andromeda-cli");
 
         commandLine = std::make_unique<CommandLine>(
-            options, static_cast<size_t>(argc), argv);
+            options, static_cast<size_t>(argc-1), argv+1);
     }
     catch (const Options::ShowHelpException& ex)
     {

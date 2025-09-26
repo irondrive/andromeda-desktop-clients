@@ -1,10 +1,9 @@
 
 #include "nlohmann/json.hpp"
 
+#include "Account.hpp"
 #include "Session.hpp"
 #include "SessionStore.hpp"
-#include "andromeda/Crypto.hpp"
-#include "andromeda/SecureBuffer.hpp"
 #include "andromeda/StringUtil.hpp"
 #include "andromeda/PlatformUtil.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
@@ -73,7 +72,7 @@ Session Session::Create(BackendImpl& backend, const std::string& username, const
 {
     SDBG_INFO("(username:" << username << ")");
 
-    const std::string passkey64 { StringUtil::base64_encode(GetPasskey(backend, username, password)) };
+    const std::string passkey64 { StringUtil::base64_encode(Account::GetPasskeys(backend, username, password).authkey) };
     const nlohmann::json resp(backend.CreateSession(username, passkey64, twofactor));
 
     std::string sessionID;
@@ -114,30 +113,6 @@ Session Session::CreateInteractive(BackendImpl& backend, const std::string& user
 
         return Session::Create(backend, username, password, twofactor);
     }
-}
-
-/*****************************************************/
-std::string Session::GetPasskey(BackendImpl& backend, const std::string& username, const std::string& password)
-{
-    SDBG_INFO("(username:" << username << ")");
-
-    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?) input+output here
-    const SecureBuffer passwordBuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
-
-    const std::string password_salt { backend.GetPasswordSalt(username) };
-    if (password_salt.size() != Crypto::SaltLength())
-        throw BackendImpl::JSONErrorException("incorrect salt length "+std::to_string(password_salt.size()));
-    SDBG_INFO("... password_salt:"); sDebug.Info(sDebug.DumpBytes(password_salt.data(), password_salt.size()));
-
-    const SecureBuffer password_superkey { Crypto::DeriveKey(passwordBuf, password_salt, Crypto::SuperKeyLength()) };
-    SDBG_INFO("... password_superkey:"); sDebug.Info(sDebug.DumpBytes(password_superkey.data(), password_superkey.size()));
-    
-    const SecureBuffer password_cryptkey { Crypto::DeriveSubkey(password_superkey, 0, "a2pwe2ee") };
-    const SecureBuffer password_authkey { Crypto::DeriveSubkey(password_superkey, 1, "a2pwauth") };
-    SDBG_INFO("... password_cryptkey:"); sDebug.Info(sDebug.DumpBytes(password_cryptkey.data(), password_cryptkey.size()));
-    SDBG_INFO("... password_authkey:"); sDebug.Info(sDebug.DumpBytes(password_authkey.data(), password_authkey.size()));
-
-    return std::string(password_authkey.data(), password_authkey.size());
 }
 
 } // namespace Andromeda::Account

@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     try
     {
         options.ParseConfig("andromeda-gui");
-        options.ParseArgs(static_cast<size_t>(argc), argv);
+        options.ParseArgs(static_cast<size_t>(argc-1), argv+1);
         options.Validate();
     }
     catch (const Options::ShowHelpException& ex)
