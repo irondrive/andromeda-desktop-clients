@@ -4,7 +4,7 @@
 #include <iostream>
 #include <mutex>
 
-// SilentReadConsole()
+// SecureReadConsole()
 #if WIN32
 #include <windows.h>
 #else // !WIN32
@@ -35,7 +35,7 @@ extern char** environ;
 namespace Andromeda {
 
 /*****************************************************/
-SecureBuffer PlatformUtil::SilentReadConsole()
+SecureBuffer PlatformUtil::SecureReadConsole()
 {
 #if WIN32
     HANDLE hStdin { GetStdHandle(STD_INPUT_HANDLE) }; 

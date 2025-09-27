@@ -13,7 +13,7 @@ void* SecureMemory::alloc(size_t num, size_t size) noexcept
 }
 
 /*****************************************************/
-void SecureMemory::free(void* ptr) noexcept
+void SecureMemory::dealloc(void* ptr) noexcept
 {
     sodium_free(ptr); // unlock, zero, dealloc
 }

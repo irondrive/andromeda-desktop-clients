@@ -52,7 +52,7 @@ struct Options : public Andromeda::BaseOptions
     /** Returns the specified API type */
     ApiType apiType { ApiType::API_INVALID };
     /** Returns the path to the API endpoint */
-    std::string apiPath;    // TODO RAY !! make fuse and etc. just a struct too
+    std::string apiPath;
 };
 
 } // namespace AndromedaUtil

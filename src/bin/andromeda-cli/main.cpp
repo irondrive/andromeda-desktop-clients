@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     const std::string userAgent(std::string("andromeda-cli/")
         +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
-    HTTPRunner runner(options.GetApiUrl(),
+    HTTPRunner runner(options.apiUrl,
         userAgent, runnerOptions, httpOptions);
 
     try

@@ -19,7 +19,7 @@ public:
      */
     void RunAction(int argc, const char* const* argv);
 
-    /** Generates a random value, maybe base64 */
+    /** Generates a random alphanum or binary string, maybe base64 */
     void Random(int argc, const char* const* argv);
     // TODO RAY !! comments
     void GetPasskey(int argc, const char* const* argv);

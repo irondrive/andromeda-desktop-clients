@@ -17,7 +17,7 @@ struct SecureMemory
     [[nodiscard]] static void* alloc(size_t num, size_t size) noexcept;
 
     /** free a pointer returned by alloc */
-    static void free(void* ptr) noexcept;
+    static void dealloc(void* ptr) noexcept;
 
     /** allocate num number of T elements */
     template<typename T>
@@ -27,7 +27,7 @@ struct SecureMemory
     /** free a T pointer returned by allocT */
     template<typename T>
     inline static void freeT(T* ptr) noexcept {
-        free(static_cast<void*>(ptr)); }
+        dealloc(static_cast<void*>(ptr)); }
 };
 
 /** Secure memory allocator as a std C++ allocator */
@@ -54,7 +54,7 @@ public:
     inline explicit SecureBuffer(size_t size) : 
         mSize(size), mBuf(alloc(mSize)) { }
 
-    inline virtual ~SecureBuffer() noexcept { free(mBuf); }
+    inline virtual ~SecureBuffer() noexcept { dealloc(mBuf); }
 
     inline SecureBuffer(const SecureBuffer& src) noexcept : // copy
         mSize(src.mSize), mBuf(alloc(mSize))
@@ -89,13 +89,15 @@ public:
     [[nodiscard]] inline const T* data() const noexcept { return mBuf; }
     /** Returns the size of the secure buffer */
     [[nodiscard]] inline size_t size() const noexcept { return mSize; }
+    /** Returns true if the buffer is empty */
+    [[nodiscard]] inline bool empty() const noexcept { return mSize == 0; }
 
     /** Reallocates the buffer to the given size, copies data */
     inline void resize(size_t newSize) noexcept
     {
         T* newBuf = alloc(newSize);
         memcpy(newBuf, mBuf, (newSize < mSize) ? newSize : mSize); // min
-        free(mBuf);
+        dealloc(mBuf);
         
         mSize = newSize;
         mBuf = newBuf;
@@ -134,7 +136,7 @@ private:
     [[nodiscard]] inline static T* alloc(size_t size) noexcept { 
         return SecureMemory::allocT<T>(size); }
 
-    inline static void free(T* ptr) noexcept { 
+    inline static void dealloc(T* ptr) noexcept { 
         SecureMemory::freeT<T>(ptr); }
 
     size_t mSize { 0 };

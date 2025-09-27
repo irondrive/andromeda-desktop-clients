@@ -26,7 +26,7 @@ bool SessionOptions::AddOption(const std::string& option, const std::string& val
 {
     if (option == "u" || option == "username")
         username = value;
-    else if (option == "password") // TODO RAY !! shouldn't really allow setting password on the cmdline? make this ifdef DEBUG only
+    else if (option == "password")
         password = value;
     else if (option == "sessionid")
         sessionid = value;

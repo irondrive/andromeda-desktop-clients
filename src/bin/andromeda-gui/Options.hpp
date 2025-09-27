@@ -12,22 +12,18 @@ namespace Andromeda {
 namespace AndromedaGui {
 
 /** Manages command line options and config */
-class Options : public Andromeda::BaseOptions // cppcheck-suppress noConstructor
+struct Options : public Andromeda::BaseOptions
 {
-public:
-
     /** Retrieve the standard help text string */
     static std::string HelpText();
 
     /** @param[out] cacheOptions CacheManager options ref to fill */
-    explicit Options(Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions);
+    explicit Options(Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions_);
 
     bool AddFlag(const std::string& flag) override;
     bool AddOption(const std::string& option, const std::string& value) override;
 
-private:
-
-    Andromeda::Filesystem::Filedata::CacheOptions& mCacheOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions; // cppcheck-suppress uninitMemberVarPrivate
 };
 
 } // namespace AndromedaGui

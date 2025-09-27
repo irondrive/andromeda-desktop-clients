@@ -45,40 +45,40 @@ std::string Options::HelpText()
 }
 
 /*****************************************************/
-Options::Options(ConfigOptions& configOptions, 
-                 HTTPOptions& httpOptions,
-                 RunnerOptions& runnerOptions,
-                 SessionOptions& sessionOptions,
-                 CacheOptions& cacheOptions,
-                 FuseOptions& fuseOptions) :
-    mConfigOptions(configOptions), 
-    mHttpOptions(httpOptions), 
-    mRunnerOptions(runnerOptions),
-    mSessionOptions(sessionOptions),
-    mCacheOptions(cacheOptions),
-    mFuseOptions(fuseOptions) { }
+Options::Options(ConfigOptions& configOptions_, 
+                 HTTPOptions& httpOptions_,
+                 RunnerOptions& runnerOptions_,
+                 SessionOptions& sessionOptions_,
+                 CacheOptions& cacheOptions_,
+                 FuseOptions& fuseOptions_) :
+    configOptions(configOptions_), 
+    httpOptions(httpOptions_), 
+    runnerOptions(runnerOptions_),
+    sessionOptions(sessionOptions_),
+    cacheOptions(cacheOptions_),
+    fuseOptions(fuseOptions_) { }
 
 /*****************************************************/
 bool Options::AddFlag(const std::string& flag)
 {
     if (flag == "p" || flag == "apipath")
-        mApiType = ApiType::API_PATH;
+        apiType = ApiType::API_PATH;
 
     else if (flag == "storage")
-        mMountRootType = RootType::STORAGE;
+        mountRootType = RootType::STORAGE;
     else if (flag == "folder")
-        mMountRootType = RootType::FOLDER;
+        mountRootType = RootType::FOLDER;
 
     else if (flag == "d" || flag == "debug")
-        mForeground = true;
+        foreground = true;
     
     else if (BaseOptions::AddFlag(flag)) { }
-    else if (mConfigOptions.AddFlag(flag)) { }
-    else if (mHttpOptions.AddFlag(flag)) { }
-    else if (mRunnerOptions.AddFlag(flag)) { }
-    else if (mSessionOptions.AddFlag(flag)) { }
-    else if (mCacheOptions.AddFlag(flag)) { }
-    else if (mFuseOptions.AddFlag(flag)) { }
+    else if (configOptions.AddFlag(flag)) { }
+    else if (httpOptions.AddFlag(flag)) { }
+    else if (runnerOptions.AddFlag(flag)) { }
+    else if (sessionOptions.AddFlag(flag)) { }
+    else if (cacheOptions.AddFlag(flag)) { }
+    else if (fuseOptions.AddFlag(flag)) { }
 
     else return false; // not used
     
@@ -91,45 +91,45 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     /** Backend endpoint selection */
     if (option == "a" || option == "apiurl")
     {
-        mApiPath = value;
-        mApiType = ApiType::API_URL;
+        apiPath = value;
+        apiType = ApiType::API_URL;
 
         // Certain details can be parsed from the URL
-        ParseUrl(mApiPath);
+        ParseUrl(apiPath);
     }
     else if (option == "p" || option == "apipath")
     {
-        mApiPath = value;
-        mApiType = ApiType::API_PATH;
+        apiPath = value;
+        apiType = ApiType::API_PATH;
     }
 
     /** Backend mount object selection */
     else if (option == "ri" || option == "storage")
     {
-        mMountItemID = value;
-        mMountRootType = RootType::STORAGE;
+        mountItemID = value;
+        mountRootType = RootType::STORAGE;
     }
     else if (option == "rf" || option == "folder")
     {
-        mMountItemID = value;
-        mMountRootType = RootType::FOLDER;
+        mountItemID = value;
+        mountRootType = RootType::FOLDER;
     }
     else if (option == "m" || option == "mountpath")
-        mMountPath = value;
+        mountPath = value;
 
     else if (option == "d" || option == "debug")
     {
-        mForeground = true;
+        foreground = true;
         BaseOptions::AddOption(option, value);
     }
 
     else if (BaseOptions::AddOption(option, value)) { }
-    else if (mConfigOptions.AddOption(option, value)) { }
-    else if (mHttpOptions.AddOption(option, value)) { }
-    else if (mRunnerOptions.AddOption(option, value)) { }
-    else if (mSessionOptions.AddOption(option, value)) { }
-    else if (mCacheOptions.AddOption(option, value)) { }
-    else if (mFuseOptions.AddOption(option, value)) { }
+    else if (configOptions.AddOption(option, value)) { }
+    else if (httpOptions.AddOption(option, value)) { }
+    else if (runnerOptions.AddOption(option, value)) { }
+    else if (sessionOptions.AddOption(option, value)) { }
+    else if (cacheOptions.AddOption(option, value)) { }
+    else if (fuseOptions.AddOption(option, value)) { }
 
     else return false; // not used
     
@@ -141,21 +141,21 @@ void Options::TryAddUrlOption(const std::string& option, const std::string& valu
 {
     if (option == "folder")
     {
-        mMountItemID = value;
-        mMountRootType = RootType::FOLDER;
+        mountItemID = value;
+        mountRootType = RootType::FOLDER;
     }
 }
 
 /*****************************************************/
 void Options::Validate() const
 {
-    if (GetApiType() == ApiType::API_INVALID)
+    if (apiType == ApiType::API_INVALID)
         throw MissingOptionException("apiurl/apipath");
 
-    if (GetMountPath().empty())
+    if (mountPath.empty())
         throw MissingOptionException("mountpath");
 
-    mSessionOptions.Validate();
+    sessionOptions.Validate();
 }
 
 } // namespace AndromedaFuse

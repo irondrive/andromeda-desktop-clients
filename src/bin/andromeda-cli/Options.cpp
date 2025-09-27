@@ -41,19 +41,19 @@ std::string Options::DetailHelpText()
 }
 
 /*****************************************************/
-Options::Options(HTTPOptions& httpOptions, RunnerOptions& runnerOptions) :
-    mHttpOptions(httpOptions), mRunnerOptions(runnerOptions) { }
+Options::Options(HTTPOptions& httpOptions_, RunnerOptions& runnerOptions_) :
+    httpOptions(httpOptions_), runnerOptions(runnerOptions_) { }
 
 /*****************************************************/
 bool Options::AddFlag(const std::string& flag)
 {
     if (BaseOptions::AddFlag(flag)) { }
 
-    else if (flag == "stream-out") mStreamOut = true;
-    else if (flag == "allow-unsafe-url") mUnsafeUrl = true;
+    else if (flag == "stream-out") streamOut = true;
+    else if (flag == "allow-unsafe-url") allowUnsafeUrl = true;
 
-    else if (mHttpOptions.AddFlag(flag)) { }
-    else if (mRunnerOptions.AddFlag(flag)) { }
+    else if (httpOptions.AddFlag(flag)) { }
+    else if (runnerOptions.AddFlag(flag)) { }
     else return false; // not used
     
     return true;
@@ -65,10 +65,10 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     if (BaseOptions::AddOption(option, value)) { }
 
     /** Backend endpoint selection */
-    else if (option == "a" || option == "apiurl") mApiUrl = value;
+    else if (option == "a" || option == "apiurl") apiUrl = value;
 
-    else if (mHttpOptions.AddOption(option, value)) { }
-    else if (mRunnerOptions.AddOption(option, value)) { }
+    else if (httpOptions.AddOption(option, value)) { }
+    else if (runnerOptions.AddOption(option, value)) { }
     else return false; // not used
     
     return true;
@@ -77,7 +77,7 @@ bool Options::AddOption(const std::string& option, const std::string& value)
 /*****************************************************/
 void Options::Validate() const
 {
-    if (mApiUrl.empty())
+    if (apiUrl.empty())
         throw MissingOptionException("apiurl");
 }
 

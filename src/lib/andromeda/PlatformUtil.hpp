@@ -18,7 +18,7 @@ public:
     PlatformUtil() = delete; // static only
 
     /** Silently read a line of input from stdin into a SecureBuffer */
-    static SecureBuffer SilentReadConsole();
+    static SecureBuffer SecureReadConsole();
 
     using StringMap = std::unordered_map<std::string, std::string>;
 

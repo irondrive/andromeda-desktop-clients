@@ -12,10 +12,8 @@ namespace Andromeda {
 namespace AndromedaCli {
 
 /** Manages command line options and config */
-class Options : public Andromeda::BaseOptions
+struct Options : public Andromeda::BaseOptions
 {
-public:
-
     /** Retrieve the base usage help text string */
     static std::string CoreHelpText();
 
@@ -30,30 +28,22 @@ public:
      * @param[out] runnerOptions BaseRunner options ref to fill
      */
     Options(
-        Andromeda::Backend::HTTPOptions& httpOptions,
-        Andromeda::Backend::RunnerOptions& runnerOptions);
+        Andromeda::Backend::HTTPOptions& httpOptions_,
+        Andromeda::Backend::RunnerOptions& runnerOptions_);
 
     bool AddFlag(const std::string& flag) override;
     bool AddOption(const std::string& option, const std::string& value) override;
     void Validate() const override;
 
+    Andromeda::Backend::HTTPOptions& httpOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Backend::RunnerOptions& runnerOptions; // cppcheck-suppress uninitMemberVarPrivate
+
     /** Returns the URL of the API endpoint */
-    [[nodiscard]] const std::string& GetApiUrl() const { return mApiUrl; }
-
+    std::string apiUrl;
     /** Returns true if output streaming is requested */
-    [[nodiscard]] bool isStreamOut() const { return mStreamOut; }
-
+    bool streamOut { false };
     /** Returns true if unsafe URLs are allowed */
-    [[nodiscard]] bool AllowUnsafeUrl() const { return mUnsafeUrl; }
-
-private:
-
-    Andromeda::Backend::HTTPOptions& mHttpOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Backend::RunnerOptions& mRunnerOptions; // cppcheck-suppress uninitMemberVarPrivate
-
-    std::string mApiUrl;
-    bool mStreamOut { false };
-    bool mUnsafeUrl { false };
+    bool allowUnsafeUrl { false };
 };
 
 } // namespace AndromedaCli

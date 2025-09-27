@@ -121,7 +121,7 @@ void Actions::GetPasskey(const int argc, const char* const* const argv)
         throw Options::BadUsageException("quiet prevents password prompt");
 
     std::cout << "Password? ";
-    const SecureBuffer password { PlatformUtil::SilentReadConsole() };
+    const SecureBuffer password { PlatformUtil::SecureReadConsole() };
 
     const std::string authkey { Account::GetPasskeys(mResource.GetBackend(), options.username, password).authkey };
     std::cout << StringUtil::base64_encode(authkey) << std::endl;

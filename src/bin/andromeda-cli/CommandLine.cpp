@@ -66,7 +66,6 @@ CommandLine::CommandLine(Options& options, size_t argc, const char* const* argv)
     RunnerInput::Params plainParams;
     RunnerInput::Params dataParams;
     RunnerInput_StreamIn::FileStreams inStreams;
-    const bool outStream { mOptions.isStreamOut() };
 
     { // environment params
         StringUtil::StringList args;
@@ -86,10 +85,10 @@ CommandLine::CommandLine(Options& options, size_t argc, const char* const* argv)
         ProcessArgList(args, false, plainParams, dataParams, inStreams);
     }
 
-    if (outStream && !inStreams.empty())
+    if (mOptions.streamOut && !inStreams.empty())
         throw IncompatibleIOException();
 
-    if (outStream)
+    if (mOptions.streamOut)
     {
         mInput_StreamOut = std::make_unique<RunnerInput_StreamOut>(
             RunnerInput_StreamOut{{app, action, plainParams, dataParams}, { }});
@@ -200,7 +199,7 @@ void CommandLine::ProcessArgList(const StringUtil::StringList& args, bool isPriv
         }
         else // plain argument
         {
-            if (!isPriv && !mOptions.AllowUnsafeUrl() && 
+            if (!isPriv && !mOptions.allowUnsafeUrl && 
                 (param.find("password") != std::string::npos || param.find("auth_") != std::string::npos))
                 throw PrivateDataException(param); // hardcoded sanity check for now...
 

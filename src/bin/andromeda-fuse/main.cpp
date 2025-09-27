@@ -104,20 +104,20 @@ int main(int argc, char** argv)
     DDBG_INFO("()");
 
     std::unique_ptr<BaseRunner> runner;
-    switch (options.GetApiType())
+    switch (options.apiType)
     {
         case Options::ApiType::API_URL:
         {
             const std::string userAgent(std::string("andromeda-fuse/")
                 +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
-            runner = std::make_unique<HTTPRunner>(options.GetApiPath(),
+            runner = std::make_unique<HTTPRunner>(options.apiPath,
                 userAgent, runnerOptions, httpOptions);
         }; break;
         case Options::ApiType::API_PATH:
         {
             runner = std::make_unique<CLIRunner>(
-                options.GetApiPath(), runnerOptions);
+                options.apiPath, runnerOptions);
         }; break;
         case Options::ApiType::API_INVALID: break; // can't happen due to Validate() call
     }
@@ -150,14 +150,14 @@ int main(int argc, char** argv)
         fsResource = std::make_unique<FSResource>(*backend, cacheMgr.get(),
             cacheMgr ? cacheMgr->GetPageAllocator() : *pageAlloc);
 
-        switch (options.GetMountRootType())
+        switch (options.mountRootType)
         {
             case Options::RootType::SUPERROOT:
                 folder = std::make_unique<SuperRoot>(*fsResource); break;
             case Options::RootType::STORAGE:
-                folder = Filesystem::LoadByID(*fsResource, options.GetMountItemID()); break;
+                folder = Filesystem::LoadByID(*fsResource, options.mountItemID); break;
             case Options::RootType::FOLDER:
-                folder = PlainFolder::LoadByID(*fsResource, options.GetMountItemID()); break;
+                folder = PlainFolder::LoadByID(*fsResource, options.mountItemID); break;
         }
     }
     catch (const BackendException& ex)
@@ -170,10 +170,10 @@ int main(int argc, char** argv)
 
     try
     {
-        FuseAdapter fuseAdapter(options.GetMountPath(), *folder, fuseOptions);
+        FuseAdapter fuseAdapter(options.mountPath, *folder, fuseOptions);
 
         // In either case, StartFuse() will block until unmounted
-        if (options.isForeground())
+        if (options.foreground)
         {
             if (cacheMgr) cacheMgr->StartThreads();
             fuseAdapter.StartFuse(

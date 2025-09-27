@@ -96,10 +96,10 @@ Session Session::CreateInteractive(BackendImpl& backend, const std::string& user
 {
     SDBG_INFO("(username:" << username << ")");
 
-    if (!password.size())
+    if (password.empty())
     {
         std::cout << "Password? ";
-        password = PlatformUtil::SilentReadConsole();
+        password = PlatformUtil::SecureReadConsole();
     }
 
     try
@@ -109,7 +109,7 @@ Session Session::CreateInteractive(BackendImpl& backend, const std::string& user
     catch (const BackendImpl::TwoFactorRequiredException&)
     {
         std::cout << "Two Factor? ";
-        const SecureBuffer tfBuf { PlatformUtil::SilentReadConsole() }; // TODO RAY !! maybe should have a non-secure-buffer variation? that uses std::getline
+        const SecureBuffer tfBuf { PlatformUtil::SecureReadConsole() };
         const std::string twofactor(tfBuf.data(), tfBuf.size());
 
         return Session::Create(backend, username, password, twofactor);

@@ -18,10 +18,8 @@ namespace Andromeda {
 namespace AndromedaFuse {
 
 /** Manages command line options and config */
-class Options : public Andromeda::BaseOptions
+struct Options : public Andromeda::BaseOptions
 {
-public:
-
     /** Retrieve the standard help text string */
     static std::string HelpText();
 
@@ -33,12 +31,12 @@ public:
      * @param[out] cacheOptions CacheManager options ref to fill
      * @param[out] fuseOptions FUSE options ref to fill
      */
-    Options(Andromeda::ConfigOptions& configOptions, 
-            Andromeda::Backend::HTTPOptions& httpOptions, 
-            Andromeda::Backend::RunnerOptions& runnerOptions,
-            Andromeda::Account::SessionOptions& sessionOptions,
-            Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions,
-            AndromedaFuse::FuseOptions& fuseOptions);
+    Options(Andromeda::ConfigOptions& configOptions_, 
+            Andromeda::Backend::HTTPOptions& httpOptions_, 
+            Andromeda::Backend::RunnerOptions& runnerOptions_,
+            Andromeda::Account::SessionOptions& sessionOptions_,
+            Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions_,
+            AndromedaFuse::FuseOptions& fuseOptions_);
 
     bool AddFlag(const std::string& flag) override;
     bool AddOption(const std::string& option, const std::string& value) override;
@@ -54,12 +52,6 @@ public:
         API_INVALID
     };
 
-    /** Returns the specified API type */
-    [[nodiscard]] ApiType GetApiType() const { return mApiType; }
-
-    /** Returns the path to the API endpoint */
-    [[nodiscard]] const std::string& GetApiPath() const { return mApiPath; }
-
     /** Folder types that can be mounted as root */
     enum class RootType : uint8_t
     {
@@ -68,36 +60,28 @@ public:
         FOLDER
     };
 
+    Andromeda::ConfigOptions& configOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Backend::HTTPOptions& httpOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Backend::RunnerOptions& runnerOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Account::SessionOptions& sessionOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions; // cppcheck-suppress uninitMemberVarPrivate
+    AndromedaFuse::FuseOptions& fuseOptions; // cppcheck-suppress uninitMemberVarPrivate
+
+    /** Returns the specified API type */
+    ApiType apiType { ApiType::API_INVALID };
+    /** Returns the path to the API endpoint */
+    std::string apiPath;
+
     /** Returns the filesystem directory to mount */
-    [[nodiscard]] const std::string& GetMountPath() const { return mMountPath; }
+    std::string mountPath;
 
     /** Returns the specified mount item type */
-    [[nodiscard]] RootType GetMountRootType() const { return mMountRootType; }
-
+    RootType mountRootType { RootType::SUPERROOT };
     /** Returns the specified mount item ID */
-    [[nodiscard]] const std::string& GetMountItemID() const { return mMountItemID; }
+    std::string mountItemID;
 
     /** Returns true if we should run in the foreground */
-    [[nodiscard]] bool isForeground() const { return mForeground; }
-
-private:
-
-    Andromeda::ConfigOptions& mConfigOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Backend::HTTPOptions& mHttpOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Backend::RunnerOptions& mRunnerOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Account::SessionOptions& mSessionOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Filesystem::Filedata::CacheOptions& mCacheOptions; // cppcheck-suppress uninitMemberVarPrivate
-    AndromedaFuse::FuseOptions& mFuseOptions; // cppcheck-suppress uninitMemberVarPrivate
-
-    ApiType mApiType { ApiType::API_INVALID };
-    std::string mApiPath;
-
-    std::string mMountPath;
-
-    RootType mMountRootType { RootType::SUPERROOT };
-    std::string mMountItemID;
-
-    bool mForeground { false };
+    bool foreground { false };
 };
 
 } // namespace AndromedaFuse

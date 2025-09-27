@@ -13,7 +13,7 @@ namespace Andromeda { namespace Backend { class HTTPRunner; } }
 
 namespace AndromedaCli {
 
-class Options;
+struct Options;
 
 /** Gets options and a remote Input from the command line */
 class CommandLine

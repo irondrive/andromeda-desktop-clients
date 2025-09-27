@@ -28,14 +28,14 @@ std::string Options::HelpText()
 }
 
 /*****************************************************/
-Options::Options(CacheOptions& cacheOptions) :
-    mCacheOptions(cacheOptions) { }
+Options::Options(CacheOptions& cacheOptions_) :
+    cacheOptions(cacheOptions_) { }
 
 /*****************************************************/
 bool Options::AddFlag(const std::string& flag)
 {
     if (BaseOptions::AddFlag(flag)) { }
-    else if (mCacheOptions.AddFlag(flag)) { }
+    else if (cacheOptions.AddFlag(flag)) { }
 
     else return false; // not used
     
@@ -46,7 +46,7 @@ bool Options::AddFlag(const std::string& flag)
 bool Options::AddOption(const std::string& option, const std::string& value)
 {
     if (BaseOptions::AddOption(option, value)) { }
-    else if (mCacheOptions.AddOption(option, value)) { }
+    else if (cacheOptions.AddOption(option, value)) { }
 
     else return false; // not used
     
