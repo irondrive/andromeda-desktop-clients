@@ -9,7 +9,7 @@ namespace Andromeda {
 namespace Backend {
 
 /** Runner config options */
-struct RunnerOptions
+struct RunnerOptions // TODO RAY !! why don't these extend BaseOptions?
 {
     /** Retrieve the standard help text string */
     static std::string HelpText();

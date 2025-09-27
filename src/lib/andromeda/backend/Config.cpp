@@ -15,7 +15,7 @@ Config::Config(BackendImpl& backend) :
 {
     MDBG_INFO("()");
 
-    const nlohmann::json config(mBackend.GetConfigJ());
+    const nlohmann::json config(mBackend.GetAppConfigJ());
 
     try
     {

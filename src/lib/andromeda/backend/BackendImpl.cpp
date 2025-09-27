@@ -228,7 +228,7 @@ bool BackendImpl::isMemory() const
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetConfigJ()
+nlohmann::json BackendImpl::GetAppConfigJ()
 {
     MDBG_INFO("()");
 

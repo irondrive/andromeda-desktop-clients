@@ -7,6 +7,8 @@
 
 #include "andromeda/ConfigOptions.hpp"
 using Andromeda::ConfigOptions;
+#include "andromeda/account/SessionOptions.hpp"
+using Andromeda::Account::SessionOptions;
 #include "andromeda/backend/HTTPOptions.hpp"
 using Andromeda::Backend::HTTPOptions;
 #include "andromeda/backend/RunnerOptions.hpp"
@@ -28,7 +30,7 @@ std::string Options::HelpText()
         << "andromeda-fuse " << CoreBaseHelpText() << " -m|--mountpath path (-a|--apiurl url | -p|--apipath [path])" << endl << endl
 
         << "Remote Object:   [--folder [id] | --filesystem [id]]" << endl
-        << "Remote Auth:     [-u|--username str] [--password str] | [--sessionid id] [--sessionkey key] [--force-session]" << endl << endl
+        << SessionOptions::HelpText() << endl << endl
        
         << HTTPOptions::HelpText() << endl
         << RunnerOptions::HelpText() << endl << endl
@@ -46,11 +48,13 @@ std::string Options::HelpText()
 Options::Options(ConfigOptions& configOptions, 
                  HTTPOptions& httpOptions,
                  RunnerOptions& runnerOptions,
+                 SessionOptions& sessionOptions,
                  CacheOptions& cacheOptions,
                  FuseOptions& fuseOptions) :
     mConfigOptions(configOptions), 
     mHttpOptions(httpOptions), 
     mRunnerOptions(runnerOptions),
+    mSessionOptions(sessionOptions),
     mCacheOptions(cacheOptions),
     mFuseOptions(fuseOptions) { }
 
@@ -59,9 +63,6 @@ bool Options::AddFlag(const std::string& flag)
 {
     if (flag == "p" || flag == "apipath")
         mApiType = ApiType::API_PATH;
-
-    else if (flag == "force-session")
-        mForceSession = true;
 
     else if (flag == "storage")
         mMountRootType = RootType::STORAGE;
@@ -75,6 +76,7 @@ bool Options::AddFlag(const std::string& flag)
     else if (mConfigOptions.AddFlag(flag)) { }
     else if (mHttpOptions.AddFlag(flag)) { }
     else if (mRunnerOptions.AddFlag(flag)) { }
+    else if (mSessionOptions.AddFlag(flag)) { }
     else if (mCacheOptions.AddFlag(flag)) { }
     else if (mFuseOptions.AddFlag(flag)) { }
 
@@ -101,16 +103,6 @@ bool Options::AddOption(const std::string& option, const std::string& value)
         mApiType = ApiType::API_PATH;
     }
 
-    /** Backend authentication details */
-    else if (option == "u" || option == "username")
-        mUsername = value;
-    else if (option == "password")
-        mPassword = value;
-    else if (option == "sessionid")
-        mSessionid = value;
-    else if (option == "sessionkey")
-        mSessionkey = value;
-
     /** Backend mount object selection */
     else if (option == "ri" || option == "storage")
     {
@@ -135,6 +127,7 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     else if (mConfigOptions.AddOption(option, value)) { }
     else if (mHttpOptions.AddOption(option, value)) { }
     else if (mRunnerOptions.AddOption(option, value)) { }
+    else if (mSessionOptions.AddOption(option, value)) { }
     else if (mCacheOptions.AddOption(option, value)) { }
     else if (mFuseOptions.AddOption(option, value)) { }
 
@@ -160,7 +153,7 @@ void Options::Validate()
         throw MissingOptionException("apiurl/apipath");
 
     // TODO FUTURE mounting shares - check GetMountRootType() != RootType::FOLDER
-    if (!HasUsername() && !HasSession())
+    if (mSessionOptions.username.empty() && mSessionOptions.sessionid.empty())
         throw MissingOptionException("username/sessionid");
 
     if (GetMountPath().empty())

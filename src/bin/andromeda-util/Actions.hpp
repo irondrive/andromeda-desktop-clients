@@ -31,7 +31,7 @@ private:
     Andromeda::Debug mDebug;
 
     Andromeda::Backend::BackendImpl* backend; // NOLINT(*unused*) 
-    Andromeda::Account::Session* session; // NOLINT(*unused*) // TODO RAY !!
+    Andromeda::Account::Session* session; // NOLINT(*unused*) // TODO RAY !! nolint
 }; 
 
 } // namespace AndromedaUtil

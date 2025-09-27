@@ -19,6 +19,8 @@ using Andromeda::ConfigOptions;
 using Andromeda::Debug;
 #include "andromeda/account/Session.hpp"
 using Andromeda::Account::Session;
+#include "andromeda/account/SessionOptions.hpp"
+using Andromeda::Account::SessionOptions;
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda/backend/BaseRunner.hpp"
@@ -68,10 +70,11 @@ int main(int argc, char** argv)
     ConfigOptions configOptions;
     HTTPOptions httpOptions;
     RunnerOptions runnerOptions;
+    SessionOptions sessionOptions;
     CacheOptions cacheOptions;
     FuseOptions fuseOptions;
 
-    Options options(configOptions, httpOptions, runnerOptions, cacheOptions, fuseOptions);
+    Options options(configOptions, httpOptions, runnerOptions, sessionOptions, cacheOptions, fuseOptions);
 
     try
     {
@@ -138,21 +141,12 @@ int main(int argc, char** argv)
     {
         backend = std::make_unique<BackendImpl>(configOptions, runners);
 
-        if (options.HasSession())
-            session = std::make_unique<Session>(Session::FromExisting(*backend, options.GetSessionID(), options.GetSessionKey()));
-        else if (options.HasUsername())
-        {
-            if (backend->RequiresSession() || options.GetForceSession() || !options.GetPassword().empty())
-            {
-                if (options.isQuiet())
-                    session = std::make_unique<Session>(Session::Create(*backend, options.GetUsername(), options.GetPassword()));
-                else session = std::make_unique<Session>(Session::CreateInteractive(*backend, options.GetUsername(), options.GetPassword()));
-            }
-            else backend->SetSudoUsername(options.GetUsername());
-        }
-
-        backend->SetSession(session.get());
-
+        session = sessionOptions.GetSession(*backend, !options.isQuiet());
+        if (session)
+            backend->SetSession(session.get());
+        else if (!sessionOptions.username.empty())
+            backend->SetSudoUsername(sessionOptions.username);
+        
         fsResource = std::make_unique<FSResource>(*backend, cacheMgr.get(),
             cacheMgr ? cacheMgr->GetPageAllocator() : *pageAlloc);
 

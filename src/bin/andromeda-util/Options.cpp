@@ -5,6 +5,8 @@
 
 #include "andromeda/ConfigOptions.hpp"
 using Andromeda::ConfigOptions;
+#include "andromeda/account/SessionOptions.hpp"
+using Andromeda::Account::SessionOptions;
 #include "andromeda/backend/HTTPOptions.hpp"
 using Andromeda::Backend::HTTPOptions;
 #include "andromeda/backend/RunnerOptions.hpp"
@@ -24,8 +26,8 @@ std::string Options::HelpText()
         << "andromeda-util [flags] action [action flags]" << endl
         << "andromeda-util " << CoreBaseHelpText() << " (-a|--apiurl url | -p|--apipath [path])" << endl << endl
 
-        << "Remote Auth:     [-u|--username str] [--password str] | [--sessionid id] [--sessionkey key] [--force-session]" << endl << endl
-       
+        << SessionOptions::HelpText() << endl << endl
+
         << HTTPOptions::HelpText() << endl
         << RunnerOptions::HelpText() << endl << endl
         << ConfigOptions::HelpText() << endl
@@ -38,10 +40,12 @@ std::string Options::HelpText()
 /*****************************************************/
 Options::Options(ConfigOptions& configOptions, 
                  HTTPOptions& httpOptions,
-                 RunnerOptions& runnerOptions) :
+                 RunnerOptions& runnerOptions,
+                 SessionOptions& sessionOptions) :
     mConfigOptions(configOptions), 
     mHttpOptions(httpOptions), 
-    mRunnerOptions(runnerOptions) { }
+    mRunnerOptions(runnerOptions),
+    mSessionOptions(sessionOptions) { }
 
 /*****************************************************/
 bool Options::AddFlag(const std::string& flag)
@@ -49,13 +53,11 @@ bool Options::AddFlag(const std::string& flag)
     if (flag == "p" || flag == "apipath")
         mApiType = ApiType::API_PATH;
 
-    else if (flag == "force-session")
-        mForceSession = true;
-
     else if (BaseOptions::AddFlag(flag)) { }
     else if (mConfigOptions.AddFlag(flag)) { } // TODO RAY !! not needed? maybe need to separate out? honestly this is just "FileSystemConfig" - except what does -q do?
     else if (mHttpOptions.AddFlag(flag)) { }
     else if (mRunnerOptions.AddFlag(flag)) { }
+    else if (mSessionOptions.AddFlag(flag)) { }
 
     else return false; // not used
     
@@ -80,20 +82,11 @@ bool Options::AddOption(const std::string& option, const std::string& value)
         mApiType = ApiType::API_PATH;
     }
 
-    /** Backend authentication details */
-    else if (option == "u" || option == "username")
-        mUsername = value;
-    else if (option == "password")
-        mPassword = value;
-    else if (option == "sessionid")
-        mSessionid = value;
-    else if (option == "sessionkey")
-        mSessionkey = value;
-
     else if (BaseOptions::AddOption(option, value)) { }
     else if (mConfigOptions.AddOption(option, value)) { }
     else if (mHttpOptions.AddOption(option, value)) { }
     else if (mRunnerOptions.AddOption(option, value)) { }
+    else if (mSessionOptions.AddOption(option, value)) { }
 
     else return false; // not used
     

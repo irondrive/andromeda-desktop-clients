@@ -129,7 +129,7 @@ public:
      * @return loaded config as JSON
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetConfigJ();
+    nlohmann::json GetAppConfigJ();
 
     /** 
      * Load files policy for the current account
