@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "BaseException.hpp"
+#include "SecureBuffer.hpp"
 
 namespace Andromeda {
 
@@ -16,11 +17,8 @@ public:
 
     PlatformUtil() = delete; // static only
 
-    /**
-     * Silently read a line of input from stdin
-     * @param[out] retval reference to string to fill
-     */
-    static void SilentReadConsole(std::string& retval);
+    /** Silently read a line of input from stdin into a SecureBuffer */
+    static SecureBuffer SilentReadConsole();
 
     using StringMap = std::unordered_map<std::string, std::string>;
 

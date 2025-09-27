@@ -5,6 +5,7 @@
 
 #include "andromeda/common.hpp"
 #include "andromeda/Debug.hpp"
+#include "andromeda/SecureBuffer.hpp"
 
 namespace Andromeda::Backend { class BackendImpl; }
 
@@ -47,7 +48,7 @@ public:
      * @throws BackendImpl::TwoFactorRequiredException if two factor is required and not given
      * @throws BackendImpl::Exception for other backend issues
      */
-    static Session Create(Backend::BackendImpl& backend, const std::string& username, const std::string& password, const std::string& twofactor = "");
+    static Session Create(Backend::BackendImpl& backend, const std::string& username, const SecureBuffer& password, const std::string& twofactor = "");
 
     /**
      * Creates a new session on the backend (interactive, prompts for input)
@@ -56,7 +57,7 @@ public:
      * @throws BackendImpl::AuthenticationFailedException for invalid username/password
      * @throws BackendImpl::Exception for other backend issues
      */
-    static Session CreateInteractive(Backend::BackendImpl& backend, const std::string& username, std::string password);
+    static Session CreateInteractive(Backend::BackendImpl& backend, const std::string& username, SecureBuffer password);
 
     /** Returns a reference to the backend for this session */
     Backend::BackendImpl& GetBackend() const { return mBackend; }

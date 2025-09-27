@@ -19,7 +19,7 @@ namespace AndromedaGui {
 /*****************************************************/
 BackendContext::BackendContext(
     const std::string& url, const std::string& username, 
-    const std::string& password, const std::string& twofactor) : 
+    const Andromeda::SecureBuffer& password, const std::string& twofactor) : 
     mDebug(__func__,this) 
 {
     MDBG_INFO("(url:" << url << ", username:" << username << ")");

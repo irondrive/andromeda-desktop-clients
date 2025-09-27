@@ -8,6 +8,8 @@
 using Andromeda::BaseOptions;
 #include "andromeda/Crypto.hpp"
 using Andromeda::Crypto;
+#include "andromeda/SecureBuffer.hpp"
+using Andromeda::SecureBuffer;
 #include "andromeda/PlatformUtil.hpp"
 using Andromeda::PlatformUtil;
 #include "andromeda/StringUtil.hpp"
@@ -118,11 +120,8 @@ void Actions::GetPasskey(const int argc, const char* const* const argv)
     if (mResource.GetOptions().isQuiet())
         throw Options::BadUsageException("quiet prevents password prompt");
 
-    std::string password; 
-    // TODO RAY !! SecureBuffer - can we make SecureBuffer extend std::string or give us an allocator or something?
-    // or maybe could get fgets with some fixed size buffer instead of std::getline?
     std::cout << "Password? ";
-    PlatformUtil::SilentReadConsole(password);
+    const SecureBuffer password { PlatformUtil::SilentReadConsole() };
 
     const std::string authkey { Account::GetPasskeys(mResource.GetBackend(), options.username, password).authkey };
     std::cout << StringUtil::base64_encode(authkey) << std::endl;

@@ -10,6 +10,7 @@
 #include "andromeda/backend/RunnerOptions.hpp"
 
 namespace Andromeda { 
+    class SecureBuffer;
     namespace Account { class Session; class SessionStore; }
     namespace Backend { 
         class BackendImpl; class HTTPRunner; class RunnerPool; }
@@ -27,7 +28,7 @@ public:
      * @throws BackendException for backend issues
      */
     BackendContext(const std::string& url, const std::string& username, 
-        const std::string& password, const std::string& twofactor);
+        const Andromeda::SecureBuffer& password, const std::string& twofactor);
 
     /** 
      * Create a new BackendContext from a known session and store ref

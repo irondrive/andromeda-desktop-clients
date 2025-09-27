@@ -35,7 +35,7 @@ extern char** environ;
 namespace Andromeda {
 
 /*****************************************************/
-void PlatformUtil::SilentReadConsole(std::string& retval)
+SecureBuffer PlatformUtil::SilentReadConsole()
 {
 #if WIN32
     HANDLE hStdin { GetStdHandle(STD_INPUT_HANDLE) }; 
@@ -50,7 +50,38 @@ void PlatformUtil::SilentReadConsole(std::string& retval)
     tcsetattr(fileno(stdin), TCSANOW, &nflags);
 #endif // WIN32
 
-    std::getline(std::cin, retval);
+    constexpr size_t bufsz = BUFSIZ;
+    SecureBuffer retval(bufsz);
+    size_t offset = 0;
+    while (true) // TODO would be good to unit test this loop, pass fgets in a lambda?
+    {
+        // fgets writes \0 at the end, maybe a \n right before that, return NULL on failure or EOF
+        if (fgets(retval.data()+offset, static_cast<int>(retval.size()-offset), stdin) == nullptr)
+        {
+            retval.resize(offset);
+            break; // return result
+        }
+
+        const size_t read = strlen(retval.data()+offset);
+        if (read == 0)
+        {
+            retval.resize(offset);
+            break; // return result
+        }
+
+        if ((retval.data()+offset)[read-1] == '\n')
+        {
+            offset += read-1;
+            retval.resize(offset);
+            break; // return result
+        }
+        else
+        {
+            offset += read;
+            retval.resize(offset+bufsz);
+            continue;
+        }
+    }
 
 #if WIN32
     SetConsoleMode(hStdin, mode);
@@ -59,6 +90,7 @@ void PlatformUtil::SilentReadConsole(std::string& retval)
 #endif // WIN32
 
     std::cout << std::endl;
+    return retval;
 }
 
 /*****************************************************/

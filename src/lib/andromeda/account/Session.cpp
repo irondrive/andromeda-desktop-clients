@@ -68,7 +68,7 @@ Session Session::FromExisting(Backend::BackendImpl& backend, const std::string& 
 }
 
 /*****************************************************/
-Session Session::Create(BackendImpl& backend, const std::string& username, const std::string& password, const std::string& twofactor)
+Session Session::Create(BackendImpl& backend, const std::string& username, const SecureBuffer& password, const std::string& twofactor)
 {
     SDBG_INFO("(username:" << username << ")");
 
@@ -92,14 +92,14 @@ Session Session::Create(BackendImpl& backend, const std::string& username, const
 }
 
 /*****************************************************/
-Session Session::CreateInteractive(BackendImpl& backend, const std::string& username, std::string password)
+Session Session::CreateInteractive(BackendImpl& backend, const std::string& username, SecureBuffer password)
 {
     SDBG_INFO("(username:" << username << ")");
 
-    if (password.empty())
+    if (!password.size())
     {
         std::cout << "Password? ";
-        PlatformUtil::SilentReadConsole(password);
+        password = PlatformUtil::SilentReadConsole();
     }
 
     try
@@ -108,8 +108,9 @@ Session Session::CreateInteractive(BackendImpl& backend, const std::string& user
     }
     catch (const BackendImpl::TwoFactorRequiredException&)
     {
-        std::string twofactor; std::cout << "Two Factor? ";
-        PlatformUtil::SilentReadConsole(twofactor);
+        std::cout << "Two Factor? ";
+        const SecureBuffer tfBuf { PlatformUtil::SilentReadConsole() }; // TODO RAY !! maybe should have a non-secure-buffer variation? that uses std::getline
+        const std::string twofactor(tfBuf.data(), tfBuf.size());
 
         return Session::Create(backend, username, password, twofactor);
     }

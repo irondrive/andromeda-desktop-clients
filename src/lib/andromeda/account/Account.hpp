@@ -34,11 +34,11 @@ public:
      * @param password raw password of the account
      * @return std::string passkey derived from the password
      */
-    static PasswordKeys GetPasskeys(Backend::BackendImpl& backend, const std::string& username, const std::string& password);
+    static PasswordKeys GetPasskeys(Backend::BackendImpl& backend, const std::string& username, const SecureBuffer& password);
 
     // TODO RAY !! demo only - need to store off new key in Session, support not using password-based, etc.
     // also get the password_cryptkey from an existing session rather than re-calculating?
-    static void InitE2ee(Backend::BackendImpl& backend, const std::string& username, const std::string& password);
+    static void InitE2ee(Backend::BackendImpl& backend, const std::string& username, const SecureBuffer& password);
 };
 
 } // namespace Andromeda::Account

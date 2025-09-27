@@ -13,7 +13,7 @@ struct SecureMemory
 {
     SecureMemory() = delete; // static only
 
-    /** allocate num number of elements with given size, aligned to size */
+    /** allocate num number of elements with given size, aligned to size, NOT initialized! */
     [[nodiscard]] static void* alloc(size_t num, size_t size) noexcept;
 
     /** free a pointer returned by alloc */
@@ -62,15 +62,23 @@ public:
         memcpy(mBuf, src.mBuf, mSize);
     }
 
-    inline SecureBuffer(SecureBuffer&& old) noexcept :
-        mSize(old.mSize), mBuf(old.mBuf) // move
+    inline SecureBuffer(SecureBuffer&& old) noexcept : // move
+        mSize(old.mSize), mBuf(old.mBuf)
     {
         old.mSize = 0;
         old.mBuf = nullptr;
     }
 
-    SecureBuffer& operator=(const SecureBuffer& src) = delete; // copy
-    SecureBuffer& operator=(SecureBuffer&& old) = delete; // move
+    SecureBuffer& operator=(const SecureBuffer& src) noexcept = delete; // copy
+
+    SecureBuffer& operator=(SecureBuffer&& old) noexcept // move
+    {
+        mSize = old.mSize;
+        mBuf = old.mBuf;
+        old.mSize = 0;
+        old.mBuf = nullptr;
+        return *this;
+    }
 
     /** Compare to another SecureBuffer */
     bool operator==(const SecureBuffer& rhs) const;
@@ -86,7 +94,7 @@ public:
     inline void resize(size_t newSize) noexcept
     {
         T* newBuf = alloc(newSize);
-        memcpy(newBuf, mBuf, std::min(newSize,mSize));
+        memcpy(newBuf, mBuf, (newSize < mSize) ? newSize : mSize); // min
         free(mBuf);
         
         mSize = newSize;

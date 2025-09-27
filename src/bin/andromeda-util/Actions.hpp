@@ -29,7 +29,7 @@ public:
 
 private:
     Andromeda::Debug mDebug;
-    Resource& mResource; // NOLINT(*unused*) // TODO RAY !! remove lint
+    Resource& mResource;
 }; 
 
 } // namespace AndromedaUtil

@@ -26,7 +26,7 @@ bool SessionOptions::AddOption(const std::string& option, const std::string& val
 {
     if (option == "u" || option == "username")
         username = value;
-    else if (option == "password")
+    else if (option == "password") // TODO RAY !! shouldn't really allow setting password on the cmdline? make this ifdef DEBUG only
         password = value;
     else if (option == "sessionid")
         sessionid = value;
@@ -46,9 +46,12 @@ std::unique_ptr<Session> SessionOptions::GetSession(BackendImpl& backend, bool i
     {
         if (backend.RequiresSession() || forceSession || !password.empty())
         {
+            // putting a password on the command line is already insecure anyway
+            const SecureBuffer pbuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
+
             if (interactive)
-                return std::make_unique<Session>(Session::CreateInteractive(backend, username, password));
-            else return std::make_unique<Session>(Session::Create(backend, username, password));
+                return std::make_unique<Session>(Session::CreateInteractive(backend, username, pbuf));
+            else return std::make_unique<Session>(Session::Create(backend, username, pbuf));
         }
     }
     return nullptr;

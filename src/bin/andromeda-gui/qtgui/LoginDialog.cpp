@@ -4,6 +4,8 @@
 #include "LoginDialog.hpp"
 #include "ui_LoginDialog.h"
 
+#include "andromeda/SecureBuffer.hpp"
+using Andromeda::SecureBuffer;
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda-gui/BackendContext.hpp"
@@ -39,10 +41,16 @@ void LoginDialog::accept()
 
     try
     {
-        const std::string password { mQtUi->lineEditPassword->text().toStdString() };
+        std::string password { mQtUi->lineEditPassword->text().toStdString() };
         const std::string twofactor { mQtUi->lineEditTwoFactor->text().toStdString() };
-        
-        mBackendContext = std::make_unique<BackendContext>(apiurl, username, password, twofactor);
+
+        const SecureBuffer passbuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
+        mBackendContext = std::make_unique<BackendContext>(apiurl, username, passbuf, twofactor);
+
+        // best effort zeroize of insecure buffers
+        mQtUi->lineEditPassword->text().fill('\0');
+        password.resize(password.capacity());
+        std::fill_n(password.data(), password.size(), '\0');
     }
     catch (const BackendException& ex)
     {

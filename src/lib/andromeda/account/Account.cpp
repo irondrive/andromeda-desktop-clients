@@ -12,19 +12,16 @@ Debug sDebug("Session",nullptr); // NOLINT(cert-err58-cpp)
 } // anonymous namespace
 
 /*****************************************************/
-Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::string& username, const std::string& password)
+Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::string& username, const SecureBuffer& password)
 {
     SDBG_INFO("(username:" << username << ")");
-
-    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?) input+output here - manually zero the non securebuffer places
-    const SecureBuffer passwordBuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
 
     const std::string password_salt { backend.GetPasswordSalt(username) };
     if (password_salt.size() != Crypto::SaltLength())
         throw BackendImpl::JSONErrorException("incorrect salt length "+std::to_string(password_salt.size()));
     SDBG_INFO("... password_salt:"); sDebug.Info(sDebug.DumpBytes(password_salt.data(), password_salt.size()));
 
-    const SecureBuffer password_superkey { Crypto::DeriveKey(passwordBuf, password_salt, Crypto::SuperKeyLength()) };
+    const SecureBuffer password_superkey { Crypto::DeriveKey(password, password_salt, Crypto::SuperKeyLength()) };
     SDBG_INFO("... password_superkey:"); sDebug.Info(sDebug.DumpBytes(password_superkey.data(), password_superkey.size()));
 
     const SecureBuffer authkeyb { Crypto::DeriveSubkey(password_superkey, 1, "a2pwauth") };
@@ -38,7 +35,7 @@ Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::stri
 }
 
 /*****************************************************/
-void Account::InitE2ee(BackendImpl& backend, const std::string& username, const std::string& password)
+void Account::InitE2ee(BackendImpl& backend, const std::string& username, const SecureBuffer& password)
 {
     const SecureBuffer master { Crypto::GenerateSecretKey() }; // master account e2ee key
     SDBG_INFO("... master:"); sDebug.Info(sDebug.DumpBytes(master.data(), master.size()));
