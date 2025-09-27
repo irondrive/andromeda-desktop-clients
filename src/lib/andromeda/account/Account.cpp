@@ -16,7 +16,7 @@ Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::stri
 {
     SDBG_INFO("(username:" << username << ")");
 
-    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?) input+output here
+    // TODO RAY !! should be using SecureBuffer for password as long as possible (and sessionkey too?) input+output here - manually zero the non securebuffer places
     const SecureBuffer passwordBuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
 
     const std::string password_salt { backend.GetPasswordSalt(username) };
@@ -63,6 +63,7 @@ void Account::InitE2ee(BackendImpl& backend, const std::string& username, const 
 
     // TODO RAY !! actually use all 0's? or account ID or something for safety? or something that specifies the "purpose" just in case? could derive a subkey from all 0's, that's fast, or just some hardcoded string?
     // the passkey.e2eekey is used ONLY once, to wrap the master key, use a 0 nonce
+    // need to add a generic string padding function StringUtil
     const std::string masterenc_nonce(Crypto::SecretNonceLength(),'\0');
     SDBG_INFO("... masterenc_nonce:"); sDebug.Info(sDebug.DumpBytes(masterenc_nonce.data(), masterenc_nonce.size()));
 

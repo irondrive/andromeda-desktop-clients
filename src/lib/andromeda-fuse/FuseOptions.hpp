@@ -4,11 +4,12 @@
 #include <cstdint>
 #include <list>
 #include <string>
+#include "andromeda/BaseOptions.hpp"
 
 namespace AndromedaFuse {
 
 /** FUSE wrapper options */
-struct FuseOptions
+struct FuseOptions : public Andromeda::BaseOptions
 {
     /** Retrieve the standard help text string */
     static std::string HelpText();
@@ -18,17 +19,8 @@ struct FuseOptions
     static void ShowFuseHelpText();
 #endif // !LIBFUSE2
 
-    /** 
-     * Adds the given argument, returning true iff it was used
-     * @throws BaseOptions::ShowVersionException if version is requested
-     */
-    bool AddFlag(const std::string& flag);
-
-    /** 
-     * Adds the given option/value, returning true iff it was used
-     * @throws BaseOptions::Exception if invalid arguments
-     */
-    bool AddOption(const std::string& option, const std::string& value);
+    bool AddFlag(const std::string& flag) override;
+    bool AddOption(const std::string& option, const std::string& value) override;
 
     /** List of FUSE library options */
     std::list<std::string> fuseArgs;

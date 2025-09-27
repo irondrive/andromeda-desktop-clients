@@ -15,10 +15,8 @@ namespace Andromeda {
 namespace AndromedaUtil {
 
 /** Manages command line options and config */
-class Options : public Andromeda::BaseOptions
+struct Options : public Andromeda::BaseOptions
 {
-public:
-
     /** Retrieve the standard help text string */
     static std::string HelpText();
 
@@ -28,16 +26,14 @@ public:
      * @param[out] runnerOptions BaseRunner options ref to fill
      * @param[out] sessionOptions SessionOptions options ref to fill
      */
-    Options(Andromeda::ConfigOptions& configOptions, 
-            Andromeda::Backend::HTTPOptions& httpOptions, 
-            Andromeda::Backend::RunnerOptions& runnerOptions,
-            Andromeda::Account::SessionOptions& sessionOptions);
+    Options(Andromeda::ConfigOptions& configOptions_, 
+            Andromeda::Backend::HTTPOptions& httpOptions_, 
+            Andromeda::Backend::RunnerOptions& runnerOptions_,
+            Andromeda::Account::SessionOptions& sessionOptions_);
 
     bool AddFlag(const std::string& flag) override;
-
     bool AddOption(const std::string& option, const std::string& value) override;
-
-    void Validate() override;
+    void Validate() const override;
 
     /** Backend connection type */
     enum class ApiType : uint8_t
@@ -48,22 +44,15 @@ public:
         API_INVALID
     };
 
+    Andromeda::ConfigOptions& configOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Backend::HTTPOptions& httpOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Backend::RunnerOptions& runnerOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Account::SessionOptions& sessionOptions; // cppcheck-suppress uninitMemberVarPrivate
+
     /** Returns the specified API type */
-    [[nodiscard]] ApiType GetApiType() const { return mApiType; }
-
+    ApiType apiType { ApiType::API_INVALID };
     /** Returns the path to the API endpoint */
-    [[nodiscard]] const std::string& GetApiPath() const { return mApiPath; }
-    // TODO RAY !! not just be a struct? would be consistent with the other options classes
-
-private:
-
-    Andromeda::ConfigOptions& mConfigOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Backend::HTTPOptions& mHttpOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Backend::RunnerOptions& mRunnerOptions; // cppcheck-suppress uninitMemberVarPrivate
-    Andromeda::Account::SessionOptions& mSessionOptions; // cppcheck-suppress uninitMemberVarPrivate
-
-    ApiType mApiType { ApiType::API_INVALID };
-    std::string mApiPath;
+    std::string apiPath;    // TODO RAY !! make fuse and etc. just a struct too
 };
 
 } // namespace AndromedaUtil

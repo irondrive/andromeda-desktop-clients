@@ -23,7 +23,6 @@ public:
     explicit Options(Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions);
 
     bool AddFlag(const std::string& flag) override;
-
     bool AddOption(const std::string& option, const std::string& value) override;
 
 private:

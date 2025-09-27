@@ -5,7 +5,7 @@ include(../../andromeda.cmake)
 
 # build the andromeda-util executable
 
-set(SOURCE_FILES main.cpp Options.cpp Actions.cpp)
+set(SOURCE_FILES main.cpp Options.cpp Actions.cpp Resource.cpp)
 andromeda_bin(andromeda-util "${SOURCE_FILES}")
 
 install(TARGETS andromeda-util

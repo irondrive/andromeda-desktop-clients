@@ -31,21 +31,15 @@ bool RunnerOptions::AddOption(const std::string& option, const std::string& valu
 {
     if (option == "req-timeout")
     {
-        try { timeout = seconds(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        timeout = seconds(GetUnsigned(option,value));
     }
     else if (option == "max-retries")
     {
-        try { maxRetries = static_cast<decltype(maxRetries)>(stoul(value)); }
-        catch (const std::logic_error& e) {
-            throw BaseOptions::BadValueException(option); }
+        maxRetries = static_cast<decltype(maxRetries)>(GetUnsigned(option,value));
     }
     else if (option == "retry-time")
     {
-        try { retryTime = seconds(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        retryTime = seconds(GetUnsigned(option,value));
     }
     else if (option == "stream-buffer-size")
     {

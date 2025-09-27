@@ -4,23 +4,18 @@
 #include <chrono>
 #include <cstdint>
 #include <string>
+#include "andromeda/BaseOptions.hpp"
 
 namespace Andromeda {
 
 /** Client-based libAndromeda options */
-struct ConfigOptions
+struct ConfigOptions : public BaseOptions
 {
     /** Retrieve the standard help text string */
     static std::string HelpText();
 
-    /** Adds the given argument, returning true iff it was used */
-    bool AddFlag(const std::string& flag);
-
-    /** 
-     * Adds the given option/value, returning true iff it was used
-     * @throws BaseOptions::Exception if invalid arguments
-     */
-    bool AddOption(const std::string& option, const std::string& value);
+    bool AddFlag(const std::string& flag) override;
+    bool AddOption(const std::string& option, const std::string& value) override;
 
     /** Whether we are in read-only mode */
     bool readOnly { false };

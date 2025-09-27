@@ -147,17 +147,15 @@ void Options::TryAddUrlOption(const std::string& option, const std::string& valu
 }
 
 /*****************************************************/
-void Options::Validate()
+void Options::Validate() const
 {
     if (GetApiType() == ApiType::API_INVALID)
         throw MissingOptionException("apiurl/apipath");
 
-    // TODO FUTURE mounting shares - check GetMountRootType() != RootType::FOLDER
-    if (mSessionOptions.username.empty() && mSessionOptions.sessionid.empty())
-        throw MissingOptionException("username/sessionid");
-
     if (GetMountPath().empty())
         throw MissingOptionException("mountpath");
+
+    mSessionOptions.Validate();
 }
 
 } // namespace AndromedaFuse

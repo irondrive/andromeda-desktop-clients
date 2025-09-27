@@ -1,19 +1,17 @@
 #ifndef A2UTIL_ACTIONS_H_
 #define A2UTIL_ACTIONS_H_
 
-namespace Andromeda::Account { class Session; }
-namespace Andromeda::Backend { class BackendImpl; }
-
 #include "andromeda/Debug.hpp"
 
 namespace AndromedaUtil {
+
+class Resource;
 
 /** Class for executing andromeda-util subcommands */
 class Actions
 {
 public:
-    inline Actions(Andromeda::Backend::BackendImpl* backend_, Andromeda::Account::Session* session_):
-        mDebug(__func__, this), backend(backend_), session(session_){ }
+    inline explicit Actions(Resource& resource): mDebug(__func__, this), mResource(resource){ }
 
     /**
      * Runs the action given as the first arg, with the remaining args
@@ -24,14 +22,14 @@ public:
     /** Generates a random value, maybe base64 */
     void Random(int argc, const char* const* argv);
     // TODO RAY !! comments
-    void InitE2ee(int argc, const char* const* argv);
+    void GetPasskey(int argc, const char* const* argv);
+    void InitAccountE2ee(int argc, const char* const* argv);
+    void InitFilesystemE2ee(int argc, const char* const* argv);
     void ChangePassword(int argc, const char* const* argv);
 
 private:
     Andromeda::Debug mDebug;
-
-    Andromeda::Backend::BackendImpl* backend; // NOLINT(*unused*) 
-    Andromeda::Account::Session* session; // NOLINT(*unused*) // TODO RAY !! nolint
+    Resource& mResource; // NOLINT(*unused*) // TODO RAY !! remove lint
 }; 
 
 } // namespace AndromedaUtil

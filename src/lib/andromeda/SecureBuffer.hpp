@@ -30,6 +30,15 @@ struct SecureMemory
         free(static_cast<void*>(ptr)); }
 };
 
+/** Secure memory allocator as a std C++ allocator */
+template<typename T>
+struct SecureAllocator
+{
+    using value_type = T;
+    inline T* allocate(std::size_t n){ return SecureMemory::allocT<T>(n); }
+    inline void deallocate(T* p, std::size_t n){ return SecureMemory::freeT<T>(p); }
+};
+
 /** 
  * Holds a buffer allocated with SecureMemory
  * NOT THREAD SAFE (protect externally)

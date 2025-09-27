@@ -3,24 +3,19 @@
 
 #include <chrono>
 #include <string>
+#include "andromeda/BaseOptions.hpp"
 
 namespace Andromeda {
 namespace Backend {
 
 /** HTTP config options */
-struct HTTPOptions
+struct HTTPOptions : public BaseOptions
 {
     /** Retrieve the standard help text string */
     static std::string HelpText();
 
-    /** Adds the given argument, returning true iff it was used */
-    bool AddFlag(const std::string& flag);
-
-    /** 
-     * Adds the given option/value, returning true iff it was used
-     * @throws BaseOptions::Exception if invalid arguments
-     */
-    bool AddOption(const std::string& option, const std::string& value);
+    bool AddFlag(const std::string& flag) override;
+    bool AddOption(const std::string& option, const std::string& value) override;
 
     /** Whether or not redirects are allowed */
     bool followRedirects { true };

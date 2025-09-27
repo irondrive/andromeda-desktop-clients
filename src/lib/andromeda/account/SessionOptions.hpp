@@ -18,6 +18,7 @@ struct SessionOptions : public BaseOptions
 
     bool AddFlag(const std::string& flag) override;
     bool AddOption(const std::string& option, const std::string& value) override;
+    void Validate() const override;
 
     /**
      * Returns a session object based on given session input

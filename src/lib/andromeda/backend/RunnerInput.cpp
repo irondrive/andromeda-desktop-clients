@@ -1,4 +1,5 @@
 
+#include <array>
 #include <cstdio>
 
 #include "RunnerInput.hpp"
@@ -13,8 +14,8 @@ size_t RunnerInput_StreamIn::StreamSize(const WriteFunc& func)
     bool moreData { true }; while (moreData)
     {
         size_t sread { 0 };
-        char buf[BUFSIZ]; // NOLINT(*-avoid-c-arrays)
-        moreData = func(retval, buf, sizeof(buf), sread);
+        std::array<char,BUFSIZ> buf; // NOLINT(*-init);
+        moreData = func(retval, buf.data(), buf.size(), sread);
         retval += sread;
     }
     return retval;

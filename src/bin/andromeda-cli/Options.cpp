@@ -75,7 +75,7 @@ bool Options::AddOption(const std::string& option, const std::string& value)
 }
 
 /*****************************************************/
-void Options::Validate()
+void Options::Validate() const
 {
     if (mApiUrl.empty())
         throw MissingOptionException("apiurl");

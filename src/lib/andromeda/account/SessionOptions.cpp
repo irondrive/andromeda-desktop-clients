@@ -54,4 +54,12 @@ std::unique_ptr<Session> SessionOptions::GetSession(BackendImpl& backend, bool i
     return nullptr;
 }
 
+/*****************************************************/
+void SessionOptions::Validate() const
+{
+    // TODO FUTURE mounting shares - check GetMountRootType() != RootType::FOLDER
+    if (username.empty() && sessionid.empty())
+        throw MissingOptionException("username/sessionid");
+}
+
 } // namespace Andromeda::Account

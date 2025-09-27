@@ -40,9 +40,7 @@ bool HTTPOptions::AddOption(const std::string& option, const std::string& value)
         proxyHost = value;
     else if (option == "hproxy-port")
     {
-        try { proxyPort = static_cast<decltype(proxyPort)>(stoul(value)); }
-        catch (const std::logic_error& e) {
-            throw BaseOptions::BadValueException(option); }
+        proxyPort = static_cast<decltype(proxyPort)>(GetUnsigned(option,value));
     }
     else if (option == "hproxy-user")
         proxyUsername = value;

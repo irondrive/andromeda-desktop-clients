@@ -37,6 +37,20 @@ std::string BaseOptions::DetailBaseHelpText(const std::string& name)
 }
 
 /*****************************************************/
+uint64_t BaseOptions::GetUnsigned(const std::string& name, const std::string& value, bool zero)
+{
+    try {
+        const unsigned long long retval { stoull(value,nullptr,0) }; // NOLINT(google-runtime-int)
+        if (!zero && !retval) throw BadValueException(name);
+        return static_cast<uint64_t>(retval);
+    }
+    catch(const std::logic_error& e)
+    {
+        throw BadValueException(name);
+    }
+}
+
+/*****************************************************/
 size_t BaseOptions::ParseArgs(size_t argc, const char* const* argv, bool stopmm) // NOLINT(readability-function-cognitive-complexity)
 {
     size_t argIdx { 0 }; for (; argIdx < argc; argIdx++)
@@ -181,9 +195,7 @@ bool BaseOptions::AddOption(const std::string& option, const std::string& value)
     }
     else if (option == "d" || option == "debug")
     {
-        try { Debug::SetLevel(static_cast<Debug::Level>(stoul(value))); }
-        catch (const std::logic_error& e) { 
-            throw BadValueException(option); }
+        Debug::SetLevel(static_cast<Debug::Level>(GetUnsigned(option,value)));
     }
     else if (option == "debug-filter")
     {

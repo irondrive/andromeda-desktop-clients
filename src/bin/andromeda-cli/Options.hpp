@@ -34,10 +34,8 @@ public:
         Andromeda::Backend::RunnerOptions& runnerOptions);
 
     bool AddFlag(const std::string& flag) override;
-
     bool AddOption(const std::string& option, const std::string& value) override;
-
-    void Validate() override;
+    void Validate() const override;
 
     /** Returns the URL of the API endpoint */
     [[nodiscard]] const std::string& GetApiUrl() const { return mApiUrl; }

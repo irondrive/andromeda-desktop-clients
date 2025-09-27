@@ -5,9 +5,6 @@
 #include "FuseOptions.hpp"
 #include "libfuse_Includes.h"
 
-#include "andromeda/BaseOptions.hpp"
-using Andromeda::BaseOptions;
-
 namespace AndromedaFuse {
 
 /*****************************************************/
@@ -95,9 +92,7 @@ bool FuseOptions::AddOption(const std::string& option, const std::string& value)
 #if !LIBFUSE2
     else if (option == "fuse-max-idle-threads")
     {
-        try { maxIdleThreads = static_cast<decltype(maxIdleThreads)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        maxIdleThreads = static_cast<decltype(maxIdleThreads)>(GetUnsigned(option,value));
     }
 #endif // !LIBFUSE2
     else return false; // not used

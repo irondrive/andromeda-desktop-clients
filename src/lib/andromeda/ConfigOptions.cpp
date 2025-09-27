@@ -47,9 +47,7 @@ bool ConfigOptions::AddOption(const std::string& option, const std::string& valu
     }
     else if (option == "dir-refresh")
     {
-        try { refreshTime = static_cast<decltype(refreshTime)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        refreshTime = static_cast<decltype(refreshTime)>(GetUnsigned(option,value));
     }
     else if (option == "backend-runners") 
     // TODO RAY !! these should all be separated out.  many are filesystem-specific.  this one is backend-specific. has nothing to do with config
@@ -57,11 +55,7 @@ bool ConfigOptions::AddOption(const std::string& option, const std::string& valu
     // make SessionOptions + FilesystemOptions (can go in FSResource!), no generic "ConfigOptions"
     // andromeda-util does not use the runnerPoolSize either
     {
-        try { runnerPoolSize = static_cast<decltype(runnerPoolSize)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
-
-        if (!runnerPoolSize) throw BaseOptions::BadValueException(option);
+        runnerPoolSize = static_cast<decltype(runnerPoolSize)>(GetUnsigned(option,value,false));
     }
     else if (option == "pagesize")
     {
@@ -73,23 +67,15 @@ bool ConfigOptions::AddOption(const std::string& option, const std::string& valu
     }
     else if (option == "read-ahead")
     {
-        try { readAheadTime = static_cast<decltype(readAheadTime)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        readAheadTime = static_cast<decltype(readAheadTime)>(GetUnsigned(option,value));
     }
     else if (option == "read-max-cache-frac")
     {
-        try { readMaxCacheFrac = static_cast<decltype(readMaxCacheFrac)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
-
-        if (!readMaxCacheFrac) throw BaseOptions::BadValueException(option);
+        readMaxCacheFrac = static_cast<decltype(readMaxCacheFrac)>(GetUnsigned(option,value,false));
     }
     else if (option == "read-ahead-buffer")
     {
-        try { readAheadBuffer = static_cast<decltype(readAheadBuffer)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        readAheadBuffer = static_cast<decltype(readAheadBuffer)>(GetUnsigned(option,value));
     }
     else return false; // not used
 

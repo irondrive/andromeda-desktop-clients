@@ -41,12 +41,9 @@ public:
             AndromedaFuse::FuseOptions& fuseOptions);
 
     bool AddFlag(const std::string& flag) override;
-
     bool AddOption(const std::string& option, const std::string& value) override;
-
     void TryAddUrlOption(const std::string& option, const std::string& value) override;
-
-    void Validate() override;
+    void Validate() const override;
 
     /** Backend connection type */
     enum class ApiType : uint8_t

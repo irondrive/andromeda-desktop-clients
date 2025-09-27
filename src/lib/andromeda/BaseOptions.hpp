@@ -117,10 +117,19 @@ public:
      * Makes sure all required options were provided 
      * @throws MissingOptionException if a required option is missing
      */
-    virtual void Validate() { }
+    virtual void Validate() const { }
 
     /** Returns true if terminal prompting is not allowed */
     [[nodiscard]] bool isQuiet() const { return mQuiet; }
+
+    /**
+     * Returns an unsigned int extracted from the given string
+     * @param name the name of the option being parsed (for the exception)
+     * @param value the string to pull the unsigned int out of
+     * @param zero if false, disallow being zero
+     * @throws BadValueException if not numeric or if zero
+     */
+    [[nodiscard]] static uint64_t GetUnsigned(const std::string& name, const std::string& value, bool zero = true);
 
 protected:
 
@@ -134,7 +143,7 @@ protected:
     static std::string DetailBaseHelpText(const std::string& name = "");
 
     /** True if terminal prompting is not allowed */
-    bool mQuiet { false };
+    bool mQuiet { false }; // TODO RAY !! move this back to per-binary Options (fuse and util)
 };
 
 } // namespace Andromeda

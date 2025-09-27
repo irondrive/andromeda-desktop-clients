@@ -276,6 +276,11 @@ TEST_CASE("stringToBytes", "[StringUtil]")
     REQUIRE(StringUtil::stringToBytes("1") == 1);
     REQUIRE(StringUtil::stringToBytes(" 4567 ") == 4567);
 
+    REQUIRE(StringUtil::stringToBytes("0xbeef") == 0xbeef);
+    REQUIRE(StringUtil::stringToBytes("0xBEEF") == 0xBEEF);
+    REQUIRE(StringUtil::stringToBytes("0b101") == 0b101);
+    REQUIRE(StringUtil::stringToBytes("0567") == 0567);
+
     REQUIRE(StringUtil::stringToBytes("1K") == 1024);
     REQUIRE(StringUtil::stringToBytes(" 5 K ") == 5UL*1024);
     REQUIRE(StringUtil::stringToBytes("256M") == 256UL*1024*1024);

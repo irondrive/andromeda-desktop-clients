@@ -121,6 +121,9 @@ public:
     /** Sets the username to masquerade as (or "" if none) */
     void SetSudoUsername(const std::string& username){ mSudoUsername = username; }
 
+    /** Returns true if the backend is using an account with the server */
+    bool UsingAccount() const { return RequiresSession() ? (mSession != nullptr) : (!mSudoUsername.empty()); }
+
     /*****************************************************/
     // ---- Actual backend functions below here ---- //
 

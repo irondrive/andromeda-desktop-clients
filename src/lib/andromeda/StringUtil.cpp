@@ -182,6 +182,7 @@ bool StringUtil::stringToBool(const std::string& stri)
 }
 
 static constexpr size_t bytesMul { 1024 };
+static constexpr std::array<const char*,6> byteUnits { "", "K", "M", "G", "T", "P" };
 
 /*****************************************************/
 uint64_t StringUtil::stringToBytes(const std::string& stri)
@@ -191,14 +192,14 @@ uint64_t StringUtil::stringToBytes(const std::string& stri)
 
     const char unit { str.at(str.size()-1) };
     
-    if (unit < '0' || unit > '9')
+    if (std::find(byteUnits.cbegin(), byteUnits.cend(), std::string(1,unit)) != byteUnits.cend())
     {
         str.pop_back(); trim_void(str);
         if (str.empty()) return 0;
     }
 
     // stoul throws std::logic_error
-    uint64_t num { stoul(str) };
+    uint64_t num { stoul(str, nullptr, 0) };
 
     switch (unit)
     {
@@ -222,11 +223,10 @@ uint64_t StringUtil::stringToBytes(const std::string& stri)
 std::string StringUtil::bytesToString(uint64_t bytes)
 {
     size_t unitIdx { 0 };
-    static constexpr std::array<const char*,6> units { "", "K", "M", "G", "T", "P" };
-    while (bytes >= bytesMul && !(bytes % bytesMul) && unitIdx < units.size()-1) {
+    while (bytes >= bytesMul && !(bytes % bytesMul) && unitIdx < byteUnits.size()-1) {
         ++unitIdx; bytes /= bytesMul;
     }
-    return std::to_string(bytes)+units[unitIdx];
+    return std::to_string(bytes)+byteUnits[unitIdx];
 }
 
 /*****************************************************/
@@ -235,8 +235,7 @@ std::string StringUtil::bytesToStringF(const uint64_t bytes)
     size_t unitIdx { 0 };
     double bytesF { static_cast<double>(bytes) };
 
-    static constexpr std::array<const char*,6> units { "", "K", "M", "G", "T", "P" };
-    while (bytesF >= bytesMul && unitIdx < units.size()-1) {
+    while (bytesF >= bytesMul && unitIdx < byteUnits.size()-1) {
         ++unitIdx; bytesF /= bytesMul;
     }
 
@@ -246,7 +245,7 @@ std::string StringUtil::bytesToStringF(const uint64_t bytes)
     while (bstrng.back() == '0') bstrng.pop_back();
     if (bstrng.back() == '.') bstrng.pop_back();
 
-    return bstrng+units[unitIdx];
+    return bstrng+byteUnits[unitIdx];
 }
 
 #define B64VARIANT sodium_base64_VARIANT_ORIGINAL

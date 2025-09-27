@@ -40,9 +40,7 @@ bool CacheOptions::AddOption(const std::string& option, const std::string& value
 {
     if (option == "max-dirty")
     {
-        try { maxDirtyTime = static_cast<decltype(maxDirtyTime)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
+        maxDirtyTime = static_cast<decltype(maxDirtyTime)>(GetUnsigned(option,value));
     }
     else if (option == "memory-limit")
     {
@@ -52,11 +50,7 @@ bool CacheOptions::AddOption(const std::string& option, const std::string& value
     }
     else if (option == "evict-frac")
     {
-        try { evictSizeFrac = static_cast<decltype(evictSizeFrac)>(stoul(value)); }
-        catch (const std::logic_error& e) { 
-            throw BaseOptions::BadValueException(option); }
-
-        if (!evictSizeFrac) throw BaseOptions::BadValueException(option);
+        evictSizeFrac = static_cast<decltype(evictSizeFrac)>(GetUnsigned(option,value,false));
     }
     else return false; // not used
 

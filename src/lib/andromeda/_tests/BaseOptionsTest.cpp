@@ -36,7 +36,7 @@ public:
         options.emplace(option, value);
     }
 
-    void Validate() override { }
+    void Validate() const override { }
     void Reset() { flags.clear(); options.clear(); }
 
     using Flags = std::list<std::string>;
