@@ -23,9 +23,10 @@ public:
     DELETE_MOVE(Resource);
     DELETE_COPY(Resource);
 
-    // TODO RAY !! comments
     Options& GetOptions() { return options; }
+    /** Initiates (if not already) and returns a BackendImpl from the given options */
     Andromeda::Backend::BackendImpl& GetBackend();
+    /** Initiates (if not already) and maybe returns a Session from the given options */
     Andromeda::Account::Session* TryGetSession();
 
 private:

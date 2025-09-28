@@ -11,7 +11,11 @@ class Resource;
 class Actions
 {
 public:
-    inline explicit Actions(Resource& resource): mDebug(__func__, this), mResource(resource){ }
+    /** Retrieve the standard help text string */
+    static std::string HelpText();
+
+    inline explicit Actions(Resource& resource): 
+        mDebug(__func__, this), mResource(resource){ }
 
     /**
      * Runs the action given as the first arg, with the remaining args
@@ -21,8 +25,10 @@ public:
 
     /** Generates a random alphanum or binary string, maybe base64 */
     void Random(int argc, const char* const* argv);
-    // TODO RAY !! comments
+    /** Calculates the passkey base64 from a username and password */    
     void GetPasskey(int argc, const char* const* argv);
+
+    // TODO RAY !! comments
     void InitAccountE2ee(int argc, const char* const* argv);
     void InitFilesystemE2ee(int argc, const char* const* argv);
     void ChangePassword(int argc, const char* const* argv);

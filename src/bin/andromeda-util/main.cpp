@@ -55,6 +55,7 @@ int main(int argc, char** argv)
     catch (const Options::ShowHelpException& ex)
     {
         std::cout << Options::HelpText() << std::endl;
+        std::cout << Actions::HelpText() << std::endl;
         return static_cast<int>(ExitCode::SUCCESS);
     }
     catch (const Options::ShowVersionException& ex)
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
     {
         std::cout << ex.what() << std::endl << std::endl;
         std::cout << Options::HelpText() << std::endl;
+        std::cout << Actions::HelpText() << std::endl;
         return static_cast<int>(ExitCode::BAD_USAGE);
     }
     
@@ -81,6 +83,7 @@ int main(int argc, char** argv)
     {
         std::cout << ex.what() << std::endl << std::endl;
         std::cout << Options::HelpText() << std::endl;
+        std::cout << Actions::HelpText() << std::endl;
         return static_cast<int>(ExitCode::BAD_USAGE);
     }    
     catch (const BackendException& ex)

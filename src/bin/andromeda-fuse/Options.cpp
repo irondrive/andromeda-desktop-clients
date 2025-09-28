@@ -27,7 +27,8 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-fuse " << CoreBaseHelpText() << " -m|--mountpath path (-a|--apiurl url | -p|--apipath [path])" << endl << endl
+        << "andromeda-fuse -m|--mountpath path (-a|--apiurl url | -p|--apipath [path])" << endl
+        << "Misc Flags: " << CoreBaseHelpText() << endl << endl
 
         << "Remote Object:   [--folder [id] | --filesystem [id]]" << endl
         << SessionOptions::HelpText() << endl << endl

@@ -21,8 +21,8 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-util [flags] action [action flags]" << endl
-        << "andromeda-util " << CoreBaseHelpText() << " (-a|--apiurl url | -p|--apipath [path])" << endl << endl
+        << "andromeda-util (-a|--apiurl url | -p|--apipath [path]) [flags] action [action flags]" << endl
+        << "Misc Flags: " << CoreBaseHelpText() << endl << endl
 
         << SessionOptions::HelpText() << endl << endl
 
