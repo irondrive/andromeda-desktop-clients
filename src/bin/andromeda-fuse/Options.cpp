@@ -5,14 +5,14 @@
 
 #include "andromeda-fuse/FuseOptions.hpp"
 
-#include "andromeda/ConfigOptions.hpp"
-using Andromeda::ConfigOptions;
 #include "andromeda/account/SessionOptions.hpp"
 using Andromeda::Account::SessionOptions;
 #include "andromeda/backend/HTTPOptions.hpp"
 using Andromeda::Backend::HTTPOptions;
 #include "andromeda/backend/RunnerOptions.hpp"
 using Andromeda::Backend::RunnerOptions;
+#include "andromeda/filesystem/FSOptions.hpp"
+using Andromeda::Filesystem::FSOptions;
 #include "andromeda/filesystem/filedata/CacheOptions.hpp"
 using Andromeda::Filesystem::Filedata::CacheOptions;
 
@@ -36,7 +36,7 @@ std::string Options::HelpText()
         << RunnerOptions::HelpText() << endl << endl
         << FuseOptions::HelpText() << endl << endl
         
-        << ConfigOptions::HelpText() << endl
+        << FSOptions::HelpText() << endl
         << CacheOptions::HelpText() << endl << endl
            
         << DetailBaseHelpText("fuse") << endl;
@@ -45,16 +45,16 @@ std::string Options::HelpText()
 }
 
 /*****************************************************/
-Options::Options(ConfigOptions& configOptions_, 
-                 HTTPOptions& httpOptions_,
+Options::Options(HTTPOptions& httpOptions_,
                  RunnerOptions& runnerOptions_,
                  SessionOptions& sessionOptions_,
+                 FSOptions& fsOptions_, 
                  CacheOptions& cacheOptions_,
                  FuseOptions& fuseOptions_) :
-    configOptions(configOptions_), 
     httpOptions(httpOptions_), 
     runnerOptions(runnerOptions_),
     sessionOptions(sessionOptions_),
+    fsOptions(fsOptions_), 
     cacheOptions(cacheOptions_),
     fuseOptions(fuseOptions_) { }
 
@@ -73,10 +73,10 @@ bool Options::AddFlag(const std::string& flag)
         foreground = true;
     
     else if (BaseOptions::AddFlag(flag)) { }
-    else if (configOptions.AddFlag(flag)) { }
     else if (httpOptions.AddFlag(flag)) { }
     else if (runnerOptions.AddFlag(flag)) { }
     else if (sessionOptions.AddFlag(flag)) { }
+    else if (fsOptions.AddFlag(flag)) { }
     else if (cacheOptions.AddFlag(flag)) { }
     else if (fuseOptions.AddFlag(flag)) { }
 
@@ -124,10 +124,10 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     }
 
     else if (BaseOptions::AddOption(option, value)) { }
-    else if (configOptions.AddOption(option, value)) { }
     else if (httpOptions.AddOption(option, value)) { }
     else if (runnerOptions.AddOption(option, value)) { }
     else if (sessionOptions.AddOption(option, value)) { }
+    else if (fsOptions.AddOption(option, value)) { }
     else if (cacheOptions.AddOption(option, value)) { }
     else if (fuseOptions.AddOption(option, value)) { }
 

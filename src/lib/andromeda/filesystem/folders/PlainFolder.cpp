@@ -2,12 +2,12 @@
 #include "nlohmann/json.hpp"
 
 #include "PlainFolder.hpp"
-#include "andromeda/ConfigOptions.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
 #include "andromeda/backend/RunnerInput.hpp"
 using Andromeda::Backend::WriteFunc;
 #include "andromeda/filesystem/FSConfig.hpp"
+#include "andromeda/filesystem/FSOptions.hpp"
 #include "andromeda/filesystem/FSResource.hpp"
 #include "andromeda/filesystem/File.hpp"
 using Andromeda::Filesystem::File;
@@ -112,7 +112,7 @@ void PlainFolder::SubCreateFile(const std::string& name, const SharedLockW& this
 
     std::unique_ptr<File> file;
 
-    if (mBackend.GetOptions().cacheType == ConfigOptions::CacheType::NONE)
+    if (mFsResource.options.cacheType == FSOptions::CacheType::NONE)
     {
         const nlohmann::json data(mBackend.CreateFile(GetID(), name));
         file = std::make_unique<File>(mFsResource, data, *this);

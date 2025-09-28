@@ -1,15 +1,15 @@
-#ifndef LIBA2_CONFIGOPTIONS_H_
-#define LIBA2_CONFIGOPTIONS_H_
+#ifndef LIBA2_FSOPTIONS_H_
+#define LIBA2_FSOPTIONS_H_
 
 #include <chrono>
 #include <cstdint>
 #include <string>
 #include "andromeda/BaseOptions.hpp"
 
-namespace Andromeda {
+namespace Andromeda::Filesystem {
 
 /** Client-based libAndromeda options */
-struct ConfigOptions : public BaseOptions
+struct FSOptions : public BaseOptions
 {
     /** Retrieve the standard help text string */
     static std::string HelpText();
@@ -68,11 +68,8 @@ struct ConfigOptions : public BaseOptions
      * CPU usage and possibly wasted bandwidth and cache. Overall effect is small either way.
      */
     size_t readAheadBuffer { 2 };
-
-    /** The maximum number of concurrent backend runners, never zero! */
-    size_t runnerPoolSize { 1 }; // TODO server has threading issues
 };
 
-} // namespace Andromeda
+} // namespace Andromeda::Filesystem
 
-#endif // LIBA2_CONFIGOPTIONS_H_
+#endif // LIBA2_FSOPTIONS_H_

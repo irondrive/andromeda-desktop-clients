@@ -1,24 +1,24 @@
 
 #include <sstream>
 
-#include "ConfigOptions.hpp"
-#include "BaseOptions.hpp"
-#include "StringUtil.hpp"
+#include "FSOptions.hpp"
+#include "andromeda/BaseOptions.hpp"
+#include "andromeda/StringUtil.hpp"
 
-namespace Andromeda {
+namespace Andromeda::Filesystem {
 
 /*****************************************************/
-std::string ConfigOptions::HelpText()
+std::string FSOptions::HelpText()
 {
     std::ostringstream output;
-    const ConfigOptions optDefault;
+    const FSOptions optDefault;
 
     const auto defRefresh(optDefault.refreshTime.count());
     const auto defReadAhead(optDefault.readAheadTime.count());
     const size_t stBits { sizeof(size_t)*8 };
 
     using std::endl; output 
-        << "Advanced:        [-r|--read-only] [--dir-refresh secs(" << defRefresh << ")] [--cachemode none|memory|normal] [--backend-runners uint"<<stBits<<"(" << optDefault.runnerPoolSize << ")]" << endl
+        << "FS Advanced:     [-r|--read-only] [--dir-refresh secs(" << defRefresh << ")] [--cachemode none|memory|normal]" << endl
         << "Data Advanced:   [--pagesize bytes"<<stBits<<"(" << StringUtil::bytesToString(optDefault.pageSize) << ")] [--read-ahead ms(" << defReadAhead << ")]"
             << " [--read-max-cache-frac uint32(" << optDefault.readMaxCacheFrac << ")] [--read-ahead-buffer pages(" << optDefault.readAheadBuffer << ")]";
 
@@ -26,7 +26,7 @@ std::string ConfigOptions::HelpText()
 }
 
 /*****************************************************/
-bool ConfigOptions::AddFlag(const std::string& flag)
+bool FSOptions::AddFlag(const std::string& flag)
 {
     if (flag == "r" || flag == "read-only")
         readOnly = true;
@@ -36,26 +36,18 @@ bool ConfigOptions::AddFlag(const std::string& flag)
 }
 
 /*****************************************************/
-bool ConfigOptions::AddOption(const std::string& option, const std::string& value) // NOLINT(readability-function-cognitive-complexity)
+bool FSOptions::AddOption(const std::string& option, const std::string& value) // NOLINT(readability-function-cognitive-complexity)
 {
     if (option == "cachemode")
     {
-        if      (value == "none")   cacheType = ConfigOptions::CacheType::NONE;
-        else if (value == "memory") cacheType = ConfigOptions::CacheType::MEMORY;
-        else if (value == "normal") cacheType = ConfigOptions::CacheType::NORMAL;
+        if      (value == "none")   cacheType = FSOptions::CacheType::NONE;
+        else if (value == "memory") cacheType = FSOptions::CacheType::MEMORY;
+        else if (value == "normal") cacheType = FSOptions::CacheType::NORMAL;
         else throw BaseOptions::BadValueException(option);
     }
     else if (option == "dir-refresh")
     {
         refreshTime = static_cast<decltype(refreshTime)>(GetUnsigned(option,value));
-    }
-    else if (option == "backend-runners") 
-    // TODO RAY !! these should all be separated out.  many are filesystem-specific.  this one is backend-specific. has nothing to do with config
-    // really quiet should be moved to SessionOptions, everything else is filesystem-related... actually honestly they are all fuse related, move to lib/fuse?
-    // make SessionOptions + FilesystemOptions (can go in FSResource!), no generic "ConfigOptions"
-    // andromeda-util does not use the runnerPoolSize either
-    {
-        runnerPoolSize = static_cast<decltype(runnerPoolSize)>(GetUnsigned(option,value,false));
     }
     else if (option == "pagesize")
     {
@@ -82,4 +74,4 @@ bool ConfigOptions::AddOption(const std::string& option, const std::string& valu
     return true; 
 }
 
-} // namespace Andromeda
+} // namespace Andromeda::Filesystem

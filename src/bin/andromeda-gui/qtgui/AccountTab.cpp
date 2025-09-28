@@ -12,6 +12,8 @@
 using Andromeda::BaseException;
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
+#include "andromeda/filesystem/FSOptions.hpp"
+using Andromeda::Filesystem::FSOptions;
 #include "andromeda/filesystem/filedata/CacheManager.hpp"
 using Andromeda::Filesystem::Filedata::CacheManager;
 
@@ -54,6 +56,9 @@ void AccountTab::Mount(bool autoMount)
 {
     MDBG_INFO("()");
 
+    // can go out of scope - FSResource and FuseAdapter make copies
+    // TODO for now just use the default of everything, no GUI config
+    FSOptions fsOptions;
     FuseOptions fuseOptions;
 
     BackendImpl& backend { mBackendContext->GetBackend() };
@@ -62,7 +67,7 @@ void AccountTab::Mount(bool autoMount)
     try
     {
         mMountContext = std::make_unique<MountContext>(
-            backend, mCacheMgr, true, mountPath, fuseOptions);
+            backend, mCacheMgr, true, mountPath, fsOptions, fuseOptions);
     }
     catch (const BaseException& ex) // MountContext::Exception or FuseAdapter::Exception
     {

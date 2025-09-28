@@ -106,7 +106,7 @@ public:
 
 private:
 
-    /** The size of each page - see description in ConfigOptions */
+    /** The size of each page - see description in FSOptions */
     const size_t mPageSize;
     /** The file size as far as the backend knows (0 if it doesn't exist) */
     uint64_t mBackendSize;

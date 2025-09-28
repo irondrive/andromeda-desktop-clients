@@ -5,7 +5,6 @@
 
 #include "andromeda/common.hpp"
 #include "andromeda/Debug.hpp"
-#include "andromeda/ConfigOptions.hpp"
 #include "andromeda/backend/HTTPOptions.hpp"
 #include "andromeda/backend/RunnerOptions.hpp"
 
@@ -69,9 +68,6 @@ private:
 
     mutable Andromeda::Debug mDebug;
 
-    /** libandromeda configuration */
-    Andromeda::ConfigOptions mConfigOptions;
-    /** HTTP Runner configuration */
     Andromeda::Backend::HTTPOptions mHttpOptions;
     Andromeda::Backend::RunnerOptions mRunnerOptions;
     

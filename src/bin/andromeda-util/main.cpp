@@ -15,8 +15,6 @@ using AndromedaUtil::Resource;
 
 #include "andromeda/BaseException.hpp"
 using Andromeda::BaseException;
-#include "andromeda/ConfigOptions.hpp"
-using Andromeda::ConfigOptions;
 #include "andromeda/Debug.hpp"
 using Andromeda::Debug;
 #include "andromeda/account/SessionOptions.hpp"
@@ -40,12 +38,11 @@ int main(int argc, char** argv)
 {
     Debug debug("main",nullptr); 
     
-    ConfigOptions configOptions;
     HTTPOptions httpOptions;
     RunnerOptions runnerOptions;
     SessionOptions sessionOptions;
 
-    Options options(configOptions, httpOptions, runnerOptions, sessionOptions);
+    Options options(httpOptions, runnerOptions, sessionOptions);
 
     try
     {

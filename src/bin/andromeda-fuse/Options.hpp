@@ -9,10 +9,9 @@
 #include "andromeda/BaseOptions.hpp"
 
 namespace Andromeda {
-    struct ConfigOptions;
     namespace Account { struct SessionOptions; }
     namespace Backend { struct HTTPOptions; struct RunnerOptions; }
-    namespace Filesystem { namespace Filedata { struct CacheOptions; } }
+    namespace Filesystem { struct FSOptions; namespace Filedata { struct CacheOptions; } }
 }
 
 namespace AndromedaFuse {
@@ -24,17 +23,17 @@ struct Options : public Andromeda::BaseOptions
     static std::string HelpText();
 
     /**
-     * @param[out] configOptions Config options ref to fill
      * @param[out] httpOptions HTTPRunner options ref to fill
      * @param[out] runnerOptions BaseRunner options ref to fill
      * @param[out] sessionOptions Session options ref to fill
+     * @param[out] fsOptions Filesystem options ref to fill
      * @param[out] cacheOptions CacheManager options ref to fill
      * @param[out] fuseOptions FUSE options ref to fill
      */
-    Options(Andromeda::ConfigOptions& configOptions_, 
-            Andromeda::Backend::HTTPOptions& httpOptions_, 
+    Options(Andromeda::Backend::HTTPOptions& httpOptions_, 
             Andromeda::Backend::RunnerOptions& runnerOptions_,
             Andromeda::Account::SessionOptions& sessionOptions_,
+            Andromeda::Filesystem::FSOptions& fsOptions_, 
             Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions_,
             AndromedaFuse::FuseOptions& fuseOptions_);
 
@@ -60,10 +59,10 @@ struct Options : public Andromeda::BaseOptions
         FOLDER
     };
 
-    Andromeda::ConfigOptions& configOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::HTTPOptions& httpOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::RunnerOptions& runnerOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Account::SessionOptions& sessionOptions; // cppcheck-suppress uninitMemberVarPrivate
+    Andromeda::Filesystem::FSOptions& fsOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Filesystem::Filedata::CacheOptions& cacheOptions; // cppcheck-suppress uninitMemberVarPrivate
     AndromedaFuse::FuseOptions& fuseOptions; // cppcheck-suppress uninitMemberVarPrivate
 

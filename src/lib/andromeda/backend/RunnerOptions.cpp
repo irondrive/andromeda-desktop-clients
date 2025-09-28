@@ -21,7 +21,7 @@ std::string RunnerOptions::HelpText()
     using std::endl;
 
     output << "Runner Advanced: [--req-timeout secs(" << defTimeout << ")] [--max-retries uint32(" << optDefault.maxRetries << ")] [--retry-time secs(" << defRetry << ")] "
-           << "[--stream-buffer-size bytes"<<stBits<<"(" << StringUtil::bytesToString(optDefault.streamBufferSize) << ")]";
+           << "[--parallel-runners uint"<<stBits<<"(" << optDefault.poolSize << ")] [--stream-buffer-size bytes"<<stBits<<"(" << StringUtil::bytesToString(optDefault.streamBufferSize) << ")]";
 
     return output.str();
 }
@@ -40,6 +40,10 @@ bool RunnerOptions::AddOption(const std::string& option, const std::string& valu
     else if (option == "retry-time")
     {
         retryTime = seconds(GetUnsigned(option,value));
+    }
+    else if (option == "parallel-runners") 
+    {
+        poolSize = static_cast<decltype(poolSize)>(GetUnsigned(option,value,false));
     }
     else if (option == "stream-buffer-size")
     {

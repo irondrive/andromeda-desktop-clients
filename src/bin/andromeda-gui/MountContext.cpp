@@ -6,6 +6,8 @@
 
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
+#include "andromeda/filesystem/FSOptions.hpp"
+using Andromeda::Filesystem::FSOptions;
 #include "andromeda/filesystem/filedata/CacheManager.hpp"
 using Andromeda::Filesystem::Filedata::CacheManager;
 #include "andromeda/filesystem/filedata/CachingAllocator.hpp"
@@ -22,9 +24,9 @@ namespace AndromedaGui {
 
 /*****************************************************/
 MountContext::MountContext(BackendImpl& backend, CacheManager& cacheMgr, 
-    bool autoHome, std::string mountPath, FuseOptions& options) : 
+    bool autoHome, std::string mountPath, FSOptions& fsOptions, FuseOptions& fuseOptions) : 
     mCreateMount(autoHome), 
-    mFsResource(backend, &cacheMgr, cacheMgr.GetPageAllocator()),
+    mFsResource(fsOptions, backend, &cacheMgr, cacheMgr.GetPageAllocator()),
     mDebug(__func__,this) 
 {
     MDBG_INFO("(mountPath:" << mountPath << ")");
@@ -62,7 +64,7 @@ MountContext::MountContext(BackendImpl& backend, CacheManager& cacheMgr,
     mRootFolder = std::make_unique<SuperRoot>(mFsResource);
 
     mFuseAdapter = std::make_unique<FuseAdapter>(
-        mountPath, *mRootFolder, options);
+        mountPath, *mRootFolder, fuseOptions);
     
     mFuseAdapter->StartFuse(FuseAdapter::RunMode::THREAD); // background
 }

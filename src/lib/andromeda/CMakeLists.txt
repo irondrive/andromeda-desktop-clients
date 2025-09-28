@@ -7,7 +7,6 @@ include(../../andromeda.cmake)
 
 set(SOURCE_FILES 
     BaseOptions.cpp
-    ConfigOptions.cpp
     Crypto.cpp
     Debug.cpp
     PlatformUtil.cpp

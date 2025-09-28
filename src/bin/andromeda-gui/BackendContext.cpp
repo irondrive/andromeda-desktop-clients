@@ -77,9 +77,8 @@ void BackendContext::InitializeBackend(const std::string& url)
     mRunner = std::make_unique<HTTPRunner>(url, 
         GetUserAgent(), mRunnerOptions, mHttpOptions);
 
-    mRunners = std::make_unique<RunnerPool>(*mRunner, mConfigOptions.runnerPoolSize);
-
-    mBackend = std::make_unique<BackendImpl>(mConfigOptions, *mRunners);
+    mRunners = std::make_unique<RunnerPool>(*mRunner, mRunnerOptions.poolSize);
+    mBackend = std::make_unique<BackendImpl>(*mRunners);
 }
 
 /*****************************************************/

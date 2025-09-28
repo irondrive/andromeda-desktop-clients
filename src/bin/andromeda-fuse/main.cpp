@@ -13,8 +13,6 @@ using AndromedaFuse::FuseAdapter;
 #include "andromeda-fuse/FuseOptions.hpp"
 using AndromedaFuse::FuseOptions;
 
-#include "andromeda/ConfigOptions.hpp"
-using Andromeda::ConfigOptions;
 #include "andromeda/Debug.hpp"
 using Andromeda::Debug;
 #include "andromeda/account/Session.hpp"
@@ -42,6 +40,8 @@ using Andromeda::Backend::RunnerPool;
 using Andromeda::Filesystem::Folder;
 #include "andromeda/filesystem/FSResource.hpp"
 using Andromeda::Filesystem::FSResource;
+#include "andromeda/filesystem/FSOptions.hpp"
+using Andromeda::Filesystem::FSOptions;
 #include "andromeda/filesystem/folders/PlainFolder.hpp"
 using Andromeda::Filesystem::Folders::PlainFolder;
 #include "andromeda/filesystem/folders/Filesystem.hpp"
@@ -67,14 +67,14 @@ int main(int argc, char** argv)
 {
     Debug debug("main",nullptr); 
     
-    ConfigOptions configOptions;
     HTTPOptions httpOptions;
     RunnerOptions runnerOptions;
     SessionOptions sessionOptions;
+    FSOptions fsOptions;
     CacheOptions cacheOptions;
     FuseOptions fuseOptions;
 
-    Options options(configOptions, httpOptions, runnerOptions, sessionOptions, cacheOptions, fuseOptions);
+    Options options(httpOptions, runnerOptions, sessionOptions, fsOptions, cacheOptions, fuseOptions);
 
     try
     {
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
         case Options::ApiType::API_INVALID: break; // can't happen due to Validate() call
     }
 
-    RunnerPool runners(*runner, configOptions.runnerPoolSize);
+    RunnerPool runners(*runner, runnerOptions.poolSize);
     
     std::unique_ptr<CacheManager> cacheMgr;
     std::unique_ptr<CachingAllocator> pageAlloc;
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     
     try
     {
-        backend = std::make_unique<BackendImpl>(configOptions, runners);
+        backend = std::make_unique<BackendImpl>(runners);
 
         session = sessionOptions.GetSession(*backend, !options.isQuiet());
         if (session)
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
         else if (!sessionOptions.username.empty())
             backend->SetSudoUsername(sessionOptions.username);
         
-        fsResource = std::make_unique<FSResource>(*backend, cacheMgr.get(),
+        fsResource = std::make_unique<FSResource>(fsOptions, *backend, cacheMgr.get(),
             cacheMgr ? cacheMgr->GetPageAllocator() : *pageAlloc);
 
         switch (options.mountRootType)

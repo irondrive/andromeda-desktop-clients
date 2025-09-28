@@ -11,7 +11,6 @@
 #include "andromeda/Debug.hpp"
 
 namespace Andromeda {
-struct ConfigOptions;
 
 namespace Backend {
 class BaseRunner;

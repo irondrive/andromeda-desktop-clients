@@ -24,7 +24,7 @@ struct CacheOptions : public BaseOptions
      * Larger values consume more memory while increasing cache effectiveness.
      * While it may be tempting to set this to 0, keep in mind reads are orders of magnitude
      * faster when multi-page readAheads can happen, and a readAhead can be larger than some fraction of this 
-     * (see ConfigOptions.readMaxCacheFrac) even small values e.g. 8MB make a huge difference in performance.
+     * (see FSOptions.readMaxCacheFrac) even small values e.g. 8MB make a huge difference in performance.
      */
     size_t memoryLimit { static_cast<size_t>(256)*1024*1024 };
 

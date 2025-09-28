@@ -12,7 +12,6 @@
 #include "HTTPRunner.hpp"
 #include "RunnerInput.hpp"
 #include "RunnerPool.hpp"
-#include "andromeda/ConfigOptions.hpp"
 #include "andromeda/Crypto.hpp"
 #include "andromeda/PlatformUtil.hpp"
 #include "andromeda/StringUtil.hpp"
@@ -25,9 +24,8 @@ namespace Backend {
 std::atomic<uint64_t> BackendImpl::sReqNext { 1 };
 
 /*****************************************************/
-BackendImpl::BackendImpl(const ConfigOptions& options, RunnerPool& runners) : 
-    mOptions(options), mRunners(runners),
-    mDebug("Backend",this) , mConfig(*this)
+BackendImpl::BackendImpl(RunnerPool& runners) : 
+    mRunners(runners), mDebug("Backend",this) , mConfig(*this)
     // loading mConfig now has the nice side effect of making sure any potential
     // HTTP->HTTPS redirect is out of the way before trying other actions!
 { 
@@ -38,12 +36,6 @@ BackendImpl::BackendImpl(const ConfigOptions& options, RunnerPool& runners) :
 BackendImpl::~BackendImpl()
 {
     MDBG_INFO("()");
-}
-
-/*****************************************************/
-bool BackendImpl::isReadOnly() const
-{
-    return mOptions.readOnly || mConfig.isReadOnly();
 }
 
 /*****************************************************/
@@ -219,12 +211,6 @@ void BackendImpl::SetSession(Session* session)
         // TODO what about resetting the policy if session is nullptr?
         mConfig.LoadFilesPolicy(*this);
     }
-}
-
-/*****************************************************/
-bool BackendImpl::isMemory() const
-{
-    return mOptions.cacheType == ConfigOptions::CacheType::MEMORY;
 }
 
 /*****************************************************/

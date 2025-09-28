@@ -1,7 +1,6 @@
 
 #include "BaseRunner.hpp"
 #include "RunnerPool.hpp"
-#include "andromeda/ConfigOptions.hpp"
 
 namespace Andromeda {
 namespace Backend {

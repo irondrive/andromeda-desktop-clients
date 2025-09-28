@@ -21,15 +21,13 @@
 #include "andromeda/SharedMutex.hpp"
 
 #include "andromeda/filesystem/File.hpp"
+#include "andromeda/filesystem/FSResource.hpp"
 
 namespace Andromeda {
-
-namespace Backend { class BackendImpl; }
 
 namespace Filesystem {
 namespace Filedata {
 
-class MemoryAllocator;
 class CacheManager;
 class Page;
 
@@ -247,13 +245,11 @@ private:
 
     /** Reference to the parent file */
     File& mFile;
-    /** Reference to the backend */
-    Backend::BackendImpl& mBackend;
+    /** Reference to the file's filesystem resources */
+    FSResource& mFsResource;
     /** Pointer to the cache manager to use */
     CacheManager* mCacheMgr { nullptr };
-    /** Reference to the page allocator */
-    MemoryAllocator& mPageAlloc;
-    /** The size of each page - see description in ConfigOptions */
+    /** The size of each page - see description in FSOptions */
     const size_t mPageSize;
     /** The current size of the file including dirty extending writes */
     uint64_t mFileSize;

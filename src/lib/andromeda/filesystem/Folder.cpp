@@ -4,7 +4,8 @@
 #include "nlohmann/json.hpp"
 
 #include "Folder.hpp"
-#include "andromeda/ConfigOptions.hpp"
+#include "FSOptions.hpp"
+#include "FSResource.hpp"
 #include "andromeda/StringUtil.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
 
@@ -159,7 +160,7 @@ void Folder::LoadItems(const SharedLockW& thisLock, bool canRefresh)
     ITDBG_INFO("()");
 
     const bool expired { (std::chrono::steady_clock::now() - mRefreshed)
-        > mBackend.GetOptions().refreshTime };
+        > mFsResource.options.refreshTime };
 
     if (!mHaveItems || (canRefresh && expired && !mBackend.isMemory()))
     {

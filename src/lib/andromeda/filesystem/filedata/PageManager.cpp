@@ -16,6 +16,7 @@ using Andromeda::Backend::BackendException;
 #include "andromeda/filesystem/File.hpp"
 #include "andromeda/filesystem/Folder.hpp"
 #include "andromeda/filesystem/Item.hpp"
+#include "andromeda/filesystem/FSOptions.hpp"
 #include "andromeda/filesystem/FSResource.hpp"
 
 namespace Andromeda {
@@ -26,12 +27,11 @@ namespace Filedata {
 PageManager::PageManager(File& file, const uint64_t fileSize, const size_t pageSize, PageBackend& pageBackend) :
     mDebug(__func__,this),
     mFile(file),
-    mBackend(file.GetFSResource().backend),
+    mFsResource(file.GetFSResource()),
     mCacheMgr(file.GetFSResource().cacheMgr),
-    mPageAlloc(file.GetFSResource().pageAlloc),
     mPageSize(pageSize), 
     mFileSize(fileSize), 
-    mBandwidth(__func__, mBackend.GetOptions().readAheadTime),
+    mBandwidth(__func__, file.GetFSResource().options.readAheadTime),
     mPageBackend(pageBackend)
 { 
     MDBG_INFO("(file:" << &file << ", size:" << fileSize << ", pageSize:" << pageSize << ")");
@@ -106,7 +106,7 @@ const Page& PageManager::GetPageRead(const uint64_t index, const SharedLock& thi
         MDBG_INFO("... return existing page");
         const Page& page { it->second };
         
-        if (mCacheMgr && !mBackend.isMemory()) 
+        if (mCacheMgr && !mFsResource.backend.isMemory()) 
             mCacheMgr->InformPage(*this, index, page, page.isDirty());
         return page;
     } }
@@ -117,7 +117,7 @@ const Page& PageManager::GetPageRead(const uint64_t index, const SharedLock& thi
         if (!fetchSize) // must be between backend end and dirty write, create empty
         {
             MDBG_INFO("... create empty page");
-            Page& newPage { mPages.try_emplace(index, 0, mPageAlloc).first->second };
+            Page& newPage { mPages.try_emplace(index, 0, mFsResource.pageAlloc).first->second };
             
             ResizePage(newPage, mPageSize, false); // zeroize
             // hold pagesLock because if inform fails, we will remove this page
@@ -147,7 +147,7 @@ const Page& PageManager::GetPageRead(const uint64_t index, const SharedLock& thi
     MDBG_INFO("... returning pended page " << index);
     const Page& page { it->second };
 
-    if (mCacheMgr && !mBackend.isMemory()) 
+    if (mCacheMgr && !mFsResource.backend.isMemory()) 
         mCacheMgr->InformPage(*this, index, page, page.isDirty());
     return page;
 }
@@ -179,7 +179,7 @@ Page& PageManager::GetPageWrite(const uint64_t index, const size_t pageSize, con
         }
 
         MDBG_INFO("... create empty page");
-        Page& newPage { mPages.try_emplace(index, 0, mPageAlloc).first->second };
+        Page& newPage { mPages.try_emplace(index, 0, mFsResource.pageAlloc).first->second };
         ResizePage(newPage, pageSize, false); // zeroize
         InformNewPageWrite(index, newPage, true, thisLock);
         return newPage;
@@ -201,7 +201,7 @@ Page& PageManager::GetPageWrite(const uint64_t index, const size_t pageSize, con
 /*****************************************************/
 void PageManager::InformNewPageRead(const uint64_t index, const Page& page, bool dirty, bool canWait, const UniqueLock& pagesLock)
 {
-    if (mCacheMgr && !mBackend.isMemory())
+    if (mCacheMgr && !mFsResource.backend.isMemory())
         try { mCacheMgr->InformPage(*this, index, page, dirty, canWait); }
     catch (const CacheManager::MemoryException& ex)
     {
@@ -214,7 +214,7 @@ void PageManager::InformNewPageRead(const uint64_t index, const Page& page, bool
 /*****************************************************/
 void PageManager::InformNewPageWrite(const uint64_t index, const Page& page, bool dirty, const SharedLockW& thisLock)
 {
-    if (mCacheMgr && !mBackend.isMemory())
+    if (mCacheMgr && !mFsResource.backend.isMemory())
         try { mCacheMgr->InformPage(*this, index, page, dirty, true, &thisLock); }
     catch (const BaseException& ex) // MemoryException or BackendException
     {
@@ -230,7 +230,7 @@ void PageManager::InformResizePage(const uint64_t index, Page& page, bool dirty,
     const size_t oldSize { page.size() };
     ResizePage(page, pageSize, false);
 
-    if (mCacheMgr && !mBackend.isMemory())
+    if (mCacheMgr && !mFsResource.backend.isMemory())
         try { mCacheMgr->InformPage(*this, index, page, dirty, true, &thisLock); }
     catch (const BaseException& ex) // MemoryException or BackendException
     {
@@ -351,7 +351,7 @@ void PageManager::DoAdvanceRead(const uint64_t index, const SharedLock& thisLock
     // always pre-populate mReadAheadPages ahead (except index 0)
     if (!index) return;
     for (uint64_t nextIdx { index+1 }; 
-        nextIdx <= index + mBackend.GetOptions().readAheadBuffer; ++nextIdx)
+        nextIdx <= index + mFsResource.options.readAheadBuffer; ++nextIdx)
     {
         if (nextIdx*mPageSize >= mFileSize) break; // exit loop
         const size_t fetchSize { GetFetchSize(nextIdx, thisLock, pagesLock) };
@@ -446,7 +446,7 @@ void PageManager::UpdateBandwidth(const size_t bytes, const std::chrono::steady_
 
     if (mCacheMgr)
     {
-        const size_t cacheMax { mCacheMgr->GetMemoryLimit()/mBackend.GetOptions().readMaxCacheFrac };
+        const size_t cacheMax { mCacheMgr->GetMemoryLimit()/mFsResource.options.readMaxCacheFrac };
         if (targetBytes > cacheMax) // no point in downloading just to get evicted
         {
             targetBytes = cacheMax;
@@ -483,7 +483,7 @@ uint64_t PageManager::GetWriteList(PageMap::iterator& pageIt, PageBackend::PageP
                      curSize + pageSize < curSize) break; // size_t overflow!
             else
             {
-                const size_t maxWrite { mBackend.GetConfig().GetUploadMaxBytes() };
+                const size_t maxWrite { mFsResource.backend.GetConfig().GetUploadMaxBytes() };
                 // no point in doing a bigger write than the backend can send at once
                 if (maxWrite && curSize + pageSize > maxWrite) break;
             }

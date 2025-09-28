@@ -6,7 +6,6 @@
 #include "andromeda/BaseOptions.hpp"
 
 namespace Andromeda {
-    struct ConfigOptions;
     namespace Account { struct SessionOptions; }
     namespace Backend { struct HTTPOptions; struct RunnerOptions; }
     namespace Filesystem { namespace Filedata { struct CacheOptions; } }
@@ -21,13 +20,11 @@ struct Options : public Andromeda::BaseOptions
     static std::string HelpText();
 
     /**
-     * @param[out] configOptions Config options ref to fill
      * @param[out] httpOptions HTTPRunner options ref to fill
      * @param[out] runnerOptions BaseRunner options ref to fill
      * @param[out] sessionOptions SessionOptions options ref to fill
      */
-    Options(Andromeda::ConfigOptions& configOptions_, 
-            Andromeda::Backend::HTTPOptions& httpOptions_, 
+    Options(Andromeda::Backend::HTTPOptions& httpOptions_, 
             Andromeda::Backend::RunnerOptions& runnerOptions_,
             Andromeda::Account::SessionOptions& sessionOptions_);
 
@@ -44,7 +41,6 @@ struct Options : public Andromeda::BaseOptions
         API_INVALID
     };
 
-    Andromeda::ConfigOptions& configOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::HTTPOptions& httpOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Backend::RunnerOptions& runnerOptions; // cppcheck-suppress uninitMemberVarPrivate
     Andromeda::Account::SessionOptions& sessionOptions; // cppcheck-suppress uninitMemberVarPrivate

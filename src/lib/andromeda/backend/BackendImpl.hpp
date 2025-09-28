@@ -13,7 +13,6 @@
 #include "Config.hpp"
 #include "RunnerInput.hpp"
 #include "andromeda/common.hpp"
-#include "andromeda/ConfigOptions.hpp"
 #include "andromeda/Debug.hpp"
 
 namespace Andromeda {
@@ -92,11 +91,10 @@ public:
         explicit NotFoundException(const std::string& message) : APIException(message) {}; };
 
     /**
-     * @param options configuration options
      * @param runners the RunnerPool to use for requests
      * @throws BackendException for backend issues
      */
-    BackendImpl(const Andromeda::ConfigOptions& options, RunnerPool& runners);
+    explicit BackendImpl(RunnerPool& runners);
 
     virtual ~BackendImpl();
     DELETE_COPY(BackendImpl)
@@ -105,14 +103,17 @@ public:
     /** Gets the server config object */
     inline const Config& GetConfig() { return mConfig; }
 
-    /** Returns the backend options in use */
-    [[nodiscard]] inline const Andromeda::ConfigOptions& GetOptions() const { return mOptions; }
-
-    /** Returns true if doing memory only */
-    [[nodiscard]] bool isMemory() const;
+    /** Returns true if doing memory data only (debug) */
+    [[nodiscard]] inline bool isMemory() const { return mMemoryOnly; }
 
     /** Returns true if the backend is read-only */
-    [[nodiscard]] bool isReadOnly() const;
+    [[nodiscard]] inline bool isReadOnly() const { return mReadOnly || mConfig.isReadOnly(); }
+
+    /** Sets the value for isMemory */
+    inline void setIsMemory(bool val) { mMemoryOnly = val; }
+
+    /** Sets the value for isReadOnly - can be overriden by the server */
+    inline void setIsReadOnly(bool val) { mReadOnly = val; }
 
     /** Returns true if this backend requires using a session */
     bool RequiresSession() const;
@@ -399,8 +400,10 @@ private:
     // global backend request counter for debug
     static std::atomic<uint64_t> sReqNext;
 
-    ConfigOptions mOptions;
     RunnerPool& mRunners;
+
+    bool mMemoryOnly { false };
+    bool mReadOnly { false };
 
     mutable Debug mDebug;
     Config mConfig;

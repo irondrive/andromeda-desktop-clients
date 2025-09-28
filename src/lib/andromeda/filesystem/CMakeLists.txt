@@ -3,6 +3,7 @@ set(SOURCE_FILES
     File.cpp
     Folder.cpp
     FSConfig.cpp
+    FSOptions.cpp
     Item.cpp 
     )
 

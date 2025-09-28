@@ -5,12 +5,12 @@
 #include "File.hpp"
 #include "Folder.hpp"
 #include "FSConfig.hpp"
-#include "andromeda/ConfigOptions.hpp"
 #include "andromeda/SharedMutex.hpp"
 #include "andromeda/backend/BackendException.hpp"
 using Andromeda::Backend::BackendException;
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
+#include "andromeda/filesystem/FSOptions.hpp"
 #include "andromeda/filesystem/filedata/PageBackend.hpp"
 using Andromeda::Filesystem::Filedata::PageBackend;
 #include "andromeda/filesystem/filedata/PageManager.hpp"
@@ -70,7 +70,7 @@ File::File(FSResource& fsResource, Folder& parent, const std::string& name, cons
 size_t File::CalcPageSize() const
 {
     const size_t stChunk { mStConfig->GetChunkSize() };
-    const size_t cfChunk { mBackend.GetOptions().pageSize };
+    const size_t cfChunk { mFsResource.options.pageSize };
 
     auto ceil { [](auto x, auto y) { return (x + y - 1) / y; } };
     const size_t pageSize { stChunk ? ceil(cfChunk,stChunk)*stChunk : cfChunk };
@@ -201,7 +201,7 @@ void File::ReadBytes(char* buffer, const uint64_t offset, const size_t length, c
     if (offset + length > mPageManager->GetFileSize(thisLock))
         throw ReadBoundsException();
 
-    if (mBackend.GetOptions().cacheType == ConfigOptions::CacheType::NONE)
+    if (mFsResource.options.cacheType == FSOptions::CacheType::NONE)
     {
         const std::string data { mBackend.ReadFile(GetID(), offset, length) };
 
@@ -231,7 +231,7 @@ void File::WriteBytes(const char* buffer, uint64_t offset, size_t length, const 
     if (isReadOnlyFS()) throw ReadOnlyFSException();
     const FSConfig::WriteMode writeMode(GetWriteMode());
 
-    if (mBackend.GetOptions().cacheType == ConfigOptions::CacheType::NONE)
+    if (mFsResource.options.cacheType == FSOptions::CacheType::NONE)
     {
         const uint64_t fileSize { mPageManager->GetFileSize(thisLock) };
 

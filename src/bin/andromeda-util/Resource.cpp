@@ -42,7 +42,7 @@ BackendImpl& Resource::GetBackend()
         }
 
         runnerPool = std::make_unique<RunnerPool>(*runner, 1);
-        backend = std::make_unique<BackendImpl>(options.configOptions, *runnerPool);
+        backend = std::make_unique<BackendImpl>(*runnerPool);
     }
 
     return *backend;

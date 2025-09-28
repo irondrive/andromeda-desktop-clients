@@ -28,6 +28,9 @@ struct RunnerOptions : public BaseOptions
     seconds timeout { 60 };
     /** Buffer/chunk size when reading file streams */
     size_t streamBufferSize { 1048576 }; // 1M
+
+    /** The maximum number of concurrent backend runners, never zero! */
+    size_t poolSize { 1 }; // TODO server has threading issues
 };
 
 } // namespace Backend

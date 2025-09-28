@@ -143,7 +143,7 @@ protected:
     static std::string DetailBaseHelpText(const std::string& name = "");
 
     /** True if terminal prompting is not allowed */
-    bool mQuiet { false }; // TODO RAY !! move this back to per-binary Options (fuse and util)
+    bool mQuiet { false };
 };
 
 } // namespace Andromeda

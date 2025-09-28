@@ -9,6 +9,7 @@
 #include "andromeda/BaseException.hpp"
 #include "andromeda/Debug.hpp"
 #include "andromeda/filesystem/FSResource.hpp"
+#include "andromeda/filesystem/FSOptions.hpp"
 #include "andromeda-fuse/FuseAdapter.hpp"
 
 namespace Andromeda { 
@@ -50,14 +51,16 @@ public:
      * @param cacheMgr the global cache manager instance
      * @param autoHome if true, mountPath is $HOME-relative and will be created, else path is absolute
      * @param mountPath filesystem path to mount - must already exist if not autoHome
-     * @param options FUSE adapter options
+     * @param fsOptions filesystem options
+     * @param fuseOptions FUSE adapter options
      * @throws Exception if there is an error creating the mountpoint
      * @throws FuseAdapter::Exception if there is a FUSE error
      */
     MountContext(Andromeda::Backend::BackendImpl& backend,
         Andromeda::Filesystem::Filedata::CacheManager& cacheMgr,
         bool autoHome, std::string mountPath, 
-        AndromedaFuse::FuseOptions& options);
+        Andromeda::Filesystem::FSOptions& fsOptions,
+        AndromedaFuse::FuseOptions& fuseOptions);
 
     virtual ~MountContext();
     DELETE_COPY(MountContext)

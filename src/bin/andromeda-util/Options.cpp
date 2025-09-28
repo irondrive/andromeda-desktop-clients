@@ -3,8 +3,6 @@
 
 #include "Options.hpp"
 
-#include "andromeda/ConfigOptions.hpp"
-using Andromeda::ConfigOptions;
 #include "andromeda/account/SessionOptions.hpp"
 using Andromeda::Account::SessionOptions;
 #include "andromeda/backend/HTTPOptions.hpp"
@@ -30,7 +28,6 @@ std::string Options::HelpText()
 
         << HTTPOptions::HelpText() << endl
         << RunnerOptions::HelpText() << endl << endl
-        << ConfigOptions::HelpText() << endl
            
         << DetailBaseHelpText("util") << endl;
 
@@ -38,11 +35,9 @@ std::string Options::HelpText()
 }
 
 /*****************************************************/
-Options::Options(ConfigOptions& configOptions_, 
-                 HTTPOptions& httpOptions_,
+Options::Options(HTTPOptions& httpOptions_,
                  RunnerOptions& runnerOptions_,
                  SessionOptions& sessionOptions_) :
-    configOptions(configOptions_), 
     httpOptions(httpOptions_), 
     runnerOptions(runnerOptions_),
     sessionOptions(sessionOptions_) { }
@@ -54,7 +49,6 @@ bool Options::AddFlag(const std::string& flag)
         apiType = ApiType::API_PATH;
 
     else if (BaseOptions::AddFlag(flag)) { }
-    else if (configOptions.AddFlag(flag)) { } // TODO RAY !! not needed? maybe need to separate out? honestly this is just "FileSystemConfig" - except what does -q do?
     else if (httpOptions.AddFlag(flag)) { }
     else if (runnerOptions.AddFlag(flag)) { }
     else if (sessionOptions.AddFlag(flag)) { }
@@ -83,7 +77,6 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     }
 
     else if (BaseOptions::AddOption(option, value)) { }
-    else if (configOptions.AddOption(option, value)) { }
     else if (httpOptions.AddOption(option, value)) { }
     else if (runnerOptions.AddOption(option, value)) { }
     else if (sessionOptions.AddOption(option, value)) { }
