@@ -107,7 +107,7 @@ public:
     [[nodiscard]] inline SecureBuffer substr(size_t offset, size_t size) const noexcept
     {
         SecureBuffer ret(size);
-        memcpy(ret.data(), mBuf+offset, size);
+        memcpy(ret.mBuf, mBuf+offset, size);
         return ret;
     }
 
@@ -116,6 +116,9 @@ public:
 
     /** Construct from bytes from a char buf (insecure - unit test only!) */
     inline static SecureBuffer Insecure_FromBuf(const char* buf, size_t size) { return SecureBuffer(buf, size); }
+
+    /** Construct a std::string from the SecureBuffer (insecure - unit test only!) */
+    [[nodiscard]] inline std::string Insecure_ToStr() const { return std::string(mBuf, mSize); }
 
     /** Compare to another c-string (insecure - unit test only!) */
     bool operator==(const char* cstr) const;

@@ -29,7 +29,10 @@ void BaseObject::InitializeFields(const MixedParams& data, bool created)
     for (const MixedParams::value_type& pair : data)
     {
         //MDBG_INFO("... " << pair.first << ":" << pair.second.ToString());
-        mFields.at(pair.first).InitDBValue(pair.second);
+
+        const decltype(mFields)::iterator it { mFields.find(pair.first) };
+        if (it == mFields.end()) throw UnknownFieldException(pair.first);
+        else it->second.InitDBValue(pair.second);
     }
 
     if (created) mIdField.SetValue(StringUtil::Random(12)); // TODO GenerateID

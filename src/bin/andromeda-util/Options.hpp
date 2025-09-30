@@ -30,7 +30,6 @@ struct Options : public Andromeda::BaseOptions
 
     bool AddFlag(const std::string& flag) override;
     bool AddOption(const std::string& option, const std::string& value) override;
-    void Validate() const override;
 
     /** Backend connection type */
     enum class ApiType : uint8_t

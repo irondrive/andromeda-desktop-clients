@@ -1,6 +1,8 @@
 #include "Resource.hpp"
 #include "Options.hpp"
 
+#include "andromeda/BaseOptions.hpp"
+using Andromeda::BaseOptions;
 #include "andromeda/account/Session.hpp"
 using Andromeda::Account::Session;
 #include "andromeda/account/SessionOptions.hpp"
@@ -38,7 +40,8 @@ BackendImpl& Resource::GetBackend()
                 runner = std::make_unique<CLIRunner>(
                     options.apiPath, options.runnerOptions);
             }; break;
-            case Options::ApiType::API_INVALID: break; // can't happen due to Validate() call
+            case Options::ApiType::API_INVALID:
+                throw BaseOptions::MissingOptionException("apiurl/apipath");
         }
 
         runnerPool = std::make_unique<RunnerPool>(*runner, 1);

@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 
+#include "DatabaseException.hpp"
 #include "andromeda/common.hpp"
 #include "andromeda/Debug.hpp"
 #include "fieldtypes/BaseField.hpp"
@@ -28,6 +29,11 @@ class ObjectDatabase;
 class BaseObject
 {
 public:
+
+    /** Exception indicating that the field in the data doesn't exist in code */
+    class UnknownFieldException : public DatabaseException { public:
+        explicit UnknownFieldException(const std::string& name) : 
+            DatabaseException("data has unknown field: "+name) {}; };
 
     /** Return the unique class name string of this BaseObject */
     virtual const char* GetClassName() const = 0;

@@ -110,7 +110,7 @@ Session Session::CreateInteractive(BackendImpl& backend, const std::string& user
     {
         std::cout << "Two Factor? ";
         const SecureBuffer tfBuf { PlatformUtil::SecureReadConsole() };
-        const std::string twofactor(tfBuf.data(), tfBuf.size());
+        const std::string twofactor { tfBuf.Insecure_ToStr() };
 
         return Session::Create(backend, username, password, twofactor);
     }

@@ -25,7 +25,7 @@ Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::stri
     SDBG_INFO("... password_superkey:"); sDebug.Info(sDebug.DumpBytes(password_superkey.data(), password_superkey.size()));
 
     const SecureBuffer authkeyb { Crypto::DeriveSubkey(password_superkey, 1, "a2pwauth") };
-    const std::string authkey(authkeyb.data(), authkeyb.size()); // extract from SecureBuffer
+    const std::string authkey { authkeyb.Insecure_ToStr() }; // extract from SecureBuffer
 
     const PasswordKeys retval(authkey, Crypto::DeriveSubkey(password_superkey, 0, "a2pwe2ee"));
     SDBG_INFO("... password_e2eekey:"); sDebug.Info(sDebug.DumpBytes(retval.e2eekey.data(), retval.e2eekey.size()));

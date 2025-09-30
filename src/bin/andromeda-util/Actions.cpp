@@ -76,7 +76,7 @@ void Actions::Random(const int argc, const char* const* const argv)
 struct GetPasskeyOptions : public BaseOptions
 {
     /** Retrieve the standard help text string */
-    static std::string HelpText(){ return "-u|--username str"; }
+    static std::string HelpText(){ return "-u|--username str [-p|--password str]"; }
 
     bool AddFlag(const std::string& flag) override { return false; }
 
@@ -84,6 +84,8 @@ struct GetPasskeyOptions : public BaseOptions
     {
         if (option == "u" || option == "username")
             username = value;
+        else if (option == "p" || option == "password")
+            password = value;
         else return false;
         return true;
     }
@@ -95,6 +97,7 @@ struct GetPasskeyOptions : public BaseOptions
     }
 
     std::string username;
+    std::string password;
 };
 
 /*****************************************************/
@@ -108,8 +111,15 @@ void Actions::GetPasskey(const int argc, const char* const* const argv)
     if (mResource.GetOptions().isQuiet())
         throw Options::BadUsageException("quiet prevents password prompt");
 
-    std::cout << "Password? ";
-    const SecureBuffer password { PlatformUtil::SecureReadConsole() };
+    (void)mResource.GetBackend(); // init before asking for password
+
+    // putting a password on the command line is already insecure anyway
+    SecureBuffer password { SecureBuffer::Insecure_FromBuf(options.password.data(), options.password.size()) };
+    if (password.empty())
+    {
+        std::cout << "Password? ";
+        password = PlatformUtil::SecureReadConsole();
+    }
 
     const std::string authkey { Account::GetPasskeys(mResource.GetBackend(), options.username, password).authkey };
     std::cout << StringUtil::base64_encode(authkey) << std::endl;

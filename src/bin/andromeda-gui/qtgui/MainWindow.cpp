@@ -43,7 +43,17 @@ MainWindow::MainWindow(QApplication& application, CacheManager* cacheManager, Ob
     if (mObjDatabase != nullptr)
     {
         MDBG_INFO("... loading existing sessions");
-        for (SessionStore* session : SessionStore::LoadAll(*mObjDatabase))
+
+        std::list<SessionStore*> sessions;
+        try { sessions = SessionStore::LoadAll(*mObjDatabase); }
+        catch (const DatabaseException& ex)
+        {
+            MDBG_ERROR("... " << ex.what());
+            const std::string msg { "Failed to load sessions from the database. This is probably a bug, please report." };
+            Utilities::warningBox(this, "Database Error", msg, ex);
+        }
+
+        for (SessionStore* const session : sessions)
             TryLoadAccount(*session);
     }
 

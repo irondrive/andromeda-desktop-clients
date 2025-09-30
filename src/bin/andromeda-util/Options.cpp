@@ -86,11 +86,4 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     return true;
 }
 
-/*****************************************************/
-void Options::Validate() const
-{
-    if (apiType == ApiType::API_INVALID)
-        throw MissingOptionException("apiurl/apipath");
-}
-
 } // namespace AndromedaUtil
