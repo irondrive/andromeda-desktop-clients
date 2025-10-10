@@ -1,7 +1,9 @@
 #ifndef LIBA2_SESSION_H_
 #define LIBA2_SESSION_H_
 
+#include <memory>
 #include <string>
+#include "nlohmann/json_fwd.hpp"
 
 #include "andromeda/common.hpp"
 #include "andromeda/Debug.hpp"
@@ -10,6 +12,8 @@
 namespace Andromeda::Backend { class BackendImpl; }
 
 namespace Andromeda::Account {
+
+class Account;
 class SessionStore;
 
 /** Represents an authenticated session that can be used with the backend */
@@ -57,28 +61,38 @@ public:
      * @throws BackendImpl::AuthenticationFailedException for invalid username/password
      * @throws BackendImpl::Exception for other backend issues
      */
-    static Session CreateInteractive(Backend::BackendImpl& backend, const std::string& username, SecureBuffer password);
+    static Session CreateInteractive(Backend::BackendImpl& backend, const std::string& username, SecureBuffer& password);
 
     /** Returns a reference to the backend for this session */
-    Backend::BackendImpl& GetBackend() const { return mBackend; }
-    /** Returns the account username in use */
-    const std::string& GetUsername() const { return mUsername; }
+    inline Backend::BackendImpl& GetBackend() const { return mBackend; }
+
+    /** Returns the account associated with this session */
+    inline const Account& GetAccount() const { return *mAccount; }
+    inline Account& GetAccount() { return *mAccount; }
+
     /** Returns the session ID in use */
-    const std::string& GetSessionID() const { return mSessionID; }
+    inline const std::string& GetSessionID() const { return mSessionID; }
     /** Returns the session key in use */
-    const std::string& GetSessionKey() const { return mSessionKey; }
+    inline const std::string& GetSessionKey() const { return mSessionKey; }
+
+    /** Returns the e2ee password subkey, if known (e.g. session was just created), else an empty buffer */
+    inline const SecureBuffer& TryGetE2eePwSubkey() const { return mE2ee_pwsubkey; }
 
     /** Sets whether the session is temporary - if true, it is deleted from the server when destructed! */
-    void SetTemporary(bool temp){ mTemporary = temp; }
+    inline void SetTemporary(bool temp){ mTemporary = temp; }
 
 private:
 
-    Session(Backend::BackendImpl& backend, const std::string& username, const std::string& sessionID, const std::string& sessionKey, bool temporary); // constructor
+    /** @throws BackendImpl::JSONErrorException if the account JSON data is bad */
+    Session(Backend::BackendImpl& backend, const nlohmann::json& account, const std::string& sessionID, const std::string& sessionKey, bool temporary);
 
     mutable Debug mDebug;
     Backend::BackendImpl& mBackend;
 
-    std::string mUsername;
+    std::unique_ptr<Account> mAccount; // NEVER NULL
+    /** cached e2ee subkey if we used the password */
+    SecureBuffer mE2ee_pwsubkey;
+
     std::string mSessionID;
     std::string mSessionKey;
 

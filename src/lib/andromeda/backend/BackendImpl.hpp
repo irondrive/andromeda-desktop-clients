@@ -57,9 +57,15 @@ public:
         APIException(int code, const std::string& message) : 
             BackendException("API code:"+std::to_string(code)+" message:"+message) {}; };
 
+    /** Base exception for Andromeda-returned 400 errors */
+    class ClientErrorException : public APIException { public:
+        ClientErrorException() : APIException("Client Error") {};
+        /** @param message message from backend */
+        explicit ClientErrorException(const std::string& message) : APIException(message) {}; };
+
     /** Andromeda exception indicating the requested operation is invalid */
-    class UnsupportedException : public APIException { public:
-        UnsupportedException() : APIException("Invalid Operation") {}; };
+    class UnsupportedException : public ClientErrorException { public:
+        UnsupportedException() : ClientErrorException("Invalid Operation") {}; };
 
     /** Base exception for Andromeda-returned 403 errors */
     class DeniedException : public APIException { public:
@@ -118,12 +124,24 @@ public:
     /** Returns true if this backend requires using a session */
     bool RequiresSession() const;
     /** Sets the session to use (or nullptr if none) */
-    void SetSession(Account::Session* session);
+    void SetSession(const Account::Session* session);
     /** Sets the username to masquerade as (or "" if none) */
     void SetSudoUsername(const std::string& username){ mSudoUsername = username; }
 
-    /** Returns true if the backend is using an account with the server */
-    bool UsingAccount() const { return RequiresSession() ? (mSession != nullptr) : (!mSudoUsername.empty()); }
+    /**
+     * Runs the given lambda function with given session, rather than the one from SetSession
+     * @param session the session to use, or nullptr to run without a session
+     */
+    static void WithSession(const Account::Session* session, const std::function<void()>& func);
+
+    /** Run the given lambda function with the given session ID/key, rather than the one from SetSession */
+    static void WithSession(const std::string& sessionID, const std::string& sessionKey, const std::function<void()>& func);
+
+    /** Run the given lambda function with the given sudo username */
+    static void WithSudoUsername(const std::string& username, const std::function<void()>& func);
+
+    /** Returns true if the backend is using an account with the server (session or sudo username) */
+    bool UsingAccount() const { return (mSession != nullptr) || (!RequiresSession() && !mSudoUsername.empty()); }
 
     /*****************************************************/
     // ---- Actual backend functions below here ---- //
@@ -141,13 +159,42 @@ public:
      */
     nlohmann::json GetFilesPolicy();
 
+    /** Returns the password salt to use for a username */
+    std::string GetPasswordSalt(const std::string& username);
+
     /**
      * Load account metadata for the current account
-     * @param session use this session rather than mSession if given
      * @return account metadata as JSON
      * @throws BackendException for backend issues
      */
-    nlohmann::json GetAccount(const Account::Session* session = nullptr);
+    nlohmann::json GetAccount();
+
+    /**
+     * Initializes the e2ee keys for the account
+     * @param rkmaster recovery key-wrapped master key string
+     * @param privkey master key-wrapped private key string
+     * @param pubkey plaintext public key string
+     * @param force if true, force overwrite existing keys
+     * @throws ClientErrorException if e2ee is already initialized and not force
+     * @throws BackendException for backend issues
+     */
+    void InitAccountE2ee(const std::string& rkmaster, const std::string& privkey, const std::string& pubkey, bool force = false);
+
+    /**
+     * Stores the wrapped master key for the account
+     * @param pwmaster password-wrapped master key string, or null to unset it
+     * @throws ClientErrorException if no e2ee keys exist
+     * @throws BackendException for backend issues
+     */
+    void SetE2eePwMaster(const std::string* pwmaster);
+
+    /**
+     * Stores the wrapped master key for the account
+     * @param pwmaster recovery key-wrapped master key strings
+     * @throws ClientErrorException if no e2ee keys exist
+     * @throws BackendException for backend issues
+     */
+    void SetE2eeRkMaster(const std::string& rkmaster);
 
     /**
      * Creates a new session with the backend
@@ -161,14 +208,8 @@ public:
      */
     nlohmann::json CreateSession(const std::string& username, const std::string& passkeyb64, const std::string& twofactor = "");
 
-    /**
-     * Deletes the current client (from SetSession) from the backend
-     * @param session use this session rather than mSession if given
-     */
-    void DeleteClient(const Account::Session* session = nullptr);
-
-    /** Returns the password salt to use for a username */
-    std::string GetPasswordSalt(const std::string& username);
+    /** Deletes the current client (from SetSession) from the backend */
+    void DeleteClient();
 
     /**
      * Load folder metadata (with subitems)
@@ -348,12 +389,9 @@ public:
 
 private:
     
-    /** 
-     * Augment input with session authentication details
-     * @param session if given, use this instead of mSession
-     */
+    /** Augment input with session authentication details */
     template <class InputT>
-    InputT& FinalizeInput(InputT& input, const Account::Session* session = nullptr);
+    InputT& FinalizeInput(InputT& input);
 
     /** Prints a RunnerInput to the given stream */
     static void PrintInput(const RunnerInput& input, std::ostream& str, const std::string& myfname, uint64_t reqCount);
@@ -366,11 +404,11 @@ private:
     nlohmann::json GetJSON(const std::string& resp);
 
     /** Finalizes input, runs the action, returns string */
-    std::string RunAction_ReadStr(RunnerInput& input, const Account::Session* session = nullptr);
+    std::string RunAction_ReadStr(RunnerInput& input);
     /** Finalizes input, runs the action, returns JSON */
-    nlohmann::json RunAction_Read(RunnerInput& input, const Account::Session* session = nullptr);
+    nlohmann::json RunAction_Read(RunnerInput& input);
     /** Finalizes input, runs the action, returns JSON */
-    nlohmann::json RunAction_Write(RunnerInput& input, const Account::Session* session = nullptr);
+    nlohmann::json RunAction_Write(RunnerInput& input);
     /** Finalizes input, runs the action, returns JSON */
     nlohmann::json RunAction_FilesIn(RunnerInput_FilesIn& input);
     /** Finalizes input, runs the action, returns JSON */
@@ -393,9 +431,16 @@ private:
     nlohmann::json SendFile(const WriteFunc& userFunc, std::string id, uint64_t offset, const UploadInput& getUpload, bool oneshot);
 
     /** Session to use with requests */
-    Account::Session* mSession { nullptr };
+    const Account::Session* mSession { nullptr };
     /** --auth_sudouser sudo user to use */
     std::string mSudoUsername;
+
+    // allow overriding the session set for the backend
+    struct SessionOverride;
+    static thread_local bool sSessionOvrd;
+    static thread_local const std::string* sSessionIDOvrd;
+    static thread_local const std::string* sSessionKeyOvrd;
+    static thread_local std::string sUsernameOvrd;
 
     // global backend request counter for debug
     static std::atomic<uint64_t> sReqNext;

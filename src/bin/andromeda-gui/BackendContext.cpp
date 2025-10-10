@@ -1,6 +1,7 @@
 
 #include "BackendContext.hpp"
 
+#include "andromeda/account/Account.hpp"
 #include "andromeda/account/Session.hpp"
 using Andromeda::Account::Session;
 #include "andromeda/account/SessionStore.hpp"
@@ -54,7 +55,7 @@ BackendContext::~BackendContext()
 std::string BackendContext::GetName(bool human) const
 {
     std::string hostname { mRunners->GetUnlocked().GetHostname() };
-    const std::string username { mSession->GetUsername() };
+    const std::string username { mSession->GetAccount().GetUsername() };
 
     if (username.empty()) return hostname;
     

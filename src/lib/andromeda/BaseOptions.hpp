@@ -119,9 +119,6 @@ public:
      */
     virtual void Validate() const { }
 
-    /** Returns true if terminal prompting is not allowed */
-    [[nodiscard]] bool isQuiet() const { return mQuiet; }
-
     /**
      * Returns an unsigned int extracted from the given string
      * @param name the name of the option being parsed (for the exception)
@@ -130,6 +127,9 @@ public:
      * @throws BadValueException if not numeric or if zero
      */
     [[nodiscard]] static uint64_t GetUnsigned(const std::string& name, const std::string& value, bool zero = true);
+
+    /** True if terminal prompting is not allowed */
+    bool mQuiet { false }; // TODO should not be in the base class, gets duplicated for each sub-options, confusing
 
 protected:
 
@@ -141,9 +141,6 @@ protected:
      * @param name suffix of andromeda-*.conf the user can use (or blank)
      */
     static std::string DetailBaseHelpText(const std::string& name = "");
-
-    /** True if terminal prompting is not allowed */
-    bool mQuiet { false };
 };
 
 } // namespace Andromeda

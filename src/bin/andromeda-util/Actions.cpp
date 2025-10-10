@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <optional>
 #include <sstream>
 
 #include "Actions.hpp"
@@ -17,6 +18,9 @@ using Andromeda::PlatformUtil;
 using Andromeda::StringUtil;
 #include "andromeda/account/Account.hpp"
 using Andromeda::Account::Account;
+#include "andromeda/account/Session.hpp"
+using Andromeda::Account::Session;
+#include "andromeda/account/SessionOptions.hpp"
 
 namespace AndromedaUtil {
 
@@ -72,77 +76,125 @@ void Actions::Random(const int argc, const char* const* const argv)
         std::cout << std::endl;
 }
 
-/** Options parser for the GetPasskey action */
-struct GetPasskeyOptions : public BaseOptions
+/*****************************************************/
+void Actions::GetPasskey(const int argc, const char* const* const argv)
+{
+    const std::string username{ mResource.GetOptions().sessionOptions.username };
+    if (username.empty()) throw Options::MissingOptionException("username");
+
+    (void)mResource.GetBackend(); // init before asking for password
+
+    const SecureBuffer password { mResource.GetOptions().sessionOptions.RequirePassword(mResource.GetOptions().mQuiet) };
+
+    const std::string authsubkey { Account::GetPasskeys(mResource.GetBackend(), username, password).authsubkey };
+    std::cout << StringUtil::base64_encode(authsubkey) << std::endl;
+}
+
+/** Options parser for the InitAccountKeys action */
+struct InitAccountKeysOptions : public BaseOptions
 {
     /** Retrieve the standard help text string */
-    static std::string HelpText(){ return "-u|--username str [-p|--password str]"; }
+    static std::string HelpText() { return "[--allow_pwlogin [bool]] [--force]"; }
 
-    bool AddFlag(const std::string& flag) override { return false; }
-
-    bool AddOption(const std::string& option, const std::string& value) override
+    bool AddFlag(const std::string& flag) override
     {
-        if (option == "u" || option == "username")
-            username = value;
-        else if (option == "p" || option == "password")
-            password = value;
+        if (flag == "allow_pwlogin")
+            addpwkey = std::make_optional<bool>(true);
+        else if (flag == "force")
+            force = true;
         else return false;
         return true;
     }
 
-    void Validate() const override
+    bool AddOption(const std::string& option, const std::string& value) override
     {
-        if (username.empty())
-            throw MissingOptionException("username");
+        if (option == "allow_pwlogin")
+            addpwkey = std::make_optional<bool>(StringUtil::stringToBool(value));
+        else return false;
+        return true;
     }
 
-    std::string username;
-    std::string password;
+    std::optional<bool> addpwkey;
+    bool force { false };
 };
 
 /*****************************************************/
-void Actions::GetPasskey(const int argc, const char* const* const argv)
+void Actions::InitAccountKeys(const int argc, const char* const* const argv)
 {
     MDBG_INFO("(argc:" << argc << ")");
-    GetPasskeyOptions options;
+    InitAccountKeysOptions options;
     options.ParseArgs(static_cast<size_t>(argc), argv);
     options.Validate();
 
-    if (mResource.GetOptions().isQuiet())
-        throw Options::BadUsageException("quiet prevents password prompt");
+    Account& account { mResource.GetAccount() };
+    const SecureBuffer recovery { account.InitE2eeKeys(options.force) };
+    const SecureBuffer recoveryb64 { Account::EncodeRecoveryKey(recovery) };
 
-    (void)mResource.GetBackend(); // init before asking for password
+    std::string recoverystr { recoveryb64.Insecure_ToStr() };
+    std::cout << "Recovery key (keep this!): " << recoverystr << std::endl;
+    StringUtil::Zeroize(recoverystr); // best effort
 
-    // putting a password on the command line is already insecure anyway
-    SecureBuffer password { SecureBuffer::Insecure_FromBuf(options.password.data(), options.password.size()) };
-    if (password.empty())
+    if (options.addpwkey == std::nullopt)
+        options.addpwkey = (PlatformUtil::MatchConsoleInput("Enable login with password only? [Y] or n: ", {"Y","n"}, "Y") == "Y");
+
+    if (*options.addpwkey)
     {
-        std::cout << "Password? ";
-        password = PlatformUtil::SecureReadConsole();
+        SecureBuffer pwsubkey;
+        
+        if (mResource.TryGetSession() != nullptr)
+            pwsubkey = mResource.GetSession().TryGetE2eePwSubkey(); 
+        // pwsbukey might still be empty if session was not just created
+
+        if (pwsubkey.empty())
+        {
+            const SecureBuffer password { mResource.GetOptions().sessionOptions.RequirePassword(mResource.GetOptions().mQuiet) };
+            pwsubkey = Account::GetPasskeys(mResource.GetBackend(), account.GetUsername(), password).e2eesubkey;
+        }
+        
+        account.StoreE2eePwMaster(pwsubkey);
     }
-
-    const std::string authkey { Account::GetPasskeys(mResource.GetBackend(), options.username, password).authkey };
-    std::cout << StringUtil::base64_encode(authkey) << std::endl;
 }
 
 /*****************************************************/
-void Actions::InitAccountE2ee(const int argc, const char* const* const argv)
+void Actions::TestAccountKeys(const int argc, const char* const* const argv)
 {
     MDBG_INFO("(argc:" << argc << ")");
 
-    // TODO RAY !! or should this just be internal to the backend? if not, what exception to use here?
-    //const BackendImpl& backend { mResource.GetBackend() };
-    //if (!backend.UsingAccount()) throw BackendImpl::AuthenticationFailedException();
+    SecureBuffer password { SecureBuffer::Insecure_FromStr(mResource.GetOptions().sessionOptions.password) };
+    SecureBuffer recoveryb64 { SecureBuffer::Insecure_FromStr(mResource.GetOptions().sessionOptions.e2ee_recoveryb64) };
+
+    mResource.GetAccount().UnlockE2eeInteractive(password, recoveryb64, mResource.TryGetSession());
+
+    std::cout << "E2EE master key: " << StringUtil::base64_encode(mResource.GetAccount().Insecure_GetMasterKey()) << std::endl;
 }
 
 /*****************************************************/
-void Actions::InitFilesystemE2ee(const int argc, const char* const* const argv)
+void Actions::StorePwMasterKey(const int argc, const char* const* const argv) // TODO E2EE
+{
+    MDBG_INFO("(argc:" << argc << ")");
+    // TODO E2EE add --erase option as well
+}
+
+/*****************************************************/
+void Actions::GenRkMasterKey(const int argc, const char* const* const argv) // TODO E2EE
 {
     MDBG_INFO("(argc:" << argc << ")");
 }
 
 /*****************************************************/
-void Actions::ChangePassword(const int argc, const char* const* const argv)
+void Actions::CreateSession(const int argc, const char* const* const argv) // TODO E2EE
+{
+    MDBG_INFO("(argc:" << argc << ")");
+}
+
+/*****************************************************/
+void Actions::ChangePassword(const int argc, const char* const* const argv) // TODO E2EE
+{
+    MDBG_INFO("(argc:" << argc << ")");
+}
+
+/*****************************************************/
+void Actions::InitFilesystemKeys(const int argc, const char* const* const argv) // TODO E2EE
 {
     MDBG_INFO("(argc:" << argc << ")");
 }
@@ -159,9 +211,16 @@ void Actions::RunAction(int argc, const char* const* argv)
 
     if (action == "random")             Random(argc,argv);
     else if (action == "getpasskey")    GetPasskey(argc, argv);
-    else if (action == "inite2ee")      InitAccountE2ee(argc,argv); 
-    else if (action == "initfse2ee")    InitFilesystemE2ee(argc,argv); 
-    else if (action == "changepw")      ChangePassword(argc,argv);
+
+    else if (action == "initacctkeys")  InitAccountKeys(argc,argv); 
+    else if (action == "testacctkeys")  TestAccountKeys(argc,argv);
+    else if (action == "storepwmaster") StorePwMasterKey(argc,argv);
+    else if (action == "genrkmaster")   GenRkMasterKey(argc,argv);
+
+    else if (action == "createsession") CreateSession(argc,argv);
+    else if (action == "changepassword") ChangePassword(argc,argv);
+    
+    else if (action == "initfskeys")    InitFilesystemKeys(argc,argv); 
 
     else throw BaseOptions::BadUsageException("Invalid action");
 }
@@ -175,11 +234,19 @@ std::string Actions::HelpText()
 
     output 
         << "Valid Actions:" << endl
+
         << "random " << RandomOptions::HelpText() << endl
-        << "getpasskey " << GetPasskeyOptions::HelpText() << endl;
+        << "getpasskey " << endl
+
+        << "initacctkeys " << InitAccountKeysOptions::HelpText() << endl
+        << "testacctkeys " << endl
+    ;
 
     return output.str();
 }
+
+// TODO FUTURE - some filesystem actions? upload, download, getfolder, etc.
+// TODO FUTURE - also share file, getshares, etc. 
 
 } // namespace AndromedaUtil
 

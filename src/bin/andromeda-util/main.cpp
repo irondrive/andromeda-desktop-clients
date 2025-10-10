@@ -31,7 +31,7 @@ enum class ExitCode : uint8_t
     SUCCESS,
     BAD_USAGE,
     BACKEND_FAIL,
-    OTHER_FAIL
+    GENERAL_FAIL
 };
 
 int main(int argc, char** argv)
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     catch (const BaseException& ex)
     {
         std::cout << ex.what() << std::endl;
-        return static_cast<int>(ExitCode::OTHER_FAIL);
+        return static_cast<int>(ExitCode::GENERAL_FAIL);
     }
 
     DDBG_INFO(": returning success...");

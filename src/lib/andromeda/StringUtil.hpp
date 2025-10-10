@@ -11,6 +11,8 @@
 
 namespace Andromeda {
 
+class SecureBuffer;
+
 /** String Utilities */
 class StringUtil
 {
@@ -111,10 +113,19 @@ public:
     [[nodiscard]] static std::string bytesToStringF(uint64_t bytes);
 
     /** Returns the string encoded as base64 (in data-independent time) */
-    static std::string base64_encode(const std::string& input);
+    [[nodiscard]] static std::string base64_encode(const std::string& input);
+    [[nodiscard]] static SecureBuffer base64_encode(const SecureBuffer& input);
 
     /** Returns the string decoded from base64, or std::nullopt if not valid base64 (in data-independent time) */
-    static std::optional<std::string> base64_decode(const std::string& input);
+    [[nodiscard]] static std::optional<std::string> base64_decode(const std::string& input);
+    [[nodiscard]] static std::optional<SecureBuffer> base64_decode(const SecureBuffer& input);
+
+    /**
+     * Zeroizes the content of a std::string
+     * This is best-effort only - if the string has been resized, its contents may exist
+     * elsewhere in RAM, or in the internal SSO buffer, etc.  Use SecureBuffer instead.
+     */
+    static void Zeroize(std::string& input);
 };
 
 } // namespace Andromeda

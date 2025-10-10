@@ -61,7 +61,7 @@ public:
      * @param salt a generated salt to use (see GenerateSalt)
      * @param bytes the number of bytes required to output
      * @return the derived binary key string
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException if the salt size is wrong
      * @throws SodiumFailedException
     */
     static SecureBuffer DeriveKey(const SecureBuffer& password, const std::string& salt, size_t bytes = SecretKeyLength());
@@ -83,6 +83,25 @@ public:
 
     /** Returns the length of a nonce for use with secret crypto */
     static size_t SecretNonceLength();
+
+    /** 
+     * Pads the nonce with zeroes until it reaches bytes in size 
+     * @param shorten if true, shorten the nonce if too long (otherwise, assert) - use this carefully!
+     *     make sure the non-fixed part of the nonce is long enough to not collide
+     * @throws ArgumentException if the nonce is too big, and shorten is false
+     */
+    static inline void ResizeNonce(std::string& nonce, const size_t bytes, bool shorten = false)
+    {
+        const size_t size = nonce.size();
+        if (size > bytes && !shorten)
+            throw ArgumentException("nonce was "+std::to_string(size)+" bytes");
+
+        if (size != bytes) 
+            nonce.resize(bytes);
+
+        if (size < bytes) // zeroize
+            std::fill(nonce.begin()+static_cast<int>(size), nonce.end(), '\0');
+    }
 
     /** 
      * Returns the size overhead of an encrypted string over a plaintext one

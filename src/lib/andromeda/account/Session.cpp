@@ -10,37 +10,46 @@
 using Andromeda::Backend::BackendImpl;
 
 namespace Andromeda::Account {
-    
+
 namespace { // anonymous
 Debug sDebug("Session",nullptr); // NOLINT(cert-err58-cpp)
 } // anonymous namespace
 
+// TODO nit - should take JSON for the session itself too? - may need backend GetSession function? if more metadata about the session is needed
+
 /*****************************************************/
-Session::Session(BackendImpl& backend, const std::string& username, const std::string& sessionID, const std::string& sessionKey, bool temporary):
-    mDebug(__func__, this), mBackend(backend), mUsername(username), mSessionID(sessionID), mSessionKey(sessionKey), mTemporary(temporary)
+Session::Session(BackendImpl& backend, const nlohmann::json& account, const std::string& sessionID, const std::string& sessionKey, bool temporary):
+    mDebug(__func__, this), mBackend(backend), mAccount(std::make_unique<Account>(backend, account, this)),
+    mSessionID(sessionID), mSessionKey(sessionKey), mTemporary(temporary)
 {
-    MDBG_INFO("(username:" << username << " sessionID:" << sessionID << ")");
+    MDBG_INFO("(sessionID:" << sessionID << ")");
+}
+
+/*****************************************************/
+Session::Session(Session&& old) noexcept: // move constructor
+    // NOTE whenever adding new member variables, must add them to this list! unfortunate
+    mDebug(__func__, this), mBackend(old.mBackend), mAccount(std::move(old.mAccount)), mE2ee_pwsubkey(std::move(old.mE2ee_pwsubkey)),
+    mSessionID(std::move(old.mSessionID)), mSessionKey(std::move(old.mSessionKey)), mTemporary(old.mTemporary)
+{
+    MDBG_INFO("(move old:" << & old << ")");
+    old.mTemporary = false; // don't delete twice
+    mAccount->SetSession(this);
 }
 
 /*****************************************************/
 Session::~Session()
 {
-    MDBG_INFO("(username:" << mUsername << " sessionID:" << mSessionID << ")");
-    if (mTemporary)
-    {
-        try { mBackend.DeleteClient(this); }
-        catch (const Backend::BackendException& ex) 
-        { 
-            MDBG_ERROR("... " << ex.what());
-        }
-    }
-}
+    MDBG_INFO("(sessionID:" << mSessionID << ")");
+    if (!mTemporary) return; // don't delete
 
-/*****************************************************/
-Session::Session(Session&& old) noexcept: // move constructor
-    Session(old.mBackend, old.mUsername, old.mSessionID, old.mSessionKey, old.mTemporary)
-{
-    old.mTemporary = false; // don't delete twice
+    try
+    {
+        BackendImpl::WithSession(this, [&](){ mBackend.DeleteClient(); });
+    }
+    catch (const Backend::BackendException& ex) 
+    { 
+        MDBG_ERROR("... " << ex.what());
+    }
 }
 
 /*****************************************************/
@@ -52,19 +61,16 @@ Session Session::FromExisting(BackendImpl& backend, const SessionStore& session)
 /*****************************************************/
 Session Session::FromExisting(Backend::BackendImpl& backend, const std::string& sessionID, const std::string& sessionKey)
 { 
-    Session session(backend, "", sessionID, sessionKey, false);
+    nlohmann::json account;
     // doing an action now also ensures the session is valid!
-    const nlohmann::json resp(backend.GetAccount(&session));
+    BackendImpl::WithSession(sessionID, sessionKey, [&](){ account = backend.GetAccount(); });
 
     try
     {
-        resp.at("username").get_to(session.mUsername);
-        SDBG_INFO("... username:" << session.mUsername);
+        return Session(backend, account, sessionID, sessionKey, false);
     }
     catch (const nlohmann::json::exception& ex) {
        throw BackendImpl::JSONErrorException(ex.what()); }
-
-    return session;
 }
 
 /*****************************************************/
@@ -72,47 +78,51 @@ Session Session::Create(BackendImpl& backend, const std::string& username, const
 {
     SDBG_INFO("(username:" << username << ")");
 
-    const std::string passkey64 { StringUtil::base64_encode(Account::GetPasskeys(backend, username, password).authkey) };
+    const Account::PasswordKeys pwkeys { Account::GetPasskeys(backend, username, password) };
+    const std::string passkey64 { StringUtil::base64_encode(pwkeys.authsubkey) };
     const nlohmann::json resp(backend.CreateSession(username, passkey64, twofactor));
 
-    std::string sessionID;
-    std::string sessionKey;
     try
     {
-        //resp.at("account").at("id").get_to(accountID);
+        std::string sessionID;
+        std::string sessionKey;
         resp.at("client").at("session").at("id").get_to(sessionID);
         resp.at("client").at("session").at("authkey").get_to(sessionKey);
 
         SDBG_INFO("... sessionID:" << sessionID);
+
+        Session retval(backend, resp.at("account"), sessionID, sessionKey, true);
+        retval.mE2ee_pwsubkey = pwkeys.e2eesubkey;
+        return retval;
     }
     catch (const nlohmann::json::exception& ex) {
        throw BackendImpl::JSONErrorException(ex.what()); }
-
-    return Session(backend, username, sessionID, sessionKey, true);
 }
 
 /*****************************************************/
-Session Session::CreateInteractive(BackendImpl& backend, const std::string& username, SecureBuffer password)
+Session Session::CreateInteractive(BackendImpl& backend, const std::string& username, SecureBuffer& password)
 {
     SDBG_INFO("(username:" << username << ")");
 
     if (password.empty())
     {
-        std::cout << "Password? ";
+        std::cout << "Enter password: ";
         password = PlatformUtil::SecureReadConsole();
     }
 
-    try
+    std::string twofactor;
+    while (true) // prompt for things one at a time
     {
-        return Session::Create(backend, username, password);
-    }
-    catch (const BackendImpl::TwoFactorRequiredException&)
-    {
-        std::cout << "Two Factor? ";
-        const SecureBuffer tfBuf { PlatformUtil::SecureReadConsole() };
-        const std::string twofactor { tfBuf.Insecure_ToStr() };
-
-        return Session::Create(backend, username, password, twofactor);
+        try
+        {
+            return Session::Create(backend, username, password, twofactor);
+        }
+        catch (const BackendImpl::TwoFactorRequiredException&)
+        {
+            std::cout << "Enter two factor: ";
+            const SecureBuffer tfBuf { PlatformUtil::SecureReadConsole() };
+            twofactor = tfBuf.Insecure_ToStr(); // doesn't matter
+        }
     }
 }
 

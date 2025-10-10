@@ -28,11 +28,23 @@ public:
     /** Calculates the passkey base64 from a username and password */    
     void GetPasskey(int argc, const char* const* argv);
 
-    // TODO RAY !! comments
-    void InitAccountE2ee(int argc, const char* const* argv);
-    void InitFilesystemE2ee(int argc, const char* const* argv);
+    /** Initializes e2ee keys for an account */
+    void InitAccountKeys(int argc, const char* const* argv);
+    /** Attempts to load and unlock e2ee on an account */
+    void TestAccountKeys(int argc, const char* const* argv);
+    /** Stores or deletes the password-wrapped master key */
+    void StorePwMasterKey(int argc, const char* const* argv);
+    /** Generates and stores a new recovery key (overwriting old) */
+    void GenRkMasterKey(int argc, const char* const* argv);
+    
+    /** Creates a session and returns it + e2ee keys */
+    void CreateSession(int argc, const char* const* argv);
+    /** Changes an account's password, possibly re-storing the PwMasterKey */
     void ChangePassword(int argc, const char* const* argv);
 
+    /** Initializes e2ee folder keys throughout a filesystem */
+    void InitFilesystemKeys(int argc, const char* const* argv);
+    
 private:
     Andromeda::Debug mDebug;
     Resource& mResource;

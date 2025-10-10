@@ -20,6 +20,17 @@ public:
     /** Silently read a line of input from stdin into a SecureBuffer */
     static SecureBuffer SecureReadConsole();
 
+    /**
+     * Asks the user at the console to pick from a list of options
+     * @param prompt explanatory prompt to give from the user
+     * @param options list of options the user can choose from
+     * @param defaultt default option to pick if the usre enters nothing
+     * @param matchCase if true, be case-sensitive
+     * @return std::string option that the user selected
+     */
+    [[nodiscard]] static std::string MatchConsoleInput(const std::string& prompt,
+        const std::list<std::string>& options, const std::string& defaultt = "", bool matchCase = false);
+
     using StringMap = std::unordered_map<std::string, std::string>;
 
     /** 

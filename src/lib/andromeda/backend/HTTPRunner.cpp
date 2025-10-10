@@ -220,7 +220,7 @@ std::string HTTPRunner::HandleResponse(const httplib::Response& response, bool& 
 {
     MDBG_INFO("() HTTP:" << response.status);
 
-    const bool wantRetry { response.status == 500 || response.status == 503 }; // TODO remove me (don't retry on 500)
+    const bool wantRetry { response.status == 503 };
     respData.doRetry = (respData.canRetry && wantRetry);
     if (respData.doRetry) return ""; // early return
 

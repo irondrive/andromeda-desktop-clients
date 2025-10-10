@@ -30,7 +30,7 @@ public:
     };
 
     /** 
-     * @param apiPath path to the API index.php 
+     * @param apiPath path to the API index.php (can be empty to use env)
      * @param timeout the timeout for each CLI call
      */
     explicit CLIRunner(const std::string& apiPath, const RunnerOptions& runnerOptions);

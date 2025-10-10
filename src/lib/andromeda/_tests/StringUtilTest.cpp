@@ -351,6 +351,7 @@ TEST_CASE("base64_decode", "[StringUtil]")
     REQUIRE(StringUtil::base64_decode("EAAh0Jxh/0Y=") == str);
 
     REQUIRE(StringUtil::base64_decode(" ") == std::nullopt);
+    REQUIRE(StringUtil::base64_decode("a") == std::nullopt);
     REQUIRE(StringUtil::base64_decode(std::string("\0",1)) == std::nullopt);
     REQUIRE(StringUtil::base64_decode(std::string("YQ==\0",5)) == std::nullopt);
     REQUIRE(StringUtil::base64_decode("not valid") == std::nullopt); // spaces
@@ -359,6 +360,24 @@ TEST_CASE("base64_decode", "[StringUtil]")
     REQUIRE(StringUtil::base64_decode("YWI") == std::nullopt); // missing padding
     REQUIRE(StringUtil::base64_decode("YWIax") == std::nullopt); // missing padding
     REQUIRE(StringUtil::base64_decode("YWIaxy") == std::nullopt); // missing padding
+}
+
+/*****************************************************/
+TEST_CASE("Zeroize", "[StringUtil]")
+{
+    std::string data; 
+    StringUtil::Zeroize(data);
+    REQUIRE(data == std::string(data.size(),'\0'));
+
+    data = "test123"; // stack (SSO)
+    StringUtil::Zeroize(data);
+    REQUIRE(data.size() >= 7);
+    REQUIRE(data == std::string(data.size(),'\0'));
+
+    data = std::string(128,'X'); // heap
+    StringUtil::Zeroize(data);
+    REQUIRE(data.size() >= 128);
+    REQUIRE(data == std::string(data.size(),'\0'));
 }
 
 } // namespace

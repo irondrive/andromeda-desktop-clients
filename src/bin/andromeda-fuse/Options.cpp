@@ -92,11 +92,11 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     /** Backend endpoint selection */
     if (option == "a" || option == "apiurl")
     {
-        apiPath = value;
+        apiUrl = value;
         apiType = ApiType::API_URL;
 
         // Certain details can be parsed from the URL
-        ParseUrl(apiPath);
+        ParseUrl(apiUrl);
     }
     else if (option == "p" || option == "apipath")
     {

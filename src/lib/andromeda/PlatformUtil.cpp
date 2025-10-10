@@ -94,6 +94,33 @@ SecureBuffer PlatformUtil::SecureReadConsole()
 }
 
 /*****************************************************/
+std::string PlatformUtil::MatchConsoleInput(const std::string& prompt, 
+    const std::list<std::string>& options, const std::string& defaultt, bool matchCase)
+{
+    while (true)
+    {
+        std::string line;
+        std::cout << prompt;
+        std::getline(std::cin, line);
+
+        const auto compare { [&](const std::string& option)
+        {
+            return matchCase ? (option == line) :
+                StringUtil::tolower(option) == StringUtil::tolower(line);
+        } };
+
+        if (line.empty() && !defaultt.empty())
+            return defaultt;
+        else
+        {
+            const auto it { std::find_if(options.cbegin(), options.cend(), compare) };
+            if (it != options.cend())
+                return *it;
+        }
+    }
+}
+
+/*****************************************************/
 PlatformUtil::StringMap PlatformUtil::GetEnvironment(const std::string& prefix)
 {
     StringMap retval;

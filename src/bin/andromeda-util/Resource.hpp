@@ -6,7 +6,7 @@
 
 namespace Andromeda
 {
-    namespace Account { class Session; }
+    namespace Account { class Account; class Session; }
     namespace Backend { class BaseRunner; class RunnerPool; class BackendImpl; }
 }
 
@@ -26,8 +26,19 @@ public:
     Options& GetOptions() { return options; }
     /** Initiates (if not already) and returns a BackendImpl from the given options */
     Andromeda::Backend::BackendImpl& GetBackend();
-    /** Initiates (if not already) and maybe returns a Session from the given options */
+    /** Initiates (if not already) and returns a Session from the given options (if available) */
     Andromeda::Account::Session* TryGetSession();
+    /** 
+     * Initiates (if not already) and returns a Session from the given options
+     * This forces that a session is provided and does not allow auth_sudouser
+     */
+    Andromeda::Account::Session& GetSession();
+    /** 
+     * Initiates (if not already) and returns the Account from the given options
+     * If using auth_sudouser, this doesn't force a session.  Otherwise it will use GetSession() and use the account from there.
+     * NOTE that if using auth_sudouser, then you call GetSession() after this, it will have its own separate account object
+     */
+    Andromeda::Account::Account& GetAccount();
 
 private:
     Options& options;
@@ -35,6 +46,7 @@ private:
     std::unique_ptr<Andromeda::Backend::RunnerPool> runnerPool;
     std::unique_ptr<Andromeda::Backend::BackendImpl> backend;
     std::unique_ptr<Andromeda::Account::Session> session;
+    std::unique_ptr<Andromeda::Account::Account> account;
 };
 
 } // namespace AndromedaUtil

@@ -111,7 +111,7 @@ int main(int argc, char** argv)
             const std::string userAgent(std::string("andromeda-fuse/")
                 +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
-            runner = std::make_unique<HTTPRunner>(options.apiPath,
+            runner = std::make_unique<HTTPRunner>(options.apiUrl,
                 userAgent, runnerOptions, httpOptions);
         }; break;
         case Options::ApiType::API_PATH:
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
     {
         backend = std::make_unique<BackendImpl>(runners);
 
-        session = sessionOptions.GetSession(*backend, !options.isQuiet());
+        session = sessionOptions.GetSession(*backend, !options.mQuiet);
         if (session)
             backend->SetSession(session.get());
         else if (!sessionOptions.username.empty())

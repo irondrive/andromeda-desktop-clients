@@ -46,8 +46,10 @@ struct Options : public Andromeda::BaseOptions
 
     /** Returns the specified API type */
     ApiType apiType { ApiType::API_INVALID };
-    /** Returns the path to the API endpoint */
+    /** Returns the path to the API endpoint if CLI */
     std::string apiPath;
+    /** Returns the URL to the API endpoint if HTTP */
+    std::string apiUrl;
 };
 
 } // namespace AndromedaUtil

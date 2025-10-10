@@ -1,14 +1,22 @@
 
 #include "SessionOptions.hpp"
+#include "andromeda/PlatformUtil.hpp"
+#include "andromeda/StringUtil.hpp"
 #include "andromeda/backend/BackendImpl.hpp"
 using Andromeda::Backend::BackendImpl;
 
 namespace Andromeda::Account {
 
 /*****************************************************/
+SessionOptions::~SessionOptions()
+{
+    StringUtil::Zeroize(password); // best effort
+}
+
+/*****************************************************/
 std::string SessionOptions::HelpText()
 {
-    return "Remote Auth:     [-u|--username str] [--password str] | [--sessionid id] [--sessionkey key] [--force-session]";
+    return "Remote Auth:     ([-u|--username str] [--password str]) | ([--sessionid id] [--sessionkey b64]) [--force-session] [--e2ee_recovery b64]";
 }
 
 /*****************************************************/
@@ -28,6 +36,8 @@ bool SessionOptions::AddOption(const std::string& option, const std::string& val
         username = value;
     else if (option == "password")
         password = value;
+    else if (option == "e2ee_recovery")
+        e2ee_recoveryb64 = value;
     else if (option == "sessionid")
         sessionid = value;
     else if (option == "sessionkey")
@@ -47,7 +57,7 @@ std::unique_ptr<Session> SessionOptions::GetSession(BackendImpl& backend, bool i
         if (backend.RequiresSession() || forceSession || !password.empty())
         {
             // putting a password on the command line is already insecure anyway
-            const SecureBuffer pbuf { SecureBuffer::Insecure_FromBuf(password.data(), password.size()) };
+            SecureBuffer pbuf { SecureBuffer::Insecure_FromStr(password) };
 
             if (interactive)
                 return std::make_unique<Session>(Session::CreateInteractive(backend, username, pbuf));
@@ -55,6 +65,21 @@ std::unique_ptr<Session> SessionOptions::GetSession(BackendImpl& backend, bool i
         }
     }
     return nullptr;
+}
+
+/*****************************************************/
+SecureBuffer SessionOptions::RequirePassword(bool quiet) const
+{
+    // putting a password on the command line is already insecure anyway
+    SecureBuffer ret { SecureBuffer::Insecure_FromStr(password) };
+    if (ret.empty())
+    {
+        if (quiet) throw BadUsageException("quiet prevents password prompt");
+    
+        std::cout << "Enter password: ";
+        ret = PlatformUtil::SecureReadConsole();
+    }
+    return ret;
 }
 
 /*****************************************************/

@@ -21,6 +21,11 @@ using Andromeda::Account::Session;
 namespace Andromeda {
 namespace Backend {
 
+thread_local bool BackendImpl::sSessionOvrd { false };
+thread_local const std::string* BackendImpl::sSessionIDOvrd { nullptr };
+thread_local const std::string* BackendImpl::sSessionKeyOvrd { nullptr };
+thread_local std::string BackendImpl::sUsernameOvrd;
+
 std::atomic<uint64_t> BackendImpl::sReqNext { 1 };
 
 /*****************************************************/
@@ -83,12 +88,18 @@ void BackendImpl::PrintInput(const RunnerInput_StreamIn& input, std::ostream& st
 
 /*****************************************************/
 template <class InputT>
-InputT& BackendImpl::FinalizeInput(InputT& input, const Session* session)
+InputT& BackendImpl::FinalizeInput(InputT& input)
 {
-    if (session != nullptr)
+    if (sSessionOvrd)
     {
-        input.dataParams["auth_sessionid"] = session->GetSessionID();
-        input.dataParams["auth_sessionkey"] = session->GetSessionKey();    
+        if (sSessionIDOvrd)
+        {
+            input.dataParams["auth_sessionid"] = *sSessionIDOvrd;
+            input.dataParams["auth_sessionkey"] = *sSessionKeyOvrd;
+        }
+
+        if (!sUsernameOvrd.empty())
+            input.plainParams["auth_sudouser"] = sUsernameOvrd;
     }
     else
     {
@@ -99,9 +110,7 @@ InputT& BackendImpl::FinalizeInput(InputT& input, const Session* session)
         }
     
         if (!mSudoUsername.empty())
-        {
             input.plainParams["auth_sudouser"] = mSudoUsername;
-        }
     }
 
     return input;
@@ -136,9 +145,9 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
 
             if      (code == HTTP_ERROR && message == "FILESYSTEM_MISMATCH")         throw UnsupportedException();
             else if (code == HTTP_ERROR && message == "STORAGE_FOLDERS_UNSUPPORTED") throw UnsupportedException();
-                // TODO better exception? - should not happen if Authenticated? maybe for bad shares
+            // TODO better exception? - should not happen if Authenticated? maybe for bad shares
             else if (code == HTTP_ERROR && message == "ACCOUNT_CRYPTO_NOT_UNLOCKED") throw DeniedException(message);
-             // PHP silently discards too-large files, assume that's what happened and not us making a mistake
+            // PHP silently discards too-large files, assume that's what happened and not us making a mistake
             else if (code == HTTP_ERROR && message == "INPUT_FILE_MISSING")          throw HTTPRunner::InputSizeException();
 
             else if (code == HTTP_DENIED && message == "AUTHENTICATION_FAILED") throw AuthenticationFailedException();
@@ -147,6 +156,7 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
             else if (code == HTTP_DENIED && message == "READ_ONLY_DATABASE")    throw ReadOnlyFSException("Database");
             else if (code == HTTP_DENIED && message == "READ_ONLY_STORAGE")     throw ReadOnlyFSException("Storage");
 
+            else if (code == HTTP_ERROR) throw ClientErrorException(message);
             else if (code == HTTP_DENIED) throw DeniedException(message); 
             else if (code == HTTP_NOT_FOUND) throw NotFoundException(message);
             else throw APIException(code, message);
@@ -161,21 +171,21 @@ nlohmann::json BackendImpl::GetJSON(const std::string& resp)
 }
 
 /*****************************************************/
-std::string BackendImpl::RunAction_ReadStr(RunnerInput& input, const Session* session)
+std::string BackendImpl::RunAction_ReadStr(RunnerInput& input)
 {
-    return mRunners.GetRunner()->RunAction_Read(FinalizeInput(input, session));
+    return mRunners.GetRunner()->RunAction_Read(FinalizeInput(input));
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::RunAction_Read(RunnerInput& input, const Session* session)
+nlohmann::json BackendImpl::RunAction_Read(RunnerInput& input)
 {
-    return GetJSON(mRunners.GetRunner()->RunAction_Read(FinalizeInput(input, session)));
+    return GetJSON(mRunners.GetRunner()->RunAction_Read(FinalizeInput(input)));
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::RunAction_Write(RunnerInput& input, const Session* session)
+nlohmann::json BackendImpl::RunAction_Write(RunnerInput& input)
 {
-    return GetJSON(mRunners.GetRunner()->RunAction_Write(FinalizeInput(input, session)));
+    return GetJSON(mRunners.GetRunner()->RunAction_Write(FinalizeInput(input)));
 }
 
 /*****************************************************/
@@ -203,7 +213,7 @@ bool BackendImpl::RequiresSession() const
 }
 
 /*****************************************************/
-void BackendImpl::SetSession(Session* session)
+void BackendImpl::SetSession(const Session* session)
 {
     mSession = session;
     if (session != nullptr)
@@ -211,6 +221,46 @@ void BackendImpl::SetSession(Session* session)
         // TODO what about resetting the policy if session is nullptr?
         mConfig.LoadFilesPolicy(*this);
     }
+}
+
+/*****************************************************/
+struct BackendImpl::SessionOverride final
+{
+    inline SessionOverride(const std::string* sessionID, const std::string* sessionKey){
+        sSessionOvrd = true; sSessionIDOvrd = sessionID; sSessionKeyOvrd = sessionKey; }
+
+    explicit inline SessionOverride(const std::string& username){
+        sSessionOvrd = true; sUsernameOvrd = username; }
+
+    ~SessionOverride()
+    { 
+        sSessionOvrd = false; 
+        sSessionIDOvrd = nullptr; 
+        sSessionKeyOvrd = nullptr; 
+        sUsernameOvrd.clear();
+    }
+    DELETE_COPY(SessionOverride);
+    DELETE_MOVE(SessionOverride);
+};
+
+/*****************************************************/
+void BackendImpl::WithSession(const Account::Session* session, const std::function<void()>& func)
+{
+    if (session != nullptr)
+        { const SessionOverride s(&session->GetSessionID(), &session->GetSessionKey()); func(); }
+    else { const SessionOverride s(nullptr, nullptr); func(); }
+}
+
+/*****************************************************/
+void BackendImpl::WithSession(const std::string& sessionID, const std::string& sessionKey, const std::function<void()>& func)
+{
+    const SessionOverride s(&sessionID, &sessionKey); func();
+}
+
+/*****************************************************/
+void BackendImpl::WithSudoUsername(const std::string& username, const std::function<void()>& func)
+{
+    const SessionOverride s(username); func();
 }
 
 /*****************************************************/
@@ -232,12 +282,72 @@ nlohmann::json BackendImpl::GetFilesPolicy()
 }
 
 /*****************************************************/
-nlohmann::json BackendImpl::GetAccount(const Session* session)
+std::string BackendImpl::GetPasswordSalt(const std::string& username)
+{
+    MDBG_INFO("(username:" << username << ")");
+
+    RunnerInput input {"accounts", "getpwsalt", {{"username", username}}}; MDBG_BACKEND(input);
+
+    const nlohmann::json res(RunAction_Read(input));
+
+    try
+    {
+        const std::optional<std::string> bin { StringUtil::base64_decode(res.get<std::string>()) };
+        if (bin) return *bin; else throw JSONErrorException("invalid salt base64");
+    }
+    catch (const nlohmann::json::exception& ex) {
+        throw JSONErrorException(ex.what()); }
+}
+
+/*****************************************************/
+nlohmann::json BackendImpl::GetAccount()
 {
     MDBG_INFO("()");
 
     RunnerInput input {"accounts", "getaccount"}; MDBG_BACKEND(input);
-    return RunAction_Read(input, session);
+    return RunAction_Read(input);
+}
+
+/*****************************************************/
+void BackendImpl::InitAccountE2ee(const std::string& rkmaster, const std::string& privkey, const std::string& pubkey, bool force)
+{
+    MDBG_INFO("()");
+
+    RunnerInput input { "accounts", "inite2ee", {}, {
+        { "private", StringUtil::base64_encode(privkey) }, 
+        { "public", StringUtil::base64_encode(pubkey) }, 
+        { "rkmaster", StringUtil::base64_encode(rkmaster) }}}; // dataParams
+
+    if (force) input.plainParams["force"] = "true";
+
+    MDBG_BACKEND(input);
+    (void)RunAction_Write(input);
+}
+
+/*****************************************************/
+void BackendImpl::SetE2eePwMaster(const std::string* const pwmaster)
+{
+    MDBG_INFO("()");
+
+    RunnerInput input { "accounts", "editaccount", {}, {{ "e2ee_pwmaster", "" }}}; // dataParams
+
+    if (pwmaster != nullptr)
+        input.dataParams["e2ee_pwmaster"] = StringUtil::base64_encode(*pwmaster);
+
+    MDBG_BACKEND(input);
+    (void)RunAction_Write(input);
+}
+
+/*****************************************************/
+void BackendImpl::SetE2eeRkMaster(const std::string& rkmaster)
+{
+    MDBG_INFO("()");
+
+    RunnerInput input { "accounts", "editaccount", {}, 
+        {{ "e2ee_rkmaster", StringUtil::base64_encode(rkmaster) }}}; // dataParams
+
+    MDBG_BACKEND(input);
+    (void)RunAction_Write(input);
 }
 
 /*****************************************************/
@@ -256,28 +366,10 @@ nlohmann::json BackendImpl::CreateSession(const std::string& username, const std
 }
 
 /*****************************************************/
-void BackendImpl::DeleteClient(const Session* session)
+void BackendImpl::DeleteClient()
 {
     RunnerInput input {"accounts", "deleteclient"}; MDBG_BACKEND(input);
-    (void)RunAction_Write(input, session);
-}
-
-/*****************************************************/
-std::string BackendImpl::GetPasswordSalt(const std::string& username)
-{
-    MDBG_INFO("(username:" << username << ")");
-
-    RunnerInput input {"accounts", "getpwsalt", {{"username", username}}}; MDBG_BACKEND(input);
-
-    const nlohmann::json res(RunAction_Read(input));
-
-    try
-    {
-        const std::optional<std::string> bin { StringUtil::base64_decode(res.get<std::string>()) };
-        if (bin) return *bin; else throw JSONErrorException("invalid salt base64");
-    }
-    catch (const nlohmann::json::exception& ex) {
-        throw JSONErrorException(ex.what()); }
+    (void)RunAction_Write(input);
 }
 
 /*****************************************************/

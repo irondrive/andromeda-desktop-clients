@@ -9,6 +9,7 @@
 #include <sodium.h>
 
 #include "StringUtil.hpp"
+#include "SecureBuffer.hpp"
 
 namespace Andromeda {
 
@@ -250,10 +251,11 @@ std::string StringUtil::bytesToStringF(const uint64_t bytes)
 
 #define B64VARIANT sodium_base64_VARIANT_ORIGINAL
 
+namespace {
 /*****************************************************/
-std::string StringUtil::base64_encode(const std::string& input)
+template<class T> inline T base64_encodeT(const T& input)
 {
-    std::string retval;
+    T retval;
     retval.resize(sodium_base64_ENCODED_LEN(input.size(), B64VARIANT));
 
     (void)sodium_bin2base64(retval.data(), retval.size(), 
@@ -265,9 +267,9 @@ std::string StringUtil::base64_encode(const std::string& input)
 }
 
 /*****************************************************/
-std::optional<std::string> StringUtil::base64_decode(const std::string& input)
+template<class T> inline std::optional<T> base64_decodeT(const T& input)
 {
-    std::string retval;
+    T retval;
     retval.resize(input.size()/4*3);
 
     size_t binlen = 0;
@@ -277,6 +279,22 @@ std::optional<std::string> StringUtil::base64_decode(const std::string& input)
 
     retval.resize(binlen);
     return retval;
+}
+} // namespace
+
+std::string StringUtil::base64_encode(const std::string& input) { return base64_encodeT(input); }
+SecureBuffer StringUtil::base64_encode(const SecureBuffer& input) { return base64_encodeT(input); }
+
+std::optional<std::string> StringUtil::base64_decode(const std::string& input) { return base64_decodeT(input); }
+std::optional<SecureBuffer> StringUtil::base64_decode(const SecureBuffer& input) { return base64_decodeT(input); }
+
+/*****************************************************/
+void StringUtil::Zeroize(std::string& input)
+{
+    if (input.capacity() > input.size())
+        input.resize(input.capacity());
+
+    std::fill_n(input.data(), input.size(), '\0');
 }
 
 } // namespace Andromeda

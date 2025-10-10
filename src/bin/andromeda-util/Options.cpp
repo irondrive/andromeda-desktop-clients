@@ -21,7 +21,7 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-util (-a|--apiurl url | -p|--apipath [path]) [flags] action [action flags]" << endl
+        << "andromeda-util (-a|--apiurl url | -p|--apipath [path]) [global flags] action [action flags]" << endl
         << "Misc Flags: " << CoreBaseHelpText() << endl << endl
 
         << SessionOptions::HelpText() << endl << endl
@@ -64,11 +64,11 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     /** Backend endpoint selection */
     if (option == "a" || option == "apiurl")
     {
-        apiPath = value;
+        apiUrl = value;
         apiType = ApiType::API_URL;
 
         // Certain details can be parsed from the URL
-        ParseUrl(apiPath);
+        ParseUrl(apiUrl);
     }
     else if (option == "p" || option == "apipath")
     {

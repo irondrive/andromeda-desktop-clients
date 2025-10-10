@@ -53,7 +53,7 @@ void CLIRunner::CheckError(reproc::process& process, const std::error_code& erro
 /*****************************************************/
 CLIRunner::ArgList CLIRunner::GetArguments(const RunnerInput& input)
 {
-    ArgList arguments { mApiPath, "--json", input.app, input.action };
+    ArgList arguments { mApiPath, "--outmode", "json", input.app, input.action };
 
     if (StringUtil::endsWith(mApiPath, ".php"))
         arguments.emplace_front("php");
