@@ -194,7 +194,7 @@ void Account::UnlockE2eeDirectly(const SecureBuffer& master)
         { MDBG_INFO("already unlocked"); return; }
     
     UnlockE2eePrivateKey(master);
-    mE2ee_master = master;
+    mE2ee_master = master; DBGINFO_KEY(mE2ee_master);
 }
 
 /*****************************************************/
@@ -212,7 +212,7 @@ void Account::UnlockE2eeFromRecovery(const SecureBuffer& recovery)
     const SecureBuffer master { Crypto::DecryptSecret(mE2ee_rkmaster, rkmaster_nonce, recovery) }; DBGINFO_KEY(master);
 
     UnlockE2eePrivateKey(master);
-    mE2ee_master = master;
+    mE2ee_master = master; DBGINFO_KEY(mE2ee_master);
 }
 
 /*****************************************************/
@@ -233,7 +233,7 @@ void Account::UnlockE2eeFromPwSubkey(const SecureBuffer& pwsubkey)
     const SecureBuffer master { Crypto::DecryptSecret(mE2ee_pwmaster, pwmaster_nonce, pwsubkey) }; DBGINFO_KEY(master);
 
     UnlockE2eePrivateKey(master);
-    mE2ee_master = master;
+    mE2ee_master = master; DBGINFO_KEY(mE2ee_master);
 }
 
 /*****************************************************/
