@@ -22,7 +22,7 @@ using Andromeda::Account::Account;
 using Andromeda::Account::Session;
 #include "andromeda/account/SessionOptions.hpp"
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 /** Options parser for the Random action */
 struct RandomOptions : public BaseOptions
@@ -248,5 +248,5 @@ std::string Actions::HelpText()
 // TODO FUTURE - some filesystem actions? upload, download, getfolder, etc.
 // TODO FUTURE - also share file, getshares, etc. 
 
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee
 

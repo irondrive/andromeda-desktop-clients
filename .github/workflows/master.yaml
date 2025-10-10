@@ -109,21 +109,21 @@ jobs:
       if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-latest'
       run: |
         build-Release/bin/cli/andromeda-cli --version
-        build-Release/bin/fuse/andromeda-util --version
+        build-Release/bin/fuse/andromeda-e2ee --version
         build-Release/bin/fuse/andromeda-fuse --version
         build-Release/bin/gui/andromeda-gui --version
     - name: Execute --version (macos)
       if: matrix.os == 'macos-13' || matrix.os == 'macos-latest'
       run: |
         build-Release/bin/cli/andromeda-cli --version
-        build-Release/bin/fuse/andromeda-util --version
+        build-Release/bin/fuse/andromeda-e2ee --version
         build-Release/bin/fuse/andromeda-fuse --version
         build-Release/bin/gui/andromeda-gui.app/Contents/MacOS/andromeda-gui --version
 #    - name: Execute --version (windows)
 #      if: matrix.os == 'windows-2019' || matrix.os == 'windows-latest'
 #      run: |
 #        install/bin/andromeda-cli.exe --version
-#        install/bin/andromeda-util.exe --version
+#        install/bin/andromeda-e2ee.exe --version
 #        install/bin/andromeda-fuse.exe --version
 #        install/bin/andromeda-gui.exe --version
         

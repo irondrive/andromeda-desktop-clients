@@ -3,11 +3,11 @@
 
 #include "andromeda/Debug.hpp"
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 class Resource;
 
-/** Class for executing andromeda-util subcommands */
+/** Class for executing andromeda-e2ee subcommands */
 class Actions
 {
 public:
@@ -50,6 +50,6 @@ private:
     Resource& mResource;
 }; 
 
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee
 
 #endif // A2UTIL_ACTIONS_H_

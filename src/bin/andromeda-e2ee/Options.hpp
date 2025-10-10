@@ -11,7 +11,7 @@ namespace Andromeda {
     namespace Filesystem { namespace Filedata { struct CacheOptions; } }
 }
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 /** Manages command line options and config */
 struct Options : public Andromeda::BaseOptions
@@ -52,6 +52,6 @@ struct Options : public Andromeda::BaseOptions
     std::string apiUrl;
 };
 
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee
 
 #endif // A2UTIL_OPTIONS_H_

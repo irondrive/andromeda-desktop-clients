@@ -7,11 +7,11 @@
 #include <cstdlib>
 
 #include "Options.hpp"
-using AndromedaUtil::Options;
+using AndromedaE2ee::Options;
 #include "Actions.hpp"
-using AndromedaUtil::Actions;
+using AndromedaE2ee::Actions;
 #include "Resource.hpp"
-using AndromedaUtil::Resource;
+using AndromedaE2ee::Resource;
 
 #include "andromeda/BaseException.hpp"
 using Andromeda::BaseException;
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     try
     {
         options.ParseConfig("libandromeda");
-        options.ParseConfig("andromeda-util");
+        options.ParseConfig("andromeda-e2ee");
         const size_t args = options.ParseArgs(static_cast<size_t>(--argc), ++argv, true);
         argc -= static_cast<int>(args); argv += args;
         options.Validate();

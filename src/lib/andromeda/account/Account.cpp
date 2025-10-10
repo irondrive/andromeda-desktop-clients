@@ -233,6 +233,13 @@ void Account::UnlockE2eeFromPassword(const SecureBuffer& password)
 /*****************************************************/
 void Account::UnlockE2eeInteractive(SecureBuffer& password, SecureBuffer& recoveryb64, const Session* session)
 {
+    MDBG_INFO("()");
+
+    if (mE2ee_rkmaster.empty()) 
+        { MDBG_INFO("e2ee not initialized"); return; }
+    else if (!mE2ee_master.empty())
+        { MDBG_INFO("already unlocked"); return; }
+
     if (!mE2ee_pwmaster.empty())
     {
         if (session != nullptr && !session->TryGetE2eePwSubkey().empty())

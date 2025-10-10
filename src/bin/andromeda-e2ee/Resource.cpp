@@ -19,7 +19,7 @@ using Andromeda::Backend::HTTPRunner;
 #include "andromeda/backend/RunnerPool.hpp"
 using Andromeda::Backend::RunnerPool;
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 Resource::Resource(Options& options_): options(options_){ } 
 Resource::~Resource() = default;
@@ -33,7 +33,7 @@ BackendImpl& Resource::GetBackend()
         {
             case Options::ApiType::API_URL:
             {
-                const std::string userAgent(std::string("andromeda-util/")
+                const std::string userAgent(std::string("andromeda-e2ee/")
                     +ANDROMEDA_VERSION+"/"+SYSTEM_NAME);
 
                 runner = std::make_unique<HTTPRunner>(options.apiUrl,
@@ -115,4 +115,4 @@ Account& Resource::GetAccount()
     else throw Options::MissingOptionException("username/sessionid");
 }
    
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee

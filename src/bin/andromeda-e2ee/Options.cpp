@@ -10,7 +10,7 @@ using Andromeda::Backend::HTTPOptions;
 #include "andromeda/backend/RunnerOptions.hpp"
 using Andromeda::Backend::RunnerOptions;
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 /*****************************************************/
 std::string Options::HelpText()
@@ -21,7 +21,7 @@ std::string Options::HelpText()
 
     output 
         << "Usage Syntax: " << endl
-        << "andromeda-util (-a|--apiurl url | -p|--apipath [path]) [global flags] action [action flags]" << endl
+        << "andromeda-e2ee (-a|--apiurl url | -p|--apipath [path]) [global flags] action [action flags]" << endl
         << "Misc Flags: " << CoreBaseHelpText() << endl << endl
 
         << SessionOptions::HelpText() << endl << endl
@@ -29,7 +29,7 @@ std::string Options::HelpText()
         << HTTPOptions::HelpText() << endl
         << RunnerOptions::HelpText() << endl << endl
            
-        << DetailBaseHelpText("util") << endl;
+        << DetailBaseHelpText("e2ee") << endl;
 
     return output.str();
 }
@@ -86,4 +86,4 @@ bool Options::AddOption(const std::string& option, const std::string& value)
     return true;
 }
 
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee

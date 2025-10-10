@@ -10,7 +10,7 @@ namespace Andromeda
     namespace Backend { class BaseRunner; class RunnerPool; class BackendImpl; }
 }
 
-namespace AndromedaUtil {
+namespace AndromedaE2ee {
 
 struct Options;
 
@@ -49,6 +49,6 @@ private:
     std::unique_ptr<Andromeda::Account::Account> account;
 };
 
-} // namespace AndromedaUtil
+} // namespace AndromedaE2ee
 
 #endif // A2UTIL_RESOURCE_H_
