@@ -11,6 +11,8 @@
 #include "LoginDialog.hpp"
 #include "Utilities.hpp"
 
+#include "andromeda/Crypto.hpp"
+using Andromeda::Crypto;
 #include "andromeda/account/SessionStore.hpp"
 using Andromeda::Account::SessionStore;
 #include "andromeda/backend/BackendException.hpp"
@@ -104,6 +106,12 @@ void MainWindow::TryLoadAccount(SessionStore& session)
     try
     {
         AddAccountTab(std::make_unique<BackendContext>(session));
+    }    
+    catch (const Crypto::Exception& ex)
+    {
+        MDBG_ERROR("... " << ex.what());
+        const std::string msg("Failed to initialize e2ee (wrong key?)");
+        Utilities::warningBox(this, "Crypto Error", msg, ex);
     }
     catch (const BackendException& ex)
     {
