@@ -3,6 +3,7 @@
 
 #include "Account.hpp"
 #include "Session.hpp"
+#include "SessionStore.hpp"
 
 #include "andromeda/Crypto.hpp"
 #include "andromeda/PlatformUtil.hpp"
@@ -27,7 +28,7 @@ std::string Account::ParseServerKey(const nlohmann::json& data, const std::strin
     {
         std::string keyb64; data.at(name).get_to(keyb64);
         const std::optional<std::string> key { StringUtil::base64_decode(keyb64) };
-        if (!key) { MDBG_ERROR(mAccountID << " " << name << " invalid base64"); } // carry on...
+        if (!key) { MDBG_ERROR("... " << mAccountID << " " << name << " invalid base64"); } // carry on...
         else return *key;
     }
     return "";
@@ -106,11 +107,19 @@ SecureBuffer Account::EncodeRecoveryKey(const SecureBuffer& rawkey)
 SecureBuffer Account::DecodeRecoveryKey(const SecureBuffer& fullkey)
 {
     if (fullkey.size() < 5 || fullkey.substr(0,5) != "e2rk:")
-        throw InvalidRecoveryKeyException();
+        throw RecoveryKeyInvalidException();
 
     const std::optional<SecureBuffer> rawkey { StringUtil::base64_decode(fullkey.substr(5)) };
-    if (!rawkey) throw InvalidRecoveryKeyException();
+    if (!rawkey) throw RecoveryKeyInvalidException();
     else return *rawkey;
+}
+
+/*****************************************************/
+void Account::StoreMasterKey(SessionStore& sessionStore)
+{
+    if (mE2ee_master.empty()) throw KeysNotAvailableException();
+
+    sessionStore.SetMasterKey(mE2ee_master);
 }
 
 /*****************************************************/
@@ -152,7 +161,7 @@ SecureBuffer Account::InitE2eeKeys(bool force)
 }
 
 /*****************************************************/
-void Account::StoreE2eePwMaster(const SecureBuffer& pwsubkey)
+void Account::EnableE2eePwKey(const SecureBuffer& pwsubkey)
 {
     if (mE2ee_master.empty()) throw KeysNotAvailableException();
 
@@ -164,17 +173,28 @@ void Account::StoreE2eePwMaster(const SecureBuffer& pwsubkey)
 }
 
 /*****************************************************/
-void Account::UnstoreE2eePwMaster()
+void Account::DisableE2eePwKey()
 {
     RunBackend([&](){ mBackend.SetE2eePwMaster(nullptr); });
 }
 
 /*****************************************************/
-void Account::UnlockE2eePrivateKey()
+void Account::UnlockE2eePrivateKey(const SecureBuffer& master)
 {
-    if (mE2ee_master.empty()) throw KeysNotAvailableException();
     const std::string privateenc_nonce { GetPrivateKeyNonce() }; DBGINFO_KEY(privateenc_nonce);
-    mE2ee_private = Crypto::DecryptSecret(mE2ee_privateenc, privateenc_nonce, mE2ee_master); DBGINFO_KEY(mE2ee_private);
+    mE2ee_private = Crypto::DecryptSecret(mE2ee_privateenc, privateenc_nonce, master); DBGINFO_KEY(mE2ee_private);
+}
+
+/*****************************************************/
+void Account::UnlockE2eeDirectly(const SecureBuffer& master)
+{
+    MDBG_INFO("()");
+
+    if (!mE2ee_master.empty())
+        { MDBG_INFO("already unlocked"); return; }
+    
+    UnlockE2eePrivateKey(master);
+    mE2ee_master = master;
 }
 
 /*****************************************************/
@@ -189,9 +209,10 @@ void Account::UnlockE2eeFromRecovery(const SecureBuffer& recovery)
     
     // recovery key is used only ONCE - can use a 0 nonce
     const std::string rkmaster_nonce(Crypto::SecretNonceLength(),'\0'); DBGINFO_KEY(rkmaster_nonce);
-    mE2ee_master = Crypto::DecryptSecret(mE2ee_rkmaster, rkmaster_nonce, recovery); DBGINFO_KEY(mE2ee_master);
+    const SecureBuffer master { Crypto::DecryptSecret(mE2ee_rkmaster, rkmaster_nonce, recovery) }; DBGINFO_KEY(master);
 
-    UnlockE2eePrivateKey();
+    UnlockE2eePrivateKey(master);
+    mE2ee_master = master;
 }
 
 /*****************************************************/
@@ -209,9 +230,10 @@ void Account::UnlockE2eeFromPwSubkey(const SecureBuffer& pwsubkey)
 
     // password e2ee subkey is used only ONCE - can use a 0 nonce
     const std::string pwmaster_nonce(Crypto::SecretNonceLength(),'\0'); DBGINFO_KEY(pwmaster_nonce);
-    mE2ee_master = Crypto::DecryptSecret(mE2ee_pwmaster, pwmaster_nonce, pwsubkey); DBGINFO_KEY(mE2ee_master);
+    const SecureBuffer master { Crypto::DecryptSecret(mE2ee_pwmaster, pwmaster_nonce, pwsubkey) }; DBGINFO_KEY(master);
 
-    UnlockE2eePrivateKey();
+    UnlockE2eePrivateKey(master);
+    mE2ee_master = master;
 }
 
 /*****************************************************/

@@ -4,6 +4,8 @@
 #include "LoginDialog.hpp"
 #include "ui_LoginDialog.h"
 
+#include "andromeda/Crypto.hpp"
+using Andromeda::Crypto;
 #include "andromeda/SecureBuffer.hpp"
 using Andromeda::SecureBuffer;
 #include "andromeda/StringUtil.hpp"
@@ -44,14 +46,24 @@ void LoginDialog::accept()
     try
     {
         std::string password { mQtUi->lineEditPassword->text().toStdString() };
+        std::string e2ee_recovery { mQtUi->lineEditE2eeRecovery->text().toStdString() };
         const std::string twofactor { mQtUi->lineEditTwoFactor->text().toStdString() };
 
         const SecureBuffer passbuf { SecureBuffer::Insecure_FromStr(password) };
-        mBackendContext = std::make_unique<BackendContext>(apiurl, username, passbuf, twofactor);
+        const SecureBuffer e2eebuf { SecureBuffer::Insecure_FromStr(e2ee_recovery) };
+        mBackendContext = std::make_unique<BackendContext>(apiurl, username, passbuf, e2eebuf, twofactor);
 
         // best effort zeroize of insecure buffers
         mQtUi->lineEditPassword->text().fill('\0');
         StringUtil::Zeroize(password);
+        mQtUi->lineEditE2eeRecovery->text().fill('\0');
+        StringUtil::Zeroize(e2ee_recovery);
+    }
+    catch (const Crypto::Exception& ex)
+    {
+        MDBG_ERROR("... " << ex.what());
+        Utilities::criticalBox(this, "Crypto Error", "Failed to initialize e2ee (wrong key?)", ex);
+        return; // no accept()
     }
     catch (const BackendException& ex)
     {

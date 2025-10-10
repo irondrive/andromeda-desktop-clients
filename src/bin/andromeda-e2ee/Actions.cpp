@@ -151,7 +151,7 @@ void Actions::InitAccountKeys(const int argc, const char* const* const argv)
             pwsubkey = Account::GetPasskeys(mResource.GetBackend(), account.GetUsername(), password).e2eesubkey;
         }
         
-        account.StoreE2eePwMaster(pwsubkey);
+        account.EnableE2eePwKey(pwsubkey);
     }
 }
 

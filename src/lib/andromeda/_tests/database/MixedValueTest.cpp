@@ -17,21 +17,27 @@ TEST_CASE("MixedValue", "[MixedValue]")
     const MixedValue c { "5" };
     const MixedValue d { nullptr };
     const MixedValue e { 6 };
+    const MixedValue s { SecureBuffer::Insecure_FromCstr("test") };
 
-    REQUIRE(a == a);
-    REQUIRE(b == a);
-    REQUIRE(c != a);
-    REQUIRE(d != a);
+    REQUIRE(a == a); REQUIRE(a == 5);
+    REQUIRE(b == a); REQUIRE(b == 5);
+    REQUIRE(c != a); REQUIRE(c == "5");
+    REQUIRE(d != a); REQUIRE(d == nullptr);
     REQUIRE(e != a);
 
-    REQUIRE(a.ToString() == "5");
-    REQUIRE(c.ToString() == "5");
-    REQUIRE(d.ToString() == "NULL");
+    REQUIRE(s == SecureBuffer::Insecure_FromStr("test"));
+
+    REQUIRE(a.Debug_ToString() == "5");
+    REQUIRE(c.Debug_ToString() == "5");
+    REQUIRE(d.Debug_ToString() == "NULL");
+    REQUIRE(s.Debug_ToString() == "test");
 
     const std::string sa { "test" };
     const MixedValue f { sa };
     const std::string sb { "test" };
     const MixedValue g { sb };
+
+    REQUIRE(g != s); // can't compare SecureBuffer
 
     // same string, different pointers
     REQUIRE(f == g);

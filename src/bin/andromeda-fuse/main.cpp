@@ -166,6 +166,11 @@ int main(int argc, char** argv)
         return static_cast<int>(ExitCode::BACKEND_INIT);
     }
 
+    // TODO RAY !! commonize somehow... maybe move account/session resources to SessionOptions?
+    //SecureBuffer password { SecureBuffer::Insecure_FromStr(mResource.GetOptions().sessionOptions.password) };
+    //SecureBuffer recoveryb64 { SecureBuffer::Insecure_FromStr(mResource.GetOptions().sessionOptions.e2ee_recoveryb64) };
+    //mResource.GetAccount().UnlockE2eeInteractive(password, recoveryb64, mResource.TryGetSession());
+
     runner->EnableRetry(); // no retries during init
 
     try

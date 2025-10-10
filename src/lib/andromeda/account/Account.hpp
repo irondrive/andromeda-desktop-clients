@@ -6,6 +6,7 @@
 
 #include "andromeda/common.hpp"
 #include "andromeda/BaseException.hpp"
+#include "andromeda/Crypto.hpp"
 #include "andromeda/Debug.hpp"
 #include "andromeda/SecureBuffer.hpp"
 
@@ -13,6 +14,7 @@ namespace Andromeda::Backend { class BackendImpl; }
 
 namespace Andromeda::Account {
 class Session;
+class SessionStore;
 
 /**
  * Represents a user account on the backend
@@ -32,11 +34,6 @@ public:
         explicit RecoveryKeyRequiredException() : 
             Exception("Need a recovery key to unlock e2ee") {}; };
 
-    /** Exception indicating the given recovery key is not valid base64 */
-    class InvalidRecoveryKeyException : public Exception { public:
-        explicit InvalidRecoveryKeyException() : 
-            Exception("The given e2ee recovery key is an invalid format") {}; };
-
     /** Exception indicating the account already has e2ee keys */
     class AlreadyInitializedException : public Exception { public:
         explicit AlreadyInitializedException() :
@@ -46,6 +43,11 @@ public:
     class KeysNotAvailableException : public Exception { public:
         explicit KeysNotAvailableException() :
             Exception("E2EE keys are not unlocked") {}; };
+
+    /** Exception indicating the recovery key is invalid */
+    class RecoveryKeyInvalidException : public Crypto::Exception { public:
+        explicit RecoveryKeyInvalidException() : 
+            Crypto::Exception("Invalid recovery key format") {}; };
 
     /** 
      * Construct an account using JSON data from the backend
@@ -88,8 +90,17 @@ public:
     /** Returns true if the account has e2ee initialized */
     inline bool HasE2eeKeys() const { return !mE2ee_rkmaster.empty(); }
 
+    /** Returns true if the account can unlock e2ee from a password */
+    inline bool HasE2eePwKey() const { return !mE2ee_pwmaster.empty(); }
+
     /** Returns the master key as a std::string (insecure, use only for console output, etc.) */
     inline std::string Insecure_GetMasterKey() const { return mE2ee_master.Insecure_ToStr(); }
+
+    /** 
+     * Stores the master key to the session store
+     * @throws KeysNotAvailableException if e2ee is not unlocked
+     */
+    void StoreMasterKey(SessionStore& sessionStore);
 
     /**
      * Initializes an e2ee key set and sends them to the backend
@@ -108,14 +119,20 @@ public:
      * @throws KeysNotAvailableException if e2ee is not unlocked
      * @throws BackendImpl::Exception for other backend issues
      */
-    void StoreE2eePwMaster(const SecureBuffer& pwsubkey);
+    void EnableE2eePwKey(const SecureBuffer& pwsubkey);
 
     /**
      * Deletes the password subkey-wrapped master key from the backend (disallow signin with password only)
      * NOTE - requires a session to be set, or we'll attempt to use auth_sudouser with the backend
      * @throws BackendImpl::Exception for other backend issues
      */
-    void UnstoreE2eePwMaster();
+    void DisableE2eePwKey();
+
+    /**
+     * Unlocks e2ee crypto by directly giving the recovery key (will be validated!)
+     * @throws Crypto::DecryptFailedException if the key is not valid
+     */
+    void UnlockE2eeDirectly(const SecureBuffer& masterkey);
 
     /**
      * Unlocks e2ee crypto from a raw recovery key
@@ -143,7 +160,6 @@ public:
      * @param password password if known, can be empty
      * @param recoveryb64 full recovery key if known, can be empty
      * @param session optional session pointer (might have the password subkey available)
-     * @throws InvalidRecoveryKeyException if the format is invalid
      * @throws Crypto::DecryptFailedException if decryption fails
      * @throws BackendImpl::Exception for other backend issues
      */
@@ -154,7 +170,7 @@ public:
 
     /**
      * Decodes an encoded recovery key into its raw format
-     * @throws InvalidRecoveryKeyException if the format is invalid
+     * @throws Crypto::Exception if the format is invalid
      */
     static SecureBuffer DecodeRecoveryKey(const SecureBuffer& fullkey);
 
@@ -189,12 +205,12 @@ private:
 
     /** Parses a key (base64 decode) from the json data, returning "" if invalid */
     std::string ParseServerKey(const nlohmann::json& data, const std::string& name);
+
     /**
-     * Unlocks the e2ee private key, using the master key
+     * Unlocks the e2ee private key, using the given master key
      * @throws Crypto::DecryptFailedException if decryption fails
-     * @throws KeysNotAvailableException if e2ee is not unlocked
      */
-    void UnlockE2eePrivateKey();
+    void UnlockE2eePrivateKey(const SecureBuffer& master);
 
     mutable Debug mDebug;
     Backend::BackendImpl& mBackend;

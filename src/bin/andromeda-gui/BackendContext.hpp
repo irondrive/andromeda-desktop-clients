@@ -24,16 +24,18 @@ public:
 
     /** 
      * Create a new BackendContext from user input (sessionstore is nullptr)
+     * @throws Crypto::Exception for e2ee decryption issues
      * @throws BackendException for backend issues
      */
-    BackendContext(const std::string& url, const std::string& username, 
-        const Andromeda::SecureBuffer& password, const std::string& twofactor);
+    BackendContext(const std::string& url, const std::string& username, const Andromeda::SecureBuffer& password, 
+        const Andromeda::SecureBuffer& e2ee_recovery, const std::string& twofactor);
 
     /** 
      * Create a new BackendContext from a known session and store ref
+     * @throws Crypto::Exception for e2ee decryption issues
      * @throws BackendException for backend issues
      */
-    explicit BackendContext(Andromeda::Account::SessionStore& session);
+    explicit BackendContext(Andromeda::Account::SessionStore& sessionStore);
 
     virtual ~BackendContext();
     DELETE_COPY(BackendContext)

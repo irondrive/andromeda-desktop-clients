@@ -47,13 +47,21 @@ public:
     inline const std::string& GetSessionID() const { return mSessionID.GetValue(); }
     /** Returns the stored session key */
     inline const std::string& GetSessionKey() const { return mSessionKey.GetValue(); }
-    
+    /** Returns the stored e2ee master key or nullptr if not set */
+    inline const SecureBuffer* TryGetMasterKey() const { return mE2eeMaster.TryGetValue(); }
+
+    /** Sets the stored e2ee master key (will copy), clears if nullptr */
+    inline bool SetMasterKey(const SecureBuffer& key) { return mE2eeMaster.SetValue(key); }
 
 private:
 
     Database::FieldTypes::ScalarType<std::string> mServerUrl;
     Database::FieldTypes::ScalarType<std::string> mSessionID;
     Database::FieldTypes::ScalarType<std::string> mSessionKey;
+    Database::FieldTypes::NullScalarType<SecureBuffer> mE2eeMaster; 
+    // TODO RAY !! - use windows profile encryption or something - QtKeychain?
+    // just store a std::string here and have the API take it already encrypted
+    // then can remove SecureBuffer from MixedValue which is iffy anyway
 };
 
 } // namespace Account

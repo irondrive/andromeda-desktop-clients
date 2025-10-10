@@ -17,9 +17,10 @@ SessionStore::SessionStore(ObjectDatabase& database, const MixedParams& data, bo
     BaseObject(database),
     mServerUrl("serverUrl",*this),
     mSessionID("sessionID",*this),
-    mSessionKey("sessionKey",*this)
+    mSessionKey("sessionKey",*this),
+    mE2eeMaster("e2eeMaster",*this)
 {
-    RegisterFields({&mServerUrl, &mSessionID, &mSessionKey});
+    RegisterFields({&mServerUrl, &mSessionID, &mSessionKey, &mE2eeMaster});
     InitializeFields(data, created);
 }
 
@@ -31,7 +32,8 @@ TableBuilder SessionStore::GetTableInstall()
       .AddColumn("serverUrl","text",false)
       //.AddColumn("accountID","char(12)",false).AddUnique("accountID") // TODO unique field?
       .AddColumn("sessionID","char(12)",false)
-      .AddColumn("sessionKey","char(32)",false);
+      .AddColumn("sessionKey","char(32)",false)
+      .AddColumn("e2eeMaster","char(32)",true);
     return tb;
 }
 

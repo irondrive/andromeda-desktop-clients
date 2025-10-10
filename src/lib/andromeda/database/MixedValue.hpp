@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <variant>
 
+#include "andromeda/SecureBuffer.hpp"
+
 struct sqlite3_stmt;
 struct sqlite3_value;
 
@@ -50,6 +52,7 @@ public:
      * Stores the value in the desired out variable 
      * @throws std::bad_variant_access if holding a variant of a different type
      */
+    void get_to(SecureBuffer& out) const;
     void get_to(std::string& out) const;
     void get_to(const char*& out) const;
     void get_to(int& out) const;
@@ -57,7 +60,7 @@ public:
     void get_to(double& out) const;
 
     /** Return any type in string form (for debug printing) */
-    [[nodiscard]] std::string ToString() const;
+    [[nodiscard]] std::string Debug_ToString() const;
 
     /** 
      * Returns the value as the desired type 
@@ -108,7 +111,7 @@ private:
     sqlite3_value* mSqlValue { nullptr };
 
     /** The manually-set value of any allowable type */
-    std::variant<std::nullptr_t, std::string, const char*, int, int64_t, double> mVariant;
+    std::variant<std::nullptr_t, SecureBuffer, std::string, const char*, int, int64_t, double> mVariant;
 };
 
 using MixedParamsBase = std::unordered_map<std::string, MixedValue>;

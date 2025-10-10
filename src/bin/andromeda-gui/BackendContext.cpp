@@ -1,7 +1,10 @@
 
 #include "BackendContext.hpp"
 
+#include "andromeda/SecureBuffer.hpp"
+using Andromeda::SecureBuffer;
 #include "andromeda/account/Account.hpp"
+using Andromeda::Account::Account;
 #include "andromeda/account/Session.hpp"
 using Andromeda::Account::Session;
 #include "andromeda/account/SessionStore.hpp"
@@ -19,8 +22,8 @@ namespace AndromedaGui {
 
 /*****************************************************/
 BackendContext::BackendContext(
-    const std::string& url, const std::string& username, 
-    const Andromeda::SecureBuffer& password, const std::string& twofactor) : 
+    const std::string& url, const std::string& username, const Andromeda::SecureBuffer& password, 
+    const Andromeda::SecureBuffer& e2ee_recovery, const std::string& twofactor) : 
     mDebug(__func__,this) 
 {
     MDBG_INFO("(url:" << url << ", username:" << username << ")");
@@ -30,19 +33,35 @@ BackendContext::BackendContext(
     mSession = std::make_unique<Session>(Session::Create(*mBackend, username, password, twofactor));
     mBackend->SetSession(mSession.get());
     mRunner->EnableRetry(); // no retry during init
+
+    Account& account { mSession->GetAccount() };
+    if (account.HasE2eeKeys())
+    {
+        if (account.HasE2eePwKey() && e2ee_recovery.empty())
+            account.UnlockE2eeFromPassword(password);
+        else account.UnlockE2eeFromRecovery(Account::DecodeRecoveryKey(e2ee_recovery));
+    }
 }
 
 /*****************************************************/
-BackendContext::BackendContext(SessionStore& session) : 
-    mDebug(__func__,this), mSessionStore(&session)
+BackendContext::BackendContext(SessionStore& sessionStore) : 
+    mDebug(__func__,this), mSessionStore(&sessionStore)
 {
-    MDBG_INFO("(url:" << session.GetServerUrl() << ")");
+    MDBG_INFO("(url:" << sessionStore.GetServerUrl() << ")");
 
-    InitializeBackend(session.GetServerUrl());
+    InitializeBackend(sessionStore.GetServerUrl());
 
-    mSession = std::make_unique<Session>(Session::FromExisting(*mBackend, session));
+    mSession = std::make_unique<Session>(Session::FromExisting(*mBackend, sessionStore));
     mBackend->SetSession(mSession.get());
     mRunner->EnableRetry(); // no retry during init
+
+    Account& account { mSession->GetAccount() };
+    if (account.HasE2eeKeys())
+    {
+        const SecureBuffer* masterkey { sessionStore.TryGetMasterKey() };
+        if (masterkey) account.UnlockE2eeDirectly(*masterkey);
+        else MDBG_ERROR("... no master key in the session, running without e2ee!");
+    }
 }
 
 /*****************************************************/
@@ -67,6 +86,7 @@ std::string BackendContext::GetName(bool human) const
 void BackendContext::StoreSession(ObjectDatabase& objdb)
 {
     mSessionStore = &SessionStore::Create(objdb, mRunner->GetFullURL(), *mSession);
+    mSession->GetAccount().StoreMasterKey(*mSessionStore);
 
     mSessionStore->Save(); // store to DB
     mSession->SetTemporary(false);

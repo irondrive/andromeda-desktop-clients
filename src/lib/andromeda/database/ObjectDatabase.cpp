@@ -136,14 +136,14 @@ void ObjectDatabase::UpdateObject_Query(BaseObject& object, const BaseObject::Fi
             const std::string istr { std::to_string(i) };
             std::string s(key); s+="="; s+=key; s+="+:d"; s+=istr; // += for efficiency
             sets.emplace_back(s); data.emplace(":d"+istr, val); ++i;
-            //MDBG_INFO("... " << key << "+=:d" << istr << "(" << val.ToString() << ")");
+            //MDBG_INFO("... " << key << "+=:d" << istr << "(" << val.Debug_ToString() << ")");
         }
         else
         {
             const std::string istr { std::to_string(i) };
             std::string s(key); s+="=:d"; s+=istr; // += for efficiency
             sets.emplace_back(s); data.emplace(":d"+istr, val); ++i;
-            //MDBG_INFO("... " << key << "=:d" << istr << "(" << val.ToString() << ")");
+            //MDBG_INFO("... " << key << "=:d" << istr << "(" << val.Debug_ToString() << ")");
         }
     }
 
@@ -193,7 +193,7 @@ void ObjectDatabase::InsertObject_Query(BaseObject& object, const BaseObject::Fi
             const std::string istr { std::to_string(i) };
             indexes.emplace_back(":d"+istr);
             data.emplace(":d"+istr, val); ++i;
-            //MDBG_INFO("... " << key << " = :d" << istr << "(" << val.ToString() << ")");
+            //MDBG_INFO("... " << key << " = :d" << istr << "(" << val.Debug_ToString() << ")");
         }
     }
 

@@ -48,8 +48,9 @@ int MixedValue::bind(sqlite3_stmt& stmt, int idx) const
         {
             return sqlite3_bind_null(&stmt, idx);
         }
-        else if constexpr (std::is_same_v<T, std::string>)
+        else if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, SecureBuffer>)
         {
+            // yes, the security for SecureBuffer ends here...
             return sqlite3_bind_blob(&stmt, idx, val.data(), 
                 static_cast<int>(val.size()), nullptr);
         }
@@ -74,7 +75,7 @@ int MixedValue::bind(sqlite3_stmt& stmt, int idx) const
 }
 
 /*****************************************************/
-std::string MixedValue::ToString() const
+std::string MixedValue::Debug_ToString() const
 {
     if (mSqlValue != nullptr)
         return get<std::string>();
@@ -83,6 +84,7 @@ std::string MixedValue::ToString() const
     {
         using T = std::decay_t<decltype(val)>;
         if constexpr (std::is_same_v<T, std::nullptr_t>) return "NULL";
+        else if constexpr (std::is_same_v<T, SecureBuffer>) return val.Insecure_ToStr();
         else if constexpr (std::is_same_v<T, std::string>) return val;
         else if constexpr (std::is_same_v<T, const char*>) return std::string(val);
         else return std::to_string(val); // int, int64_t, double
@@ -96,6 +98,16 @@ bool MixedValue::is_null() const
         return sqlite3_value_bytes(mSqlValue) == 0;
 
     else return std::holds_alternative<std::nullptr_t>(mVariant);
+}
+
+/*****************************************************/
+void MixedValue::get_to(SecureBuffer& out) const
+{
+    if (mSqlValue != nullptr) out = SecureBuffer::Insecure_FromBuf( // new copy
+        static_cast<const char*>(sqlite3_value_blob(mSqlValue)),
+        static_cast<size_t>(sqlite3_value_bytes(mSqlValue)));
+
+    else out = std::get<SecureBuffer>(mVariant);
 }
 
 /*****************************************************/
@@ -113,6 +125,7 @@ void MixedValue::get_to(std::string& out) const
 
 /*****************************************************/
 void MixedValue::get_to(const char*& out) const
+// TODO nit - could reduce complexity by removing char* fields (keep in operator==), probably not needed?
 {
     if (mSqlValue != nullptr) // reinterpret_cast, sqlite gives unsigned char
         out = reinterpret_cast<const char*>(sqlite3_value_text(mSqlValue));
