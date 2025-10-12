@@ -40,8 +40,6 @@ Account::Account(BackendImpl& backend, const nlohmann::json& data, const Session
 {
     MDBG_INFO("()");
 
-    MDBG_INFO(data.dump(4));
-
     try
     {
         data.at("id").get_to(mAccountID);

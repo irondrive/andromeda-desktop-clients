@@ -126,6 +126,26 @@ public:
      * elsewhere in RAM, or in the internal SSO buffer, etc.  Use SecureBuffer instead.
      */
     static void Zeroize(std::string& input);
+
+    /** Returns the given integer as a big-endian-formatted string */
+    template<typename T>
+    [[nodiscard]] inline static std::string FormatBE(T val)
+    {
+        std::string retval; retval.resize(sizeof(T));
+        for (size_t i = 0; i < sizeof(T); ++i)
+            retval[sizeof(T)-i-1] = static_cast<char>(val >> (8*i));
+        return retval;
+    }
+
+    /** Returns the given integer as a little-endian-formatted string */
+    template<typename T>
+    [[nodiscard]] inline static std::string FormatLE(T val)
+    {
+        std::string retval; retval.resize(sizeof(T));
+        for (size_t i = 0; i < sizeof(T); ++i)
+            retval[i] = static_cast<char>(val >> (8*i));
+        return retval;
+    }
 };
 
 } // namespace Andromeda

@@ -380,5 +380,33 @@ TEST_CASE("Zeroize", "[StringUtil]")
     REQUIRE(data == std::string(data.size(),'\0'));
 }
 
+/*****************************************************/
+TEST_CASE("FormatBE", "[StringUtil]")
+{
+    REQUIRE(StringUtil::FormatBE(static_cast<uint8_t>(0)) == std::string(1,'\0'));
+    REQUIRE(StringUtil::FormatBE(static_cast<uint16_t>(0)) == std::string(2,'\0'));
+    REQUIRE(StringUtil::FormatBE(static_cast<uint32_t>(0)) == std::string(4,'\0'));
+    REQUIRE(StringUtil::FormatBE(static_cast<uint64_t>(0)) == std::string(8,'\0'));
+
+    REQUIRE(StringUtil::FormatBE(static_cast<uint8_t>(0x20)) == "\x20");
+    REQUIRE(StringUtil::FormatBE(static_cast<uint16_t>(0x05dc)) == "\x05\xDC");
+    REQUIRE(StringUtil::FormatBE(static_cast<uint32_t>(0x08f0d180)) == "\x08\xF0\xD1\x80");
+    REQUIRE(StringUtil::FormatBE(static_cast<uint64_t>(0x0214e8348c4f01f4)) == "\x02\x14\xE8\x34\x8C\x4F\x01\xF4");
+}
+
+/*****************************************************/
+TEST_CASE("FormatLE", "[StringUtil]")
+{
+    REQUIRE(StringUtil::FormatLE(static_cast<uint8_t>(0)) == std::string(1,'\0'));
+    REQUIRE(StringUtil::FormatLE(static_cast<uint16_t>(0)) == std::string(2,'\0'));
+    REQUIRE(StringUtil::FormatLE(static_cast<uint32_t>(0)) == std::string(4,'\0'));
+    REQUIRE(StringUtil::FormatLE(static_cast<uint64_t>(0)) == std::string(8,'\0'));
+
+    REQUIRE(StringUtil::FormatLE(static_cast<uint8_t>(0x20)) == "\x20");
+    REQUIRE(StringUtil::FormatLE(static_cast<uint16_t>(0x05dc)) == "\xdc\x05");
+    REQUIRE(StringUtil::FormatLE(static_cast<uint32_t>(0x08f0d180)) == "\x80\xd1\xf0\x08");
+    REQUIRE(StringUtil::FormatLE(static_cast<uint64_t>(0x0214e8348c4f01f4)) == "\xf4\x01\x4f\x8c\x34\xe8\x14\x02");
+}
+
 } // namespace
 } // namespace Andromeda

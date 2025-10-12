@@ -111,6 +111,7 @@ target_link_libraries(andromeda-gui PRIVATE libandromeda-fuse)
 #target_link_libraries(andromeda-gui PRIVATE libandromeda-sync)
 
 # include/link Qt libraries
+# GPL/LGPL for open source - https://www.qt.io/download-open-source#obligations
 
 target_link_libraries(andromeda-gui PRIVATE
     Qt${QT_VERSION_MAJOR}::Core 

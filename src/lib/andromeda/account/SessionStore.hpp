@@ -59,8 +59,7 @@ private:
     Database::FieldTypes::ScalarType<std::string> mSessionID;
     Database::FieldTypes::ScalarType<std::string> mSessionKey;
     Database::FieldTypes::NullScalarType<SecureBuffer> mE2eeMaster; 
-    // TODO E2EE - use windows profile encryption or something - QtKeychain?
-    // just store a std::string here and have the API take it already encrypted
+    // TODO E2EE use libkeychain instead for e2ee key (and session key?)
     // then can remove SecureBuffer from MixedValue which is iffy anyway
 };
 

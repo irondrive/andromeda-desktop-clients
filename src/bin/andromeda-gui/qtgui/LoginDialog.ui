@@ -128,6 +128,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEditServerUrl</tabstop>
+  <tabstop>lineEditUsername</tabstop>
+  <tabstop>lineEditPassword</tabstop>
+  <tabstop>lineEditE2eeRecovery</tabstop>
+  <tabstop>lineEditTwoFactor</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

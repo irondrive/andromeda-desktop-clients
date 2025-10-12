@@ -56,6 +56,7 @@ Ubuntu 22.04 is the baseline for support so all packages are assumed to be at le
   - OpenSSL (libssl, libcrypto) (3.x only)
   - sqlite3
   - libsodium
+  - libsecret (POSIX only)
 - libandromeda-fuse
   - libfuse (2.x or 3.x) https://github.com/libfuse/libfuse
     - for macOS, OSXFUSE https://osxfuse.github.io/
@@ -79,29 +80,29 @@ The following platforms (GCC 11.4+, Clang 14+) are targeted for support and shou
   - `WINFSP_ROOT_DIR` can also be set but defaults to `C:/Program Files (x86)/WinFsp`
   - Windows development typically uses the most recent QT LTS
 
-- Debian/Ubuntu: `apt install make cmake g++ python3 libssl-dev libcrypt-dev`
+- Debian/Ubuntu: `apt install make cmake g++ python3 libssl-dev libcrypt-dev libsecret-1-dev`
   - Ubuntu 22.04 amd64 `apt install libfuse-dev qtbase5-dev libsqlite3-dev libsodium-dev`
   - Ubuntu 24.10 amd64 `apt install libfuse3-dev qt6-base-dev libsqlite3-dev libsodium-dev`
   - Debian 12 armhf `apt install libfuse3-dev qt6-base-dev libsqlite3-dev libsodium-dev`
 
 The following get tested occasionally:
 
-- Arch Linux amd64: `pacman -S make cmake gcc python openssl fuse3 qt6-base sqlite libsodium`
-- Void Linux amd64: `xbps-install gcc python3 cmake make openssl-devel fuse3-devel qt6-base-devel sqlite-devel libsodium-devel`
+- Arch Linux amd64: `pacman -S make cmake gcc python openssl fuse3 qt6-base sqlite libsodium libsecret`
+- Void Linux amd64: `xbps-install gcc python3 cmake make openssl-devel fuse3-devel qt6-base-devel sqlite-devel libsodium-devel libsecret-devel`
 - macOS Catalina (10.15) amd64: `brew install make cmake openssl macfuse qt sqlite libsodium`
 
 The following platforms are supported minus the Qt GUI (it may work, just not tested):
 
-- Alpine Linux amd64: `apk add make cmake g++ python3 openssl-dev fuse3-dev sqlite-dev libsodium-dev`
-- FreeBSD 13.2/14.0 amd64: `pkg install cmake python fusefs-libs3 sqlite3 libsodium`
-- OpenBSD 6.7 amd64: `pkg_add cmake libsodium`
+- Alpine Linux amd64: `apk add make cmake g++ python3 openssl-dev fuse3-dev sqlite-dev libsodium-dev libsecret-dev`
+- FreeBSD 13.2/14.0 amd64: `pkg install cmake python fusefs-libs3 sqlite3 libsodium libsecret`
+- OpenBSD 6.7 amd64: `pkg_add cmake libsodium libsecret`
 
 NOTE that older tools (UB22) may not be able to run development builds (tools/builddev), as clang-tidy, etc. will be too old.
 
 NOTE for FreeBSD to allow FUSE mounting by regular users, you will need to add your user to the operator group with `pw group mod operator -m $(whoami)`, and enable user mounting with `sysctl vfs.usermount=1`.  FreeBSD FUSE currently has a few issues that may result in ERR#78 (Not implemented) errors on file accessat() and close().  OpenBSD only allows FUSE mount/unmount by the super user.
 
 FUTURE - libandromeda on NetBSD 9.3 does not compile with the default GCC 7 or with librefuse - you must install the GCC 9 and fuse packages.  andromeda-fuse does not currently work at runtime: `fuse: writing device: Message too long`.
-- NetBSD 9.3 amd64: `pkgin install gcc9 gcc9-libs cmake python311 fuse sqlite3 libsodium`
+- NetBSD 9.3 amd64: `pkgin install gcc9 gcc9-libs cmake python311 fuse sqlite3 libsodium libsecret`
 
 # CLI Client
 
