@@ -76,8 +76,9 @@ Account::PasswordKeys Account::GetPasskeys(BackendImpl& backend, const std::stri
 /*****************************************************/
 std::string Account::GetPrivateKeyNonce()
 {
+    // the private key is only encrypted once. Just need one nonce.
     std::string retval(sizeof(KeyUsage),KeyUsage::PRIVATE_KEY);
-    Crypto::ResizeNonce(retval, Crypto::SecretNonceLength());
+    retval += std::string(Crypto::SecretNonceLength()-retval.size(),'\0');
     return retval;
 }
 

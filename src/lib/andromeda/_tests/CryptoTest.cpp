@@ -16,24 +16,6 @@ TEST_CASE("GenerateSalt", "[Crypto]")
 }
 
 /*****************************************************/
-TEST_CASE("ResizeNonce", "[Crypto]")
-{
-    std::string nonce; Crypto::ResizeNonce(nonce,24);
-    REQUIRE(nonce == std::string(24,'\0'));
-
-    nonce = "test"; Crypto::ResizeNonce(nonce,8);
-    REQUIRE(nonce == std::string("test")+std::string(4,'\0'));
-
-    nonce = "test123"; Crypto::ResizeNonce(nonce,7);
-    REQUIRE(nonce == "test123");
-
-    REQUIRE_THROWS_AS(Crypto::ResizeNonce(nonce,0), Crypto::ArgumentException);
-
-    Crypto::ResizeNonce(nonce,2,true);
-    REQUIRE(nonce == "te");
-}
-
-/*****************************************************/
 TEST_CASE("DeriveKey", "[Crypto]")
 {
     const SecureBuffer password { SecureBuffer::Insecure_FromCstr("mypassword123") };
